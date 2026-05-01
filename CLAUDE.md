@@ -1,0 +1,299 @@
+# CLAUDE.md — Hướng dẫn cho AI Assistant maintain dự án QLNCDTCDT
+
+> File này được Claude Code đọc tự động khi mở project. Mục tiêu: cung cấp đủ context để Claude hoặc dev mới bắt nhịp ngay.
+
+---
+
+## 1. Tổng quan
+
+| Mục | Giá trị |
+|---|---|
+| **Tên** | QL NCKH - Đào tạo - Chỉ đạo tuyến |
+| **Cho** | Bệnh viện Hữu nghị Đa khoa Nghệ An |
+| **Phạm vi** | NCKH (đề tài/sáng kiến/bài báo), Đào tạo (khóa/lớp/HV/GV), Chỉ đạo tuyến (chưa làm) |
+| **Stack** | PHP 7.4+/8.0, MariaDB 10.4+, jQuery 3.7, không framework |
+| **Vị trí dev** | `d:\wwweb\QLNCDTCDT` (Windows + XAMPP) |
+| **Domain dev** | `http://qldt.bv` (cấu hình `PUBLIC/Common/AppConfig.php::APP_URL`) |
+
+## 2. Kiến trúc
+
+### 2.1. Mô hình 3-tier
+```
+GUI/<Module>/         Presentation: index.php (HTML+JS) + ajax_handler.php
+   │
+BUS/<Module>_BUS.php  Business logic, validate, transaction
+   │
+DAL/<Module>_DAL.php  Data access (PDO + named placeholder)
+   │
+PUBLIC/Entities/      DTO (typed properties)
+PUBLIC/Common/        Helpers (Session, PhanQuyen, Mail, Icon...)
+```
+
+### 2.2. Quy ước tên
+- **Bảng DB**: `snake_case` — `dm_nhan_vien`, `nckh_de_tai`.
+- **Class PHP**: PascalCase + suffix layer — `NCKH_DeTai_BUS`, `DM_NhanVien_DAL`.
+- **File**: theo class — `BUS/NCKH_DeTai_BUS.php`.
+- **Module key** (`dm_danh_sach_form.modules_tuong_ung`): `NCKH_DeTai`, `DT_LopHoc` — dùng làm key check quyền.
+
+### 2.3. Entry point
+- `index.php` (root) → redirect login hoặc dashboard.
+- `bootstrap.php` → load AppConfig, helpers, DB, start session. **Mọi GUI/ajax_handler phải `require_once __DIR__ . '/../../bootstrap.php';` ở dòng đầu.**
+
+---
+
+## 3. Convention bắt buộc
+
+### 3.1. Soft delete (KHÔNG DELETE thật)
+- Luôn `UPDATE ... SET da_xoa = 1`.
+- Mọi `SELECT` phải có `WHERE X.da_xoa = 0`.
+- UNIQUE KEY luôn bao gồm `da_xoa` cuối: `UNIQUE (ma_x, da_xoa)` → cho phép tái dùng mã sau xoá.
+
+### 3.2. Audit fields
+Mọi bảng (trừ `dm_phan_quyen`) phải có:
+`ngay_tao`, `ngay_cap_nhat`, `nguoi_tao`, `nguoi_cap_nhat`, `da_xoa`.
+Set chúng từ `SessionHelper::userId()` ở BUS hoặc DAL.
+
+### 3.3. PDO — KHÔNG reuse named placeholder
+- `PDO::ATTR_EMULATE_PREPARES = false` (xem `DAL/database.php`) ⇒ một query không được dùng cùng `:name` 2 lần.
+- Cần lặp giá trị (vd 5 LIKE search) → đặt `:s1, :s2, :s3, :s4, :s5` rồi bind từng giá trị.
+- Đã từng gặp `HY093 Invalid parameter number` — luôn nhớ.
+
+### 3.4. LIMIT / OFFSET
+- An toàn để nội suy trực tiếp **chỉ khi** đã ép int qua `PaginationHelper::normalize(int, int)` hoặc cast `(int)` rõ ràng:
+  ```php
+  [$page, $pageSize, $offset] = PaginationHelper::normalize($page, $pageSize);
+  $sql .= " LIMIT {$pageSize} OFFSET {$offset}"; // OK — đã type-safe
+  ```
+- **Không** dùng giá trị từ `$_POST` trực tiếp vào LIMIT/OFFSET nếu chưa cast.
+
+### 3.5. AJAX response
+Mọi ajax_handler trả qua `ResponseHelper`:
+- `ResponseHelper::success($message, $data)`
+- `ResponseHelper::error($message, $code)`
+- `ResponseHelper::paged($data, $page, $size, $total)`
+
+**Không** dùng `die()`, `exit`, `echo json_encode(...)` trực tiếp.
+
+### 3.6. Auth + Permission + CSRF ở mọi ajax_handler
+Pattern chuẩn (sau khi đã bật CSRF toàn hệ thống):
+```php
+require_once __DIR__ . '/../../bootstrap.php';
+Helper::requireAjaxCsrf();                                  // 1. Login + CSRF
+$action = Helper::post('action', '');
+switch ($action) {
+    case 'getPaged':
+        PhanQuyenHelper::requireQuyen('NCKH_DeTai',
+            PhanQuyenHelper::QUYEN_XEM);                    // 2. Permission
+        // ... business logic
+}
+```
+- `Helper::requireAjaxCsrf()` đọc token từ header `X-CSRF-Token` (đã được `APP.ajax` tự gắn) hoặc POST `_csrf_token` / `_csrf`.
+- `APP.ajax()` ở `assets/js/app.js` tự lấy `window.CSRF_TOKEN` (set trong `header.php`) → mọi request POST đều có CSRF.
+- Action chỉ-đọc (`getPaged`, `getById`, `getCombo`...) **vẫn nên** dùng `requireAjaxCsrf` để đồng nhất, hoặc tối thiểu `requireAjaxLogin`.
+
+### 3.7. Transaction cho multi-table writes
+Khi 1 action ghi vào ≥ 2 bảng, **bắt buộc** bọc transaction:
+```php
+try {
+    Database::beginTransaction();
+    // ... write A, B, C
+    Database::commit();
+} catch (Throwable $ex) {
+    Database::rollBack();
+    return ['success' => false, 'message' => 'Lỗi: ' . $ex->getMessage()];
+}
+```
+- Side effects ngoài DB (gửi mail, ghi log audit ở bảng độc lập) đặt **ngoài** try/catch để không kéo nhau rollback.
+- Đã có sẵn ở: `DT_DangKyKhoaHoc_BUS::approve()`, `DM_NhomTaiKhoan_BUS::delete()`, `DT_KhoaHocMonHoc_BUS::move()`, `DT_LichHoc_BUS` (tạo lịch hàng loạt).
+
+### 3.8. Frontend
+- jQuery 3.7 + 1 file global `assets/js/app.js` chứa `APP.ajax/toast/confirm/escape/debounce/showLoading/formatDate/formatDateTime/renderPagination`.
+- Mỗi module có 1 `index.php` chứa cả HTML + `<script>` inline.
+- Modal: `.modal-backdrop > .modal`, class `.open` để hiện.
+- Drawer chi tiết bên phải: `.dt-drawer` z-index `80` (thấp hơn modal-backdrop `100` để modal đè drawer).
+
+### 3.9. Icon
+- Mọi icon qua `IconHelper::svg('name', size, class, color)`. Không hardcode SVG.
+- Trong JS, embed bằng `json_encode`:
+  ```php
+  var ICON_EDIT = <?= json_encode(IconHelper::svg('edit', 18, 'icon', 'currentColor')) ?>;
+  ```
+
+### 3.10. Output XSS
+- Echo biến vào HTML qua `Helper::h($val)`.
+- JS hiện text qua `APP.escape(val)`.
+
+### 3.11. Color / UI tokens
+- `--primary: #16a34a` (xanh lá theo logo BV).
+- Sidebar nền xanh đen `#1e293b → #0f172a`, active border-left `#ec4899` (hồng).
+- File CSS chính: `assets/css/style.css`. Biến CSS ở `:root`.
+
+### 3.12. Phân quyền Admin
+- Cờ `dm_nhom_tai_khoan.la_admin = 1` ⇒ full quyền (skip check matrix).
+- **KHÔNG hardcode `id === 1`** — đã refactor sang `PhanQuyenHelper::isAdminNhom($nhomId)`.
+- Khi seed/restore DB phải đảm bảo nhóm Admin có `la_admin = 1`.
+
+---
+
+## 4. Tasks thường gặp
+
+### 4.1. Thêm module CRUD mới
+1. Thiết kế bảng DB (id + nghiệp vụ + audit + da_xoa, UNIQUE bao gồm da_xoa).
+2. Tạo Entity DTO ở `PUBLIC/Entities/<Tên>_PUBLIC.php` (typed properties).
+3. Tạo DAL: `selectSql()`, `getById()`, `getPaged($filter, $page, $size)`, `insert()`, `update()`, `softDelete()`.
+4. Tạo BUS validate + gọi DAL, trả `['success'=>bool, 'message'=>str, 'data'=>...]`. Bọc transaction nếu multi-table.
+5. Tạo `GUI/<Tên>/index.php` + `ajax_handler.php` (mở đầu bằng `Helper::requireAjaxCsrf()`).
+6. Khai báo form trong `dm_danh_sach_form` (key + tên), gán quyền tại `dm_phan_quyen`.
+7. Thêm link vào `GUI/layouts/sidebar.php`.
+
+### 4.2. Thêm cột vào bảng có sẵn
+1. ALTER TABLE qua phpMyAdmin hoặc qua PHP script (vì MySQL CLI Windows hay sai encoding với DEFAULT có Unicode).
+2. Thêm property vào DTO.
+3. Cập nhật `selectSql()`, `insert()`, `update()` ở DAL.
+4. Cập nhật form ở GUI (input + JS load/save).
+5. Cập nhật BUS nếu có validate.
+
+### 4.3. Sửa quyền cho nhóm
+- UI: `GUI/DM_PhanQuyen/index.php` (ma trận).
+- Hoặc UPDATE `dm_phan_quyen` rồi `MemcachedHelper::deleteByPrefix('phan_quyen:')` để clear cache.
+
+### 4.4. Bật / tắt một nhóm thành Admin
+```sql
+UPDATE dm_nhom_tai_khoan SET la_admin = 1 WHERE id = X;
+```
+Sau đó: `MemcachedHelper::deleteByPrefix('phan_quyen:')`.
+
+---
+
+## 5. Helpers
+
+| Helper | Mô tả |
+|---|---|
+| `Helper::h($val)` | Escape HTML |
+| `Helper::post('key', $default)` / `postInt` / `postStr` | Lấy POST |
+| `Helper::requireLogin()` | Redirect login nếu chưa đăng nhập |
+| `Helper::requireAjaxLogin()` | Trả 401 JSON nếu chưa đăng nhập |
+| **`Helper::requireAjaxCsrf()`** | Login + verify CSRF — dùng cho **mọi ajax_handler** |
+| `SessionHelper::userId() / nhomTaiKhoanId() / taiKhoan() / hoTen()` | Đọc info user |
+| `SessionHelper::csrfToken() / verifyCsrf($t)` | CSRF token |
+| `PhanQuyenHelper::hasQuyen($key, $quyen) / requireQuyen()` | Check quyền |
+| `PhanQuyenHelper::isAdminNhom($nhomId)` | Check nhóm có cờ la_admin |
+| `ResponseHelper::success / error / paged / json` | JSON response |
+| `Database::beginTransaction / commit / rollBack` | Transaction |
+| `Database::hydrate($row, $class)` | Map row → DTO |
+| `MemcachedHelper::get / set / delete / deleteByPrefix` | Cache |
+| `MailHelper::sendSmtp(...)` | SMTP qua fsockopen (no PHPMailer) |
+| `IconHelper::svg($name, $size, $class, $color)` | Render SVG |
+| `PaginationHelper::normalize($page, $size)` | Trả `[page, size, offset]` đã clamp |
+
+### Frontend (`APP` namespace)
+| Method | Mô tả |
+|---|---|
+| `APP.ajax(url, data, opts)` | $.ajax wrapper, **tự gắn CSRF**, handle 401 redirect |
+| `APP.toast(msg, type)` | Notification (success/error/warning/info) |
+| `APP.confirm(msg, onYes, opts)` | Modal xác nhận |
+| `APP.escape(str)` | Escape HTML |
+| `APP.debounce(fn, ms)` | Debounce |
+| `APP.formatDate / formatDateTime` | Hiện dd/mm/Y [H:i] |
+| `APP.renderPagination(info)` | Render UI phân trang |
+| `APP.showLoading / hideLoading` | Overlay loading |
+
+---
+
+## 6. Run / Test
+
+- Web server: XAMPP Apache + MariaDB ở `C:\xampp`.
+- DB credentials dev: user `root`, pass rỗng (xem `AppConfig.php`).
+- Cron nhắc việc thủ công: `php cron_nckh_nhac_viec.php` (cần task scheduler ở prod).
+- Không có unit test framework. Test thủ công qua browser.
+- **Khi cần ALTER TABLE có DEFAULT chứa Unicode**: chạy qua PHP script (`Database::getConnection()->exec(...)`), KHÔNG dùng `mysql.exe` CLI vì Windows console encoding sẽ phá UTF-8.
+
+---
+
+## 7. Security state hiện tại
+
+| Hạng mục | Trạng thái |
+|---|---|
+| CSRF | ✅ Đã bật toàn hệ thống qua `Helper::requireAjaxCsrf()` + `APP.ajax` tự gắn header |
+| SQL injection | ✅ PDO + named placeholder + `EMULATE_PREPARES=false` |
+| Soft delete | ✅ Convention enforce |
+| Permission RBAC | ✅ `dm_phan_quyen` + cờ `la_admin` |
+| Bcrypt password | ✅ `password_hash` + `password_verify`, cost 10 (nên tăng 12 ở prod) |
+| File upload | ✅ Whitelist ext + tên random, `.htaccess` chặn PHP cho cả `assets/uploads/` |
+| XSS | ✅ Mọi output qua `Helper::h()` / `APP.escape()` |
+| Audit log | ✅ `dm_nhat_ky_he_thong` |
+
+**Còn cần làm trước deploy production**: xem `docs/SECURITY.md` (rate limit login, đổi DB password, set `APP_DEBUG=false`, HTTPS, cookie `secure`, security headers).
+
+---
+
+## 8. Files / Folders quan trọng
+
+| Path | Vai trò |
+|---|---|
+| `bootstrap.php` | Entry bootstrap |
+| `index.php` | Root redirect |
+| `cron_nckh_nhac_viec.php` | Cron gửi mail nhắc việc |
+| `PUBLIC/Common/` | Helpers chung |
+| `PUBLIC/Entities/` | DTOs |
+| `assets/css/style.css` | CSS chính |
+| `assets/js/app.js` | JS chung (APP namespace, tự gắn CSRF) |
+| `assets/uploads/.htaccess` | Chặn PHP execution toàn cây upload |
+| `assets/uploads/<sub>/` | Upload files mỗi module |
+| `GUI/layouts/header.php` | Layout (sidebar/topbar/CSRF token JS) |
+| `GUI/layouts/sidebar.php` | Sidebar menu |
+| `GUI/layouts/footer.php` | Layout footer + script toggle sidebar |
+| `docs/database.md` | Schema documentation chi tiết |
+| `docs/SECURITY.md` | Security review + checklist deploy |
+| `docs/de_xuat_phan_mem.md` | Tài liệu yêu cầu gốc |
+
+---
+
+## 9. Kim chỉ nam khi sửa code
+
+1. **Soft delete > delete** — không xoá thật.
+2. **Named placeholder không reuse** — `:s1, :s2…` khi cần lặp.
+3. **`requireAjaxCsrf()` ở MỌI ajax_handler** — không skip dù chỉ là action read-only.
+4. **`Helper::h()` mọi output** — không echo biến trực tiếp.
+5. **`IconHelper::svg()` mọi icon** — không hardcode SVG.
+6. **Transaction cho ≥ 2 table writes** trong cùng action.
+7. **Đọc 1 module hiện có** (ví dụ `NCKH_DeTai`) trước khi viết module mới — convention nhất quán.
+8. **Đừng tự ý refactor lớn** — user prefer pragmatic. Sửa đúng cái cần.
+9. **Đừng tạo file thừa** (docs/note/plan riêng) trừ khi user yêu cầu.
+
+---
+
+## 10. Lưu ý khi làm việc với AI Assistant
+
+- User dùng tiếng Việt; code/identifier không dấu.
+- User prefer terse: làm đúng, không narrate, không comment dư.
+- Nhiều bước → dùng TodoWrite, mark completed ngay khi xong từng bước.
+- Tìm code: dùng Grep/Glob, không `find`/`grep` qua Bash.
+- Trên Windows + Git Bash: dùng forward slash trong path.
+- ALTER TABLE Unicode default: PHP script, không CLI mysql.
+- MySQL binary: `/c/xampp/mysql/bin/mysql.exe` và `mysqldump.exe`.
+- PHP CLI: `/c/xampp/php/php.exe`.
+
+---
+
+## 11. Roadmap
+
+- ✅ **Phần 1: NCKH** — đề tài/sáng kiến/bài báo, workflow duyệt 4 trạng thái, dashboard, cron mail.
+- ✅ **Hardening** — CSRF, htaccess uploads, admin flag, transactions, schema cleanup (xem changelog).
+- ⏳ **Phần 2: Mở rộng đào tạo** — báo cáo BCĐT, in chứng chỉ hàng loạt.
+- ⏳ **Phần 3: Chỉ đạo tuyến** — quản lý đoàn công tác, hợp tác BV tuyến dưới.
+- ⏳ **Phần 4: Mobile/PWA** (nếu cần).
+
+Xem chi tiết: `docs/de_xuat_phan_mem.md`.
+
+---
+
+## 12. Changelog quan trọng (cho người maintain sau)
+
+### 2026-05-01 — Hardening trước deploy
+- ✅ Thêm `Helper::requireAjaxCsrf()` + `APP.ajax` tự gắn `X-CSRF-Token`. Replace toàn bộ 33 `ajax_handler` từ `requireAjaxLogin()` → `requireAjaxCsrf()`.
+- ✅ Đặt `assets/uploads/.htaccess` chung chặn PHP execution cho cả cây uploads (thay vì rải mỗi subdir).
+- ✅ Thêm cột `dm_nhom_tai_khoan.la_admin`, refactor `PhanQuyenHelper::hasQuyen()` từ `id===1` → `isAdminNhom()`.
+- ✅ Drop `dt_lop_hoc.giang_vien_id_new` và `dt_lich_hoc.giang_vien_id_new` (cột tàn dư của lần migrate dở). Sửa subquery trong `DM_GiangVien_DAL` về cột canonical `giang_vien_id` qua bridge `dm_giang_vien.nhan_vien_id`.
+- ✅ Fix DEFAULT của `dt_chung_chi.loai_chung_chi` (mojibake `Chß╗®ng chß╗ë` → `Chứng chỉ`) qua PHP script.
+- ✅ Bọc transaction: `DT_DangKyKhoaHoc_BUS::approve`, `DM_NhomTaiKhoan_BUS::delete`, `DT_KhoaHocMonHoc_BUS::move`, `DT_LichHoc_BUS` createBatch.

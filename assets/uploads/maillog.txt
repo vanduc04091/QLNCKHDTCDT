@@ -1,0 +1,8 @@
+[2026-04-26 21:40:38] [DISABLED] To: nguyen@gmail.com | Subject: Xác nhận đăng ký khóa học
+<p>Xin chào <strong>Nguyễn Văn Lộc</strong>,</p><p>Bạn đã đăng ký khóa học <strong>Cấp cứu nâng cao (ACLS)</strong> thành công.</p><p>Mã tra cứu: <strong style="font-size:18px;color:#2563eb">C4AE716C08DF2014</strong></p><p>Vui lòng <strong>lưu lại mã này</strong> để theo dõi trạng thái xét duyệt.</p><p>Tra cứu trạng thái: <a href="http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014">http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014</a> (cần CCCD để xác thực)</p><p>Trân trọng.</p>
+
+------------------------------------------------------------
+[2026-04-26 21:45:01] [DISABLED] To: nguyen@gmail.com | Subject: Đăng ký được duyệt - Cấp cứu nâng cao (ACLS)
+<p>Xin chào <strong>Nguyễn Văn Lộc</strong>,</p><p>Đăng ký khóa học <strong>Cấp cứu nâng cao (ACLS)</strong> của bạn đã được <strong style="color:#16a34a">DUYỆT</strong>.</p><p>Bạn có thể tra cứu lịch học, điểm danh, kết quả học tập và chứng chỉ tại đây:<br><a href="http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014">http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014</a></p><p>Mã tra cứu: <strong>C4AE716C08DF2014</strong> (cần kết hợp với CCCD)</p><p>Trân trọng.</p>
+
+------------------------------------------------------------

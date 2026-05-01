@@ -1,0 +1,178 @@
+<?php
+require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../../BUS/DM_HocVien_BUS.php';
+require_once __DIR__ . '/../../BUS/DM_DoiTuongHocVien_BUS.php';
+require_once __DIR__ . '/../../BUS/DM_NhanVien_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_HocVienLop_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_HoSoHocVien_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_ChungChi_BUS.php';
+
+Helper::requireAjaxCsrf();
+
+$action = Helper::post('action', '');
+$u = SessionHelper::userId();
+$MODULE = DM_HocVien_BUS::MODULE_KEY;
+
+try {
+    switch ($action) {
+        case 'getPaged':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            $page = Helper::postInt('page', 1);
+            $size = Helper::postInt('pageSize', AppConfig::DEFAULT_PAGE_SIZE);
+            $search = Helper::postStr('search');
+            $daXoa = Helper::postInt('da_xoa', 0);
+            $dtId = Helper::postInt('doi_tuong_id', 0);
+            $lnv = isset($_POST['la_nhan_vien']) && $_POST['la_nhan_vien'] !== '' ? Helper::postInt('la_nhan_vien', -1) : -1;
+            $res = DM_HocVien_BUS::getPaged($page, $size, $search, $daXoa, $dtId, $lnv);
+            ResponseHelper::paged($res['data'], $page, $size, $res['totalRecords']);
+            break;
+
+        case 'getById':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            $id = Helper::postInt('id');
+            $e = DM_HocVien_BUS::getById($id);
+            if (!$e) ResponseHelper::error('Không tìm thấy');
+            ResponseHelper::success('OK', $e);
+            break;
+
+        case 'getStats':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DM_HocVien_BUS::getStats());
+            break;
+
+        case 'getComboDoiTuong':
+            ResponseHelper::success('OK', DM_DoiTuongHocVien_BUS::getCombo());
+            break;
+
+        case 'getComboNhanVien':
+            ResponseHelper::success('OK', DM_NhanVien_BUS::getCombo());
+            break;
+
+        case 'insert':
+        case 'update':
+            $isUpdate = $action === 'update';
+            PhanQuyenHelper::requireQuyen($MODULE, $isUpdate ? PhanQuyenHelper::QUYEN_SUA : PhanQuyenHelper::QUYEN_THEM);
+
+            $e = new DM_HocVien_PUBLIC();
+            if ($isUpdate) $e->id = Helper::postInt('id');
+            $e->ma_hv = Helper::postStr('ma_hv');
+            $e->ho_ten = Helper::postStr('ho_ten');
+            $e->ngay_sinh = Helper::postStr('ngay_sinh') ?: null;
+            $e->gioi_tinh = Helper::postStr('gioi_tinh') ?: null;
+            $e->dien_thoai = Helper::postStr('dien_thoai') ?: null;
+            $e->email = Helper::postStr('email') ?: null;
+            $e->cccd = Helper::postStr('cccd') ?: null;
+            $e->dia_chi = Helper::postStr('dia_chi') ?: null;
+            $e->don_vi_cong_tac = Helper::postStr('don_vi_cong_tac') ?: null;
+            $e->chuc_vu = Helper::postStr('chuc_vu') ?: null;
+            $e->doi_tuong_id = Helper::postInt('doi_tuong_id') ?: null;
+            $e->la_nhan_vien = Helper::postInt('la_nhan_vien', 0) ? 1 : 0;
+            $e->nhan_vien_id = Helper::postInt('nhan_vien_id') ?: null;
+            $e->ghi_chu = Helper::postStr('ghi_chu') ?: null;
+            $e->trang_thai = Helper::postInt('trang_thai', 1);
+
+            // Upload avatar nếu có file
+            $avatarFilename = null;
+            $removeAvatar = Helper::postInt('remove_avatar', 0) === 1;
+            if (!empty($_FILES['avatar_file']['name'])) {
+                $up = DM_HocVien_BUS::uploadAvatar($_FILES['avatar_file'], $u);
+                if (!$up['success']) ResponseHelper::error($up['message']);
+                $avatarFilename = $up['filename'];
+            }
+            if ($isUpdate) {
+                $e->nguoi_cap_nhat = $u;
+                // Logic avatar: upload mới → set; remove → ""; không đổi → null (DAL bỏ qua)
+                if ($avatarFilename) {
+                    // Xóa avatar cũ
+                    $old = DM_HocVien_BUS::getById($e->id);
+                    if ($old && $old->avatar) DM_HocVien_BUS::removeAvatarFile($old->avatar);
+                    $e->avatar = $avatarFilename;
+                } elseif ($removeAvatar) {
+                    $old = DM_HocVien_BUS::getById($e->id);
+                    if ($old && $old->avatar) DM_HocVien_BUS::removeAvatarFile($old->avatar);
+                    $e->avatar = '';
+                } else {
+                    $e->avatar = null; // DAL giữ nguyên
+                }
+                $res = DM_HocVien_BUS::update($e);
+            } else {
+                $e->nguoi_tao = $u;
+                $e->avatar = $avatarFilename;
+                $res = DM_HocVien_BUS::insert($e);
+            }
+            $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'trash':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XOA);
+            $res = DM_HocVien_BUS::trash(Helper::postInt('id'), $u);
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'restore':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
+            $res = DM_HocVien_BUS::restore(Helper::postInt('id'), $u);
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'delete':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XOA);
+            $res = DM_HocVien_BUS::delete(Helper::postInt('id'));
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        // ====== Lớp học của học viên (chiều ngược) ======
+        case 'listLopCuaHocVien':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DT_HocVienLop_BUS::getByHocVien(Helper::postInt('hoc_vien_id')));
+            break;
+
+        case 'getLopCombo':
+            // Lấy lớp đang mở/chờ khai giảng (trang_thai 0 hoặc 1) để ghi danh
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            $rows = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'] ?? [];
+            // Chỉ trả lớp chưa kết thúc
+            $rows = array_values(array_filter($rows, function ($r) {
+                return (int)$r['trang_thai'] !== 3;  // 3 = đã kết thúc (giả định theo enum)
+            }));
+            ResponseHelper::success('OK', $rows);
+            break;
+
+        case 'ghiDanhLop':
+            PhanQuyenHelper::requireQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_THEM);
+            $hvl = new DT_HocVienLop_PUBLIC();
+            $hvl->lop_hoc_id = Helper::postInt('lop_hoc_id');
+            $hvl->hoc_vien_id = Helper::postInt('hoc_vien_id');
+            $hvl->ngay_ghi_danh = Helper::postStr('ngay_ghi_danh') ?: date('Y-m-d');
+            $hvl->trang_thai = 1;
+            $hvl->nguoi_tao = $u;
+            $res = DT_HocVienLop_BUS::insert($hvl);
+            $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'huyGhiDanh':
+            PhanQuyenHelper::requireQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_XOA);
+            $res = DT_HocVienLop_BUS::delete(Helper::postInt('id'));
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'getOverview':
+            // Tổng hợp dữ liệu xem nhanh: lịch / điểm danh / điểm / khóa / môn / hồ sơ / chứng chỉ
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            $hvId = Helper::postInt('hoc_vien_id');
+            $hv   = DM_HocVien_BUS::getById($hvId);
+            if (!$hv) ResponseHelper::error('Không tìm thấy học viên');
+            $overview = DT_HocVienLop_BUS::getOverview($hvId);
+            $overview['ho_so']      = DT_HoSoHocVien_BUS::getByHocVien($hvId);
+            $overview['chung_chi']  = DT_ChungChi_BUS::getByHocVien($hvId);
+            $overview['hoc_vien']   = $hv;
+            ResponseHelper::success('OK', $overview);
+            break;
+
+        default:
+            ResponseHelper::error('Action không hợp lệ');
+    }
+} catch (Throwable $ex) {
+    ResponseHelper::error(AppConfig::APP_DEBUG ? $ex->getMessage() : 'Lỗi hệ thống', 500);
+}
