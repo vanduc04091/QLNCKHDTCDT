@@ -6,3 +6,11 @@
 <p>Xin chào <strong>Nguyễn Văn Lộc</strong>,</p><p>Đăng ký khóa học <strong>Cấp cứu nâng cao (ACLS)</strong> của bạn đã được <strong style="color:#16a34a">DUYỆT</strong>.</p><p>Bạn có thể tra cứu lịch học, điểm danh, kết quả học tập và chứng chỉ tại đây:<br><a href="http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014">http://qldt.bv/GUI/public/tra_cuu.php?ma=C4AE716C08DF2014</a></p><p>Mã tra cứu: <strong>C4AE716C08DF2014</strong> (cần kết hợp với CCCD)</p><p>Trân trọng.</p>
 
 ------------------------------------------------------------
+[2026-05-13 22:20:32] [DISABLED] To: nguyenvanduc@gmail.com | Subject: Xác nhận đăng ký khóa học
+<p>Xin chào <strong>Nguyeenx Vawn Duc</strong>,</p><p>Bạn đã đăng ký khóa học <strong>Sản phụ khoa cập nhật</strong> thành công.</p><p>Mã tra cứu: <strong style="font-size:18px;color:#2563eb">F7010EECFFCF1407</strong></p><p>Vui lòng <strong>lưu lại mã này</strong> để theo dõi trạng thái xét duyệt.</p><p>Tra cứu trạng thái: <a href="http://qldt.bv/GUI/public/tra_cuu.php?ma=F7010EECFFCF1407">http://qldt.bv/GUI/public/tra_cuu.php?ma=F7010EECFFCF1407</a> (cần CCCD để xác thực)</p><p>Trân trọng.</p>
+
+------------------------------------------------------------
+[2026-05-13 22:21:30] [DISABLED] To: nguyenvanduc@gmail.com | Subject: Đăng ký được duyệt - Sản phụ khoa cập nhật
+<p>Xin chào <strong>Nguyeenx Vawn Duc</strong>,</p><p>Đăng ký khóa học <strong>Sản phụ khoa cập nhật</strong> của bạn đã được <strong style="color:#16a34a">DUYỆT</strong>.</p><p>Bạn có thể tra cứu lịch học, điểm danh, kết quả học tập và chứng chỉ tại đây:<br><a href="http://qldt.bv/GUI/public/tra_cuu.php?ma=F7010EECFFCF1407">http://qldt.bv/GUI/public/tra_cuu.php?ma=F7010EECFFCF1407</a></p><p>Mã tra cứu: <strong>F7010EECFFCF1407</strong> (cần kết hợp với CCCD)</p><p>Trân trọng.</p>
+
+------------------------------------------------------------
