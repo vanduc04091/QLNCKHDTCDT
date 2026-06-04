@@ -5,6 +5,7 @@ require_once __DIR__ . '/../DAL/NCKH_TienDo_DAL.php';
 require_once __DIR__ . '/../DAL/NCKH_TaiLieu_DAL.php';
 require_once __DIR__ . '/../DAL/NCKH_HoiDong_DAL.php';
 require_once __DIR__ . '/../DAL/DM_NhatKyHeThong_DAL.php';
+require_once __DIR__ . '/NCKH_DotDangKy_BUS.php';
 
 class NCKH_DeTai_BUS
 {
@@ -128,13 +129,12 @@ class NCKH_DeTai_BUS
             && in_array($r['trang_thai_duyet'], ['Nhap', 'TuChoi'], true);
     }
 
-    /** Nhân viên gửi duyệt */
+    /** Nhân viên gửi duyệt — yêu cầu phase Submit của đợt đang mở */
     public static function submitForReview(int $deTaiId, int $userId): array
     {
         if (!self::canEditByOwner($deTaiId, $userId)) {
             return ['success' => false, 'message' => 'Đề tài không tồn tại hoặc bạn không có quyền'];
         }
-        // Validate trước khi gửi: tối thiểu phải có chủ nhiệm + tên + cấp + thể loại + năm
         $dt = NCKH_DeTai_DAL::getById($deTaiId);
         $missing = [];
         if (!$dt->ten_de_tai) $missing[] = 'Tên đề tài';
@@ -142,7 +142,12 @@ class NCKH_DeTai_BUS
         if (!$dt->the_loai_id) $missing[] = 'Thể loại';
         if (!$dt->chu_nhiem_id) $missing[] = 'Chủ nhiệm';
         if (!$dt->nam) $missing[] = 'Năm';
+        if (!$dt->dot_dang_ky_id) $missing[] = 'Đợt đăng ký';
         if ($missing) return ['success' => false, 'message' => 'Còn thiếu: ' . implode(', ', $missing)];
+
+        // Phase enforcement: yêu cầu phase Submit đang mở
+        $check = NCKH_DotDangKy_BUS::checkPhaseOpen((int)$dt->dot_dang_ky_id, NCKH_DotDangKy_BUS::HV_SUBMIT);
+        if (!$check['ok']) return ['success' => false, 'message' => $check['message']];
 
         $rc = NCKH_DeTai_DAL::setSubmitted($deTaiId, $userId);
         if ($rc === 0) return ['success' => false, 'message' => 'Không gửi được — kiểm tra trạng thái hiện tại'];
@@ -150,24 +155,36 @@ class NCKH_DeTai_BUS
         return ['success' => true, 'message' => 'Đã gửi đề tài cho quản trị viên duyệt'];
     }
 
-    /** Admin duyệt */
+    /** Admin duyệt — yêu cầu phase Review mở; người có QUYEN_DUYET được duyệt bất cứ lúc nào */
     public static function approveSubmission(int $deTaiId, int $adminId): array
     {
+        $dt = NCKH_DeTai_DAL::getById($deTaiId);
+        if (!$dt) return ['success' => false, 'message' => 'Đề tài không tồn tại'];
+        $bypassPhase = PhanQuyenHelper::hasQuyen('NCKH_DuyetDeTai', PhanQuyenHelper::QUYEN_DUYET);
+        if (!$bypassPhase && $dt->dot_dang_ky_id) {
+            $check = NCKH_DotDangKy_BUS::checkPhaseOpen((int)$dt->dot_dang_ky_id, NCKH_DotDangKy_BUS::HV_REVIEW);
+            if (!$check['ok']) return ['success' => false, 'message' => $check['message']];
+        }
         $rc = NCKH_DeTai_DAL::setApproved($deTaiId, $adminId);
         if ($rc === 0) return ['success' => false, 'message' => 'Đề tài không ở trạng thái Chờ duyệt'];
-        $dt = NCKH_DeTai_DAL::getById($deTaiId);
         DM_NhatKyHeThong_DAL::log($adminId, self::MODULE_KEY, "Duyệt đề tài: {$dt->ten_de_tai}", 'NCKH_DE_TAI', $deTaiId);
         return ['success' => true, 'message' => 'Đã duyệt đề tài'];
     }
 
-    /** Admin từ chối */
+    /** Admin từ chối — yêu cầu phase Review mở; người có QUYEN_DUYET bypass */
     public static function rejectSubmission(int $deTaiId, int $adminId, string $lyDo): array
     {
         $lyDo = trim($lyDo);
         if ($lyDo === '') return ['success' => false, 'message' => 'Vui lòng nhập lý do từ chối'];
+        $dt = NCKH_DeTai_DAL::getById($deTaiId);
+        if (!$dt) return ['success' => false, 'message' => 'Đề tài không tồn tại'];
+        $bypassPhase = PhanQuyenHelper::hasQuyen('NCKH_DuyetDeTai', PhanQuyenHelper::QUYEN_DUYET);
+        if (!$bypassPhase && $dt->dot_dang_ky_id) {
+            $check = NCKH_DotDangKy_BUS::checkPhaseOpen((int)$dt->dot_dang_ky_id, NCKH_DotDangKy_BUS::HV_REVIEW);
+            if (!$check['ok']) return ['success' => false, 'message' => $check['message']];
+        }
         $rc = NCKH_DeTai_DAL::setRejected($deTaiId, $adminId, $lyDo);
         if ($rc === 0) return ['success' => false, 'message' => 'Đề tài không ở trạng thái Chờ duyệt'];
-        $dt = NCKH_DeTai_DAL::getById($deTaiId);
         DM_NhatKyHeThong_DAL::log($adminId, self::MODULE_KEY, "Từ chối đề tài: {$dt->ten_de_tai}. Lý do: {$lyDo}", 'NCKH_DE_TAI', $deTaiId);
         return ['success' => true, 'message' => 'Đã từ chối đề tài'];
     }

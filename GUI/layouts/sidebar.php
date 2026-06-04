@@ -17,10 +17,11 @@ function _canSee($moduleKey) {
 
 $menu = [
     ['group' => 'Tổng quan', 'key' => 'tong-quan', 'icon' => 'dashboard', 'items' => [
-        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],
-        ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],
+        ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],    
+        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],        
     ]],
     ['group' => 'Nghiên cứu khoa học', 'key' => 'nckh', 'icon' => 'star', 'items' => [
+        ['key' => 'NCKH_DotDangKy',   'icon' => 'calendar',      'label' => 'Đợt đăng ký',        'url' => $base . 'GUI/NCKH_DotDangKy/index.php',   'module' => 'NCKH_DotDangKy'],
         ['key' => 'NCKH_DeTaiCuaToi', 'icon' => 'user-check',    'label' => 'Đề tài của tôi',     'url' => $base . 'GUI/NCKH_DeTaiCuaToi/index.php', 'module' => 'NCKH_DeTaiCuaToi'],
         ['key' => 'NCKH_DuyetDeTai',  'icon' => 'check',         'label' => 'Duyệt đề tài',       'url' => $base . 'GUI/NCKH_DuyetDeTai/index.php',  'module' => 'NCKH_DuyetDeTai'],
         ['key' => 'NCKH_DeTai',       'icon' => 'star',          'label' => 'Đề tài / Sáng kiến', 'url' => $base . 'GUI/NCKH_DeTai/index.php',       'module' => 'NCKH_DeTai'],
@@ -29,6 +30,7 @@ $menu = [
         ['key' => 'DM_NCKH_TheLoai',  'icon' => 'book',          'label' => 'Thể loại',           'url' => $base . 'GUI/DM_NCKH_TheLoai/index.php',  'module' => 'DM_NCKH_TheLoai'],
     ]],
     ['group' => 'Đào tạo', 'key' => 'dao-tao', 'icon' => 'academic-cap', 'items' => [
+        ['key' => 'DT_DotDangKy', 'icon' => 'calendar', 'label' => 'Đợt đăng ký', 'url' => $base . 'GUI/DT_DotDangKy/index.php', 'module' => 'DT_DotDangKy'],
         ['key' => 'DT_KhoaHoc', 'icon' => 'book-open', 'label' => 'Khóa học', 'url' => $base . 'GUI/DT_KhoaHoc/index.php', 'module' => 'DT_KhoaHoc'],
         ['key' => 'DT_MonHoc',  'icon' => 'book', 'label' => 'Môn học',  'url' => $base . 'GUI/DT_MonHoc/index.php',  'module' => 'DT_MonHoc'],
         ['key' => 'DT_LopHoc',  'icon' => 'users', 'label' => 'Lớp học',  'url' => $base . 'GUI/DT_LopHoc/index.php',  'module' => 'DT_LopHoc'],

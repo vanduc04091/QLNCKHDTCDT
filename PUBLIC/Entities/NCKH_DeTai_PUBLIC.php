@@ -8,6 +8,7 @@ class NCKH_DeTai_PUBLIC
     public int     $cap_do_id = 0;
     public int     $the_loai_id = 0;
     public ?int    $khoa_phong_id = null;
+    public ?int    $dot_dang_ky_id = null;
     public int     $chu_nhiem_id = 0;
     public ?int    $thu_ky_id = null;
 

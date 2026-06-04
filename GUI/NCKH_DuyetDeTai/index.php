@@ -60,6 +60,7 @@ require __DIR__ . '/../layouts/header.php';
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
         <input type="text" id="search" class="form-control" placeholder="Tìm theo mã / tên / chủ nhiệm..." style="max-width:380px">
         <select id="fNam" class="form-select" style="width:120px"><option value="">- Năm -</option></select>
+        <select id="fDot" class="form-select" style="width:240px"><option value="">- Mọi đợt -</option></select>
     </div>
 
     <div class="table-wrap" id="tableWrap" style="position:relative;min-height:200px">
@@ -126,7 +127,7 @@ var CAN_APPROVE = <?= $canApprove ? 'true' : 'false' ?>;
 var TT_DUYET = {ChoDuyet:'Chờ duyệt', DaDuyet:'Đã duyệt', TuChoi:'Từ chối'};
 var HD_VAITRO = {ChuTich:'Chủ tịch', ThuKy:'Thư ký', PhanBien1:'Phản biện 1', PhanBien2:'Phản biện 2', ThanhVien:'Thành viên'};
 var LOAI_TL = {DeCuong:'Đề cương', QuyetDinh:'Quyết định', BienBan:'Biên bản', BaoCao:'Báo cáo', FileGoc:'File gốc', Khac:'Khác'};
-var state = { tab: 'cho', page:1, pageSize:20, search:'', nam:0 };
+var state = { tab: 'cho', page:1, pageSize:20, search:'', nam:0, dotId:0 };
 var currentId = 0;
 
 function fillYears() {
@@ -143,7 +144,7 @@ function loadCounts() {
 
 function load() {
     APP.showLoading('#tableWrap');
-    APP.ajax(URL, {action:'getQueue', tab:state.tab, page:state.page, pageSize:state.pageSize, search:state.search, nam:state.nam}).done(function (res) {
+    APP.ajax(URL, {action:'getQueue', tab:state.tab, page:state.page, pageSize:state.pageSize, search:state.search, nam:state.nam, dot_dang_ky_id:state.dotId}).done(function (res) {
         APP.hideLoading('#tableWrap');
         if (!res.success) { APP.toast(res.message,'error'); return; }
         renderRows(res.data); renderInfo(res.pagination);
@@ -193,6 +194,16 @@ $('#tabs').on('click', '.dq-tab', function () {
 $('#pageNav').on('click', 'button[data-p]', function () { var p=parseInt($(this).data('p'),10); if(!p||p===state.page)return; state.page=p; load(); });
 $('#search').on('input', APP.debounce(function () { state.search=$(this).val(); state.page=1; load(); }, 400));
 $('#fNam').on('change', function () { state.nam = parseInt(this.value,10) || 0; state.page=1; load(); });
+$('#fDot').on('change', function () { state.dotId = parseInt(this.value,10) || 0; state.page=1; load(); });
+
+function loadDotCombo() {
+    APP.ajax(URL, {action:'getComboDot'}).done(function (r) {
+        if (!r.success) return;
+        $.each(r.data || [], function (_, x) {
+            $('#fDot').append('<option value="' + x.id + '">' + APP.escape(x.ten_dot + ' (' + x.nam + ')') + '</option>');
+        });
+    });
+}
 
 function openDrawer(id) {
     currentId = id; $('#drawer').addClass('open');
@@ -305,7 +316,7 @@ $('#formReject').on('submit', function (e) {
     });
 });
 
-fillYears(); loadCounts(); load();
+fillYears(); loadDotCombo(); loadCounts(); load();
 </script>
 
 <?php require __DIR__ . '/../layouts/footer.php'; ?>

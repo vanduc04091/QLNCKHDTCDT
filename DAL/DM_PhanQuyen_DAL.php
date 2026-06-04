@@ -14,7 +14,8 @@ class DM_PhanQuyen_DAL
                        IFNULL(pq.quyen_xem, 0) AS quyen_xem,
                        IFNULL(pq.quyen_them, 0) AS quyen_them,
                        IFNULL(pq.quyen_sua, 0) AS quyen_sua,
-                       IFNULL(pq.quyen_xoa, 0) AS quyen_xoa
+                       IFNULL(pq.quyen_xoa, 0) AS quyen_xoa,
+                       IFNULL(pq.quyen_duyet, 0) AS quyen_duyet
                 FROM DM_DANH_SACH_FORM f
                 LEFT JOIN DM_PHAN_QUYEN pq ON pq.danh_sach_form_id = f.id AND pq.nhom_tai_khoan_id = :nhom
                 WHERE f.da_xoa = 0
@@ -27,18 +28,18 @@ class DM_PhanQuyen_DAL
     /**
      * Ghi (upsert) quyền: nếu có thì update, không có thì insert.
      */
-    public static function upsert(int $nhomId, int $formId, int $xem, int $them, int $sua, int $xoa, int $u): int
+    public static function upsert(int $nhomId, int $formId, int $xem, int $them, int $sua, int $xoa, int $duyet, int $u): int
     {
-        $sql = "INSERT INTO DM_PHAN_QUYEN (nhom_tai_khoan_id, danh_sach_form_id, quyen_xem, quyen_them, quyen_sua, quyen_xoa,
+        $sql = "INSERT INTO DM_PHAN_QUYEN (nhom_tai_khoan_id, danh_sach_form_id, quyen_xem, quyen_them, quyen_sua, quyen_xoa, quyen_duyet,
                                            ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat)
-                VALUES (:nhom, :form, :x1, :t1, :s1, :xo1, NOW(), NOW(), :u1, :u2)
-                ON DUPLICATE KEY UPDATE quyen_xem=:x2, quyen_them=:t2, quyen_sua=:s2, quyen_xoa=:xo2,
+                VALUES (:nhom, :form, :x1, :t1, :s1, :xo1, :d1, NOW(), NOW(), :u1, :u2)
+                ON DUPLICATE KEY UPDATE quyen_xem=:x2, quyen_them=:t2, quyen_sua=:s2, quyen_xoa=:xo2, quyen_duyet=:d2,
                                         ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u3";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
             ':nhom' => $nhomId, ':form' => $formId,
-            ':x1' => $xem, ':t1' => $them, ':s1' => $sua, ':xo1' => $xoa,
-            ':x2' => $xem, ':t2' => $them, ':s2' => $sua, ':xo2' => $xoa,
+            ':x1' => $xem, ':t1' => $them, ':s1' => $sua, ':xo1' => $xoa, ':d1' => $duyet,
+            ':x2' => $xem, ':t2' => $them, ':s2' => $sua, ':xo2' => $xoa, ':d2' => $duyet,
             ':u1' => $u, ':u2' => $u, ':u3' => $u,
         ]);
         return $stmt->rowCount();
@@ -59,12 +60,12 @@ class DM_PhanQuyen_DAL
      */
     public static function grantAllToNhom(int $nhomId, int $u): int
     {
-        $sql = "INSERT INTO DM_PHAN_QUYEN (nhom_tai_khoan_id, danh_sach_form_id, quyen_xem, quyen_them, quyen_sua, quyen_xoa,
+        $sql = "INSERT INTO DM_PHAN_QUYEN (nhom_tai_khoan_id, danh_sach_form_id, quyen_xem, quyen_them, quyen_sua, quyen_xoa, quyen_duyet,
                                            ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat)
-                SELECT :nhom, f.id, 1, 1, 1, 1, NOW(), NOW(), :u1, :u2
+                SELECT :nhom, f.id, 1, 1, 1, 1, 1, NOW(), NOW(), :u1, :u2
                 FROM DM_DANH_SACH_FORM f
                 WHERE f.da_xoa = 0
-                ON DUPLICATE KEY UPDATE quyen_xem=1, quyen_them=1, quyen_sua=1, quyen_xoa=1, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u3";
+                ON DUPLICATE KEY UPDATE quyen_xem=1, quyen_them=1, quyen_sua=1, quyen_xoa=1, quyen_duyet=1, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u3";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':nhom' => $nhomId, ':u1' => $u, ':u2' => $u, ':u3' => $u]);
         return $stmt->rowCount();

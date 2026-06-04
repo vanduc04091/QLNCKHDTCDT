@@ -104,6 +104,14 @@ require __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="form-group">
+                <label>Đợt đăng ký <span class="required">*</span></label>
+                <select name="dot_dang_ky_id" id="f_dot" class="form-select" required>
+                    <option value="">- Chọn đợt đang mở -</option>
+                </select>
+                <div id="f_dot_hint" class="text-muted" style="font-size:12px;margin-top:4px"></div>
+            </div>
+
+            <div class="form-group">
                 <label>Tên đề tài <span class="required">*</span></label>
                 <input type="text" name="ten_de_tai" id="f_ten" class="form-control" required maxlength="500">
             </div>
@@ -354,8 +362,9 @@ function loadCombos() {
         APP.ajax(URL,{action:'getComboCapDo'}),
         APP.ajax(URL,{action:'getComboTheLoai'}),
         APP.ajax(URL,{action:'getComboKhoaPhong'}),
-        APP.ajax(URL,{action:'getComboNhanVien', kw:''})
-    ).done(function (cd, tl, kp, nv) {
+        APP.ajax(URL,{action:'getComboNhanVien', kw:''}),
+        APP.ajax(URL,{action:'getComboDot'})
+    ).done(function (cd, tl, kp, nv, dot) {
         $.each(cd[0].data || [], function (_, x) { $('#f_capdo').append('<option value="' + x.id + '">' + APP.escape(x.ten_cap_do) + '</option>'); });
         $.each(tl[0].data || [], function (_, x) { $('#f_theloai').append('<option value="' + x.id + '" data-ma="' + x.ma_the_loai + '">' + APP.escape(x.ten_the_loai) + '</option>'); });
         COMBO.khoaPhong = kp[0].data || [];
@@ -372,6 +381,15 @@ function loadCombos() {
             $('#tv_nv').append('<option value="' + x.id + '">' + t + '</option>');
             $('#hd_nv').append('<option value="' + x.id + '">' + t + '</option>');
         });
+        var dots = dot[0].data || [];
+        if (!dots.length) {
+            $('#f_dot_hint').html('<span style="color:#dc2626">Hiện không có đợt đăng ký nào đang mở. Vui lòng liên hệ quản trị viên.</span>');
+        } else {
+            $.each(dots, function (_, x) {
+                var label = x.ten_dot + ' (' + x.tu_ngay + ' → ' + x.den_ngay + ')';
+                $('#f_dot').append('<option value="' + x.id + '">' + APP.escape(label) + '</option>');
+            });
+        }
     });
 }
 
@@ -384,6 +402,13 @@ function loadDetail() {
         current.lyDo = e.ly_do_tu_choi;
         $('#f_ma').val(e.ma_de_tai); $('#f_nam').val(e.nam); $('#f_ten').val(e.ten_de_tai);
         $('#f_capdo').val(e.cap_do_id); $('#f_theloai').val(e.the_loai_id);
+        if (e.dot_dang_ky_id) {
+            // Đảm bảo option tồn tại (đợt cũ có thể không còn trong combo active)
+            if (!$('#f_dot option[value="' + e.dot_dang_ky_id + '"]').length) {
+                $('#f_dot').append('<option value="' + e.dot_dang_ky_id + '">' + APP.escape(e.ten_dot || ('Đợt #' + e.dot_dang_ky_id)) + '</option>');
+            }
+            $('#f_dot').val(e.dot_dang_ky_id);
+        }
         $('#f_khoa').val(e.khoa_phong_id || ''); $('#f_tkt').val(e.ten_khoa_text || '');
         $('#f_cn').val(e.chu_nhiem_id); $('#f_tk').val(e.thu_ky_id || '');
         $('#f_muctieu').val(e.muc_tieu || ''); $('#f_tomtat').val(e.tom_tat || ''); $('#f_tukhoa').val(e.tu_khoa || '');

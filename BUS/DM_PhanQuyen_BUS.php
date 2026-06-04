@@ -29,9 +29,10 @@ class DM_PhanQuyen_BUS
                 $them = !empty($p['them']) ? 1 : 0;
                 $sua = !empty($p['sua']) ? 1 : 0;
                 $xoa = !empty($p['xoa']) ? 1 : 0;
-                // Nếu có bất kỳ quyền thêm/sửa/xóa thì mặc định phải có quyền xem
-                if (($them || $sua || $xoa) && !$xem) $xem = 1;
-                DM_PhanQuyen_DAL::upsert($nhomId, $formId, $xem, $them, $sua, $xoa, $u);
+                $duyet = !empty($p['duyet']) ? 1 : 0;
+                // Nếu có bất kỳ quyền thêm/sửa/xóa/duyệt thì mặc định phải có quyền xem
+                if (($them || $sua || $xoa || $duyet) && !$xem) $xem = 1;
+                DM_PhanQuyen_DAL::upsert($nhomId, $formId, $xem, $them, $sua, $xoa, $duyet, $u);
             }
             Database::commit();
             PhanQuyenHelper::clearCache($nhomId);

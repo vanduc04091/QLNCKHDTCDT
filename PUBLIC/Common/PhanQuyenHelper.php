@@ -8,6 +8,7 @@ class PhanQuyenHelper
     const QUYEN_THEM = 'quyen_them';
     const QUYEN_SUA = 'quyen_sua';
     const QUYEN_XOA = 'quyen_xoa';
+    const QUYEN_DUYET = 'quyen_duyet';
 
     /**
      * Lấy ma trận quyền của 1 nhóm tài khoản.
@@ -20,7 +21,7 @@ class PhanQuyenHelper
         $cached = MemcachedHelper::get($key);
         if ($cached !== null) return $cached;
 
-        $sql = "SELECT f.modules_tuong_ung, pq.quyen_xem, pq.quyen_them, pq.quyen_sua, pq.quyen_xoa
+        $sql = "SELECT f.modules_tuong_ung, pq.quyen_xem, pq.quyen_them, pq.quyen_sua, pq.quyen_xoa, pq.quyen_duyet
                 FROM DM_PHAN_QUYEN pq
                 INNER JOIN DM_DANH_SACH_FORM f ON f.id = pq.danh_sach_form_id
                 WHERE pq.nhom_tai_khoan_id = :id AND f.da_xoa = 0";
@@ -35,6 +36,7 @@ class PhanQuyenHelper
                 self::QUYEN_THEM => (int)$r['quyen_them'],
                 self::QUYEN_SUA => (int)$r['quyen_sua'],
                 self::QUYEN_XOA => (int)$r['quyen_xoa'],
+                self::QUYEN_DUYET => (int)$r['quyen_duyet'],
             ];
         }
         MemcachedHelper::set($key, $matrix, Constants::CACHE_TTL_PHAN_QUYEN);

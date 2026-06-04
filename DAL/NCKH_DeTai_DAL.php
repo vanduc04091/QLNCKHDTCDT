@@ -10,6 +10,7 @@ class NCKH_DeTai_DAL
                        cd.ma_cap_do, cd.ten_cap_do,
                        tl.ma_the_loai, tl.ten_the_loai,
                        kp.ten_khoa,
+                       dd.ten_dot, dd.nam AS nam_dot,
                        cn.ho_ten AS ho_ten_chu_nhiem, cn.ma_nv AS ma_nv_chu_nhiem,
                        tk.ho_ten AS ho_ten_thu_ky,
                        u1.tai_khoan AS tai_khoan_nguoi_tao,
@@ -19,6 +20,7 @@ class NCKH_DeTai_DAL
                 LEFT JOIN DM_NCKH_CAP_DO  cd ON cd.id = dt.cap_do_id
                 LEFT JOIN DM_NCKH_THE_LOAI tl ON tl.id = dt.the_loai_id
                 LEFT JOIN DM_KHOA_PHONG   kp ON kp.id = dt.khoa_phong_id
+                LEFT JOIN NCKH_DOT_DANG_KY dd ON dd.id = dt.dot_dang_ky_id
                 LEFT JOIN DM_NHAN_VIEN    cn ON cn.id = dt.chu_nhiem_id
                 LEFT JOIN DM_NHAN_VIEN    tk ON tk.id = dt.thu_ky_id
                 LEFT JOIN DM_NGUOI_DUNG   u1 ON u1.id = dt.nguoi_tao
@@ -29,7 +31,7 @@ class NCKH_DeTai_DAL
     public static function insert(NCKH_DeTai_PUBLIC $e): int
     {
         $sql = "INSERT INTO NCKH_DE_TAI
-                (ma_de_tai, ten_de_tai, nam, cap_do_id, the_loai_id, khoa_phong_id,
+                (ma_de_tai, ten_de_tai, nam, cap_do_id, the_loai_id, khoa_phong_id, dot_dang_ky_id,
                  chu_nhiem_id, thu_ky_id, muc_tieu, tom_tat, tu_khoa,
                  ngay_bat_dau, ngay_ket_thuc_du_kien, ngay_nghiem_thu,
                  kinh_phi_du_toan, kinh_phi_thuc_te, nguon_kinh_phi,
@@ -39,7 +41,7 @@ class NCKH_DeTai_DAL
                  phien_bao_ve, dia_diem_bao_ve, ngay_bao_ve,
                  quyet_dinh_cong_nhan, ngay_quyet_dinh_cong_nhan, ten_khoa_text,
                  trang_thai, trang_thai_duyet, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
-                VALUES (:ma, :ten, :nam, :cd, :tl, :kp,
+                VALUES (:ma, :ten, :nam, :cd, :tl, :kp, :dot,
                         :cn, :tk, :muc, :tt2, :tk2,
                         :nbd, :nkt, :nnt,
                         :kpd, :kpt, :nkp,
@@ -53,6 +55,7 @@ class NCKH_DeTai_DAL
         $stmt->execute([
             ':ma' => $e->ma_de_tai, ':ten' => $e->ten_de_tai, ':nam' => $e->nam,
             ':cd' => $e->cap_do_id, ':tl' => $e->the_loai_id, ':kp' => $e->khoa_phong_id,
+            ':dot' => $e->dot_dang_ky_id,
             ':cn' => $e->chu_nhiem_id, ':tk' => $e->thu_ky_id,
             ':muc' => $e->muc_tieu, ':tt2' => $e->tom_tat, ':tk2' => $e->tu_khoa,
             ':nbd' => $e->ngay_bat_dau, ':nkt' => $e->ngay_ket_thuc_du_kien, ':nnt' => $e->ngay_nghiem_thu,
@@ -73,7 +76,7 @@ class NCKH_DeTai_DAL
     {
         $sql = "UPDATE NCKH_DE_TAI SET
                 ma_de_tai=:ma, ten_de_tai=:ten, nam=:nam,
-                cap_do_id=:cd, the_loai_id=:tl, khoa_phong_id=:kp,
+                cap_do_id=:cd, the_loai_id=:tl, khoa_phong_id=:kp, dot_dang_ky_id=:dot,
                 chu_nhiem_id=:cn, thu_ky_id=:tk,
                 muc_tieu=:muc, tom_tat=:tt2, tu_khoa=:tk2,
                 ngay_bat_dau=:nbd, ngay_ket_thuc_du_kien=:nkt, ngay_nghiem_thu=:nnt,
@@ -90,6 +93,7 @@ class NCKH_DeTai_DAL
         $stmt->execute([
             ':ma' => $e->ma_de_tai, ':ten' => $e->ten_de_tai, ':nam' => $e->nam,
             ':cd' => $e->cap_do_id, ':tl' => $e->the_loai_id, ':kp' => $e->khoa_phong_id,
+            ':dot' => $e->dot_dang_ky_id,
             ':cn' => $e->chu_nhiem_id, ':tk' => $e->thu_ky_id,
             ':muc' => $e->muc_tieu, ':tt2' => $e->tom_tat, ':tk2' => $e->tu_khoa,
             ':nbd' => $e->ngay_bat_dau, ':nkt' => $e->ngay_ket_thuc_du_kien, ':nnt' => $e->ngay_nghiem_thu,
@@ -152,6 +156,7 @@ class NCKH_DeTai_DAL
         if (!empty($filters['cap_do_id']))   { $where .= " AND dt.cap_do_id=:cd ";         $params[':cd']  = (int)$filters['cap_do_id']; }
         if (!empty($filters['the_loai_id'])) { $where .= " AND dt.the_loai_id=:tl ";       $params[':tl']  = (int)$filters['the_loai_id']; }
         if (!empty($filters['khoa_phong_id'])){ $where .= " AND dt.khoa_phong_id=:kp ";    $params[':kp']  = (int)$filters['khoa_phong_id']; }
+        if (!empty($filters['dot_dang_ky_id'])){ $where .= " AND dt.dot_dang_ky_id=:dot "; $params[':dot'] = (int)$filters['dot_dang_ky_id']; }
         if (!empty($filters['chu_nhiem_id'])){ $where .= " AND dt.chu_nhiem_id=:cn ";      $params[':cn']  = (int)$filters['chu_nhiem_id']; }
         if (isset($filters['trang_thai']) && $filters['trang_thai'] !== '') {
             $where .= " AND dt.trang_thai=:tt "; $params[':tt'] = (int)$filters['trang_thai'];

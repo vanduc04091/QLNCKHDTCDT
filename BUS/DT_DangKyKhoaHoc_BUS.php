@@ -6,6 +6,7 @@ require_once __DIR__ . '/../DAL/DT_HocVienLop_DAL.php';
 require_once __DIR__ . '/../DAL/DM_NhatKyHeThong_DAL.php';
 require_once __DIR__ . '/DM_HocVien_BUS.php';
 require_once __DIR__ . '/DT_HocVienLop_BUS.php';
+require_once __DIR__ . '/DT_DotDangKy_BUS.php';
 require_once __DIR__ . '/../PUBLIC/Common/MailHelper.php';
 
 class DT_DangKyKhoaHoc_BUS
@@ -60,6 +61,15 @@ class DT_DangKyKhoaHoc_BUS
         $kh = DT_KhoaHoc_DAL::getById($e->khoa_hoc_id);
         if (!$kh || $kh->da_xoa || (int)$kh->trang_thai !== 1) {
             return ['success' => false, 'message' => 'Khóa học không tồn tại hoặc không nhận đăng ký'];
+        }
+
+        // Khóa học phải có đợt đăng ký với phase Submit đang mở
+        if (!$kh->dot_dang_ky_id) {
+            return ['success' => false, 'message' => 'Khóa học này hiện chưa mở đăng ký'];
+        }
+        $check = DT_DotDangKy_BUS::checkPhaseOpen((int)$kh->dot_dang_ky_id, DT_DotDangKy_BUS::HV_SUBMIT);
+        if (!$check['ok']) {
+            return ['success' => false, 'message' => $check['message']];
         }
 
         // Anti-spam: chặn submit lặp 1 giờ
@@ -143,6 +153,16 @@ class DT_DangKyKhoaHoc_BUS
             return ['success' => false, 'message' => 'Đã chọn "là nhân viên" nhưng chưa chọn nhân viên cụ thể'];
         }
 
+        // Phase Review phải mở (bypass nếu user có QUYEN_DUYET)
+        $bypassPhase = PhanQuyenHelper::hasQuyen(self::MODULE_KEY, PhanQuyenHelper::QUYEN_DUYET);
+        if (!$bypassPhase) {
+            $kh = DT_KhoaHoc_DAL::getById((int)$dk->khoa_hoc_id);
+            if ($kh && $kh->dot_dang_ky_id) {
+                $check = DT_DotDangKy_BUS::checkPhaseOpen((int)$kh->dot_dang_ky_id, DT_DotDangKy_BUS::HV_REVIEW);
+                if (!$check['ok']) return ['success' => false, 'message' => $check['message']];
+            }
+        }
+
         $hocVienId = 0;
 
         try {
@@ -221,6 +241,16 @@ class DT_DangKyKhoaHoc_BUS
         if (trim($note) === '') return ['success' => false, 'message' => 'Vui lòng nhập lý do từ chối'];
         $dk = DT_DangKyKhoaHoc_DAL::getById($id);
         if (!$dk) return ['success' => false, 'message' => 'Không tìm thấy đăng ký'];
+
+        $bypassPhase = PhanQuyenHelper::hasQuyen(self::MODULE_KEY, PhanQuyenHelper::QUYEN_DUYET);
+        if (!$bypassPhase) {
+            $kh = DT_KhoaHoc_DAL::getById((int)$dk->khoa_hoc_id);
+            if ($kh && $kh->dot_dang_ky_id) {
+                $check = DT_DotDangKy_BUS::checkPhaseOpen((int)$kh->dot_dang_ky_id, DT_DotDangKy_BUS::HV_REVIEW);
+                if (!$check['ok']) return ['success' => false, 'message' => $check['message']];
+            }
+        }
+
         DT_DangKyKhoaHoc_DAL::reject($id, $userId, $note);
         DM_NhatKyHeThong_DAL::log($userId, Constants::MODULE_DAO_TAO,
             "Từ chối đăng ký id={$id}", 'DT_DANG_KY_KHOA_HOC', $id);

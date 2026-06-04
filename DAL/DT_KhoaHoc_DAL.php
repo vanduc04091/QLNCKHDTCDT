@@ -10,12 +10,14 @@ class DT_KhoaHoc_DAL
                        lh.ten_loai_hinh,
                        ht.ten_hinh_thuc,
                        dt.ten_doi_tuong,
+                       dd.ten_dot, dd.tu_ngay AS dot_tu_ngay, dd.den_ngay AS dot_den_ngay,
                        u1.tai_khoan AS tai_khoan_nguoi_tao,
                        u2.tai_khoan AS tai_khoan_nguoi_cap_nhat
                 FROM DT_KHOA_HOC kh
                 LEFT JOIN DM_LOAI_HINH_DAO_TAO lh ON lh.id = kh.loai_hinh_dao_tao_id
                 LEFT JOIN DM_HINH_THUC_HOC ht ON ht.id = kh.hinh_thuc_hoc_id
                 LEFT JOIN DM_DOI_TUONG_HOC_VIEN dt ON dt.id = kh.doi_tuong_hoc_vien_id
+                LEFT JOIN DT_DOT_DANG_KY dd ON dd.id = kh.dot_dang_ky_id
                 LEFT JOIN DM_NGUOI_DUNG u1 ON u1.id = kh.nguoi_tao
                 LEFT JOIN DM_NGUOI_DUNG u2 ON u2.id = kh.nguoi_cap_nhat";
     }
@@ -24,14 +26,15 @@ class DT_KhoaHoc_DAL
     {
         $sql = "INSERT INTO DT_KHOA_HOC
                 (ma_khoa_hoc, ten_khoa_hoc, mo_ta, muc_tieu, loai_hinh_dao_tao_id, hinh_thuc_hoc_id,
-                 doi_tuong_hoc_vien_id, dieu_kien, so_tiet_ly_thuyet, so_tiet_thuc_hanh, tong_so_tiet,
+                 doi_tuong_hoc_vien_id, dot_dang_ky_id, dieu_kien, so_tiet_ly_thuyet, so_tiet_thuc_hanh, tong_so_tiet,
                  so_tin_chi, trang_thai, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
-                VALUES (:ma, :ten, :mt, :muc, :lh, :ht, :dt, :dk, :slt, :sth, :tst, :stc, :tt,
+                VALUES (:ma, :ten, :mt, :muc, :lh, :ht, :dt, :dot, :dk, :slt, :sth, :tst, :stc, :tt,
                         NOW(), NOW(), :u1, :u2, 0)";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
             ':ma' => $e->ma_khoa_hoc, ':ten' => $e->ten_khoa_hoc, ':mt' => $e->mo_ta, ':muc' => $e->muc_tieu,
             ':lh' => $e->loai_hinh_dao_tao_id, ':ht' => $e->hinh_thuc_hoc_id, ':dt' => $e->doi_tuong_hoc_vien_id,
+            ':dot' => $e->dot_dang_ky_id,
             ':dk' => $e->dieu_kien,
             ':slt' => $e->so_tiet_ly_thuyet, ':sth' => $e->so_tiet_thuc_hanh, ':tst' => $e->tong_so_tiet,
             ':stc' => $e->so_tin_chi, ':tt' => $e->trang_thai,
@@ -44,7 +47,7 @@ class DT_KhoaHoc_DAL
     {
         $sql = "UPDATE DT_KHOA_HOC SET
                 ma_khoa_hoc=:ma, ten_khoa_hoc=:ten, mo_ta=:mt, muc_tieu=:muc,
-                loai_hinh_dao_tao_id=:lh, hinh_thuc_hoc_id=:ht, doi_tuong_hoc_vien_id=:dt,
+                loai_hinh_dao_tao_id=:lh, hinh_thuc_hoc_id=:ht, doi_tuong_hoc_vien_id=:dt, dot_dang_ky_id=:dot,
                 dieu_kien=:dk, so_tiet_ly_thuyet=:slt, so_tiet_thuc_hanh=:sth, tong_so_tiet=:tst,
                 so_tin_chi=:stc, trang_thai=:tt, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
                 WHERE id=:id AND da_xoa=0";
@@ -52,6 +55,7 @@ class DT_KhoaHoc_DAL
         $stmt->execute([
             ':ma' => $e->ma_khoa_hoc, ':ten' => $e->ten_khoa_hoc, ':mt' => $e->mo_ta, ':muc' => $e->muc_tieu,
             ':lh' => $e->loai_hinh_dao_tao_id, ':ht' => $e->hinh_thuc_hoc_id, ':dt' => $e->doi_tuong_hoc_vien_id,
+            ':dot' => $e->dot_dang_ky_id,
             ':dk' => $e->dieu_kien,
             ':slt' => $e->so_tiet_ly_thuyet, ':sth' => $e->so_tiet_thuc_hanh, ':tst' => $e->tong_so_tiet,
             ':stc' => $e->so_tin_chi, ':tt' => $e->trang_thai,
@@ -134,5 +138,21 @@ class DT_KhoaHoc_DAL
         $data = $stmt->fetchAll();
         MemcachedHelper::set($key, $data, Constants::CACHE_TTL_COMBO);
         return $data;
+    }
+
+    /**
+     * Lấy các khóa học đang mở phase Submit cho form đăng ký công khai.
+     * Điều kiện: khóa active, gắn đợt active, có giai đoạn Submit nằm trong NOW().
+     */
+    public static function getComboOpenForRegistration(): array
+    {
+        $sql = "SELECT DISTINCT kh.id, kh.ma_khoa_hoc, kh.ten_khoa_hoc, dd.ten_dot, dd.den_ngay AS dot_den_ngay
+                FROM DT_KHOA_HOC kh
+                INNER JOIN DT_DOT_DANG_KY dd ON dd.id = kh.dot_dang_ky_id AND dd.da_xoa = 0 AND dd.trang_thai = 1
+                INNER JOIN DT_DOT_GIAI_DOAN gd ON gd.dot_id = dd.id AND gd.da_xoa = 0
+                    AND gd.hanh_vi = 'Submit' AND gd.tu_ngay <= NOW() AND gd.den_ngay >= NOW()
+                WHERE kh.da_xoa = 0 AND kh.trang_thai = 1
+                ORDER BY kh.ten_khoa_hoc";
+        return Database::getConnection()->query($sql)->fetchAll();
     }
 }

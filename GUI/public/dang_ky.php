@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../BUS/bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_DangKyKhoaHoc_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
+require_once __DIR__ . '/../../DAL/DT_KhoaHoc_DAL.php';
 require_once __DIR__ . '/../../PUBLIC/Common/CaptchaHelper.php';
 
 SessionHelper::start();
@@ -35,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$khoaHocList = DT_KhoaHoc_BUS::getCombo();
+$khoaHocList = DT_KhoaHoc_DAL::getComboOpenForRegistration();
 $captchaQ = CaptchaHelper::generate();
 $honeypotName = CaptchaHelper::honeypotName();
 ?>
@@ -184,14 +185,21 @@ $honeypotName = CaptchaHelper::honeypotName();
 
                 <div class="form-group">
                     <label>Khóa học <span class="required">*</span></label>
-                    <select name="khoa_hoc_id" class="form-select" required>
-                        <option value="">-- Chọn khóa học --</option>
-                        <?php foreach ($khoaHocList as $kh): ?>
-                            <option value="<?= $kh['id'] ?>" <?= (int)($_POST['khoa_hoc_id'] ?? 0)===(int)$kh['id']?'selected':'' ?>>
-                                <?= htmlspecialchars($kh['ma_khoa_hoc'] . ' - ' . $kh['ten_khoa_hoc']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php if (empty($khoaHocList)): ?>
+                        <div class="alert alert-warning" style="padding:12px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;color:#78350f">
+                            Hiện tại không có khóa học nào đang mở đăng ký. Vui lòng quay lại sau.
+                        </div>
+                    <?php else: ?>
+                        <select name="khoa_hoc_id" class="form-select" required>
+                            <option value="">-- Chọn khóa học --</option>
+                            <?php foreach ($khoaHocList as $kh): ?>
+                                <option value="<?= $kh['id'] ?>" <?= (int)($_POST['khoa_hoc_id'] ?? 0)===(int)$kh['id']?'selected':'' ?>>
+                                    <?= htmlspecialchars($kh['ma_khoa_hoc'] . ' - ' . $kh['ten_khoa_hoc']) ?>
+                                    <?= !empty($kh['dot_den_ngay']) ? ' (Đóng đăng ký: ' . date('d/m/Y', strtotime($kh['dot_den_ngay'])) . ')' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                 </div>
 
                 <div class="form-group">

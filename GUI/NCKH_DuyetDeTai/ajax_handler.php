@@ -4,6 +4,7 @@
  */
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/NCKH_DeTai_BUS.php';
+require_once __DIR__ . '/../../BUS/NCKH_DotDangKy_BUS.php';
 
 Helper::requireAjaxCsrf();
 $action = Helper::post('action', '');
@@ -26,6 +27,7 @@ try {
             $filters = [
                 'search'             => Helper::postStr('search'),
                 'nam'                => Helper::postInt('nam'),
+                'dot_dang_ky_id'     => Helper::postInt('dot_dang_ky_id'),
                 'trang_thai_duyet_in' => $tabMap[$tab] ?? $tabMap['cho'],
             ];
             $res = NCKH_DeTai_BUS::getPaged($page, $size, $filters, 0);
@@ -59,6 +61,10 @@ try {
             $lyDo = Helper::postStr('ly_do');
             $res = NCKH_DeTai_BUS::rejectSubmission($id, $u, $lyDo);
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'getComboDot':
+            ResponseHelper::success('OK', NCKH_DotDangKy_BUS::getCombo(false));
             break;
 
         default:

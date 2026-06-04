@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../BUS/DM_NCKH_CapDo_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_NCKH_TheLoai_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_KhoaPhong_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_NhanVien_BUS.php';
+require_once __DIR__ . '/../../BUS/NCKH_DotDangKy_BUS.php';
 
 Helper::requireAjaxCsrf();
 $action = Helper::post('action', '');
@@ -27,6 +28,26 @@ function ensureMine(int $deTaiId, int $userId): void {
     if (!NCKH_DeTai_BUS::canEditByOwner($deTaiId, $userId)) {
         ResponseHelper::error('Đề tài không tồn tại hoặc đã gửi duyệt — không thể chỉnh sửa', 403);
     }
+}
+
+/**
+ * Kiểm tra phase Submit hoặc Edit của đợt phải đang mở.
+ * - Đề tài chưa có dot_dang_ky_id: bỏ qua check (legacy data).
+ * - Đề tài Nhap: chấp nhận phase Submit hoặc Edit.
+ * - Đề tài TuChoi: chỉ chấp nhận phase Edit.
+ */
+function ensurePhaseEditable(int $deTaiId): void {
+    $dt = NCKH_DeTai_BUS::getById($deTaiId);
+    if (!$dt || !$dt->dot_dang_ky_id) return;
+    // Thử phase Edit trước
+    $check = NCKH_DotDangKy_BUS::checkPhaseOpen((int)$dt->dot_dang_ky_id, NCKH_DotDangKy_BUS::HV_EDIT);
+    if ($check['ok']) return;
+    // Nếu đề tài còn Nhap thì cũng chấp nhận phase Submit
+    if ($dt->trang_thai_duyet === 'Nhap') {
+        $checkS = NCKH_DotDangKy_BUS::checkPhaseOpen((int)$dt->dot_dang_ky_id, NCKH_DotDangKy_BUS::HV_SUBMIT);
+        if ($checkS['ok']) return;
+    }
+    ResponseHelper::error($check['message'] ?: 'Hiện không có giai đoạn chỉnh sửa nào đang mở', 423);
 }
 
 try {
@@ -75,13 +96,17 @@ try {
 
         /* =============== DRAFT CRUD =============== */
         case 'createDraft':
-            // Tạo đề tài nháp với mã tự sinh
             $nam = Helper::postInt('nam', (int)date('Y'));
             $maGoc = trim(Helper::postStr('ma_de_tai'));
             $tenDeTai = trim(Helper::postStr('ten_de_tai'));
+            $dotId = Helper::postInt('dot_dang_ky_id');
             if ($tenDeTai === '') ResponseHelper::error('Vui lòng nhập tên đề tài');
+            if ($dotId <= 0) ResponseHelper::error('Vui lòng chọn đợt đăng ký');
 
-            // Tự sinh mã nếu trống
+            // Phase Submit phải đang mở
+            $check = NCKH_DotDangKy_BUS::checkPhaseOpen($dotId, NCKH_DotDangKy_BUS::HV_SUBMIT);
+            if (!$check['ok']) ResponseHelper::error($check['message'], 423);
+
             if ($maGoc === '') {
                 $stm = Database::getConnection()->prepare("SELECT COUNT(*) FROM NCKH_DE_TAI WHERE nam=:n AND da_xoa=0");
                 $stm->execute([':n' => $nam]);
@@ -97,6 +122,7 @@ try {
             $e->the_loai_id = Helper::postInt('the_loai_id');
             $e->khoa_phong_id = Helper::postInt('khoa_phong_id') ?: null;
             $e->ten_khoa_text = Helper::postStr('ten_khoa_text') ?: null;
+            $e->dot_dang_ky_id = $dotId;
             $e->chu_nhiem_id = Helper::postInt('chu_nhiem_id');
             $e->trang_thai = 0;
             $e->trang_thai_duyet = 'Nhap';
@@ -108,6 +134,7 @@ try {
         case 'updateDraft':
             $id = Helper::postInt('id');
             ensureMine($id, $u);
+            ensurePhaseEditable($id);
             $cur = NCKH_DeTai_BUS::getById($id);
             $e = new NCKH_DeTai_PUBLIC();
             // Copy current values then override allowed fields
@@ -121,6 +148,7 @@ try {
             $e->the_loai_id   = Helper::postInt('the_loai_id');
             $e->khoa_phong_id = Helper::postInt('khoa_phong_id') ?: null;
             $e->ten_khoa_text = Helper::postStr('ten_khoa_text') ?: null;
+            $e->dot_dang_ky_id = Helper::postInt('dot_dang_ky_id') ?: $cur->dot_dang_ky_id;
             $e->chu_nhiem_id  = Helper::postInt('chu_nhiem_id');
             $e->thu_ky_id     = Helper::postInt('thu_ky_id') ?: null;
             $e->muc_tieu      = Helper::postStr('muc_tieu') ?: null;
@@ -158,6 +186,7 @@ try {
             $id = Helper::postInt('id');
             $deTaiId = Helper::postInt('de_tai_id');
             ensureMine($deTaiId, $u);
+            ensurePhaseEditable($deTaiId);
             $tv = new NCKH_ThanhVien_PUBLIC();
             if ($id) $tv->id = $id;
             $tv->de_tai_id = $deTaiId;
@@ -178,6 +207,7 @@ try {
             $tv = NCKH_ThanhVien_BUS::getById($id);
             if (!$tv) ResponseHelper::error('Không tìm thấy', 404);
             ensureMine($tv->de_tai_id, $u);
+            ensurePhaseEditable($tv->de_tai_id);
             $res = NCKH_ThanhVien_BUS::trash($id, $u);
             ResponseHelper::success($res['message']);
             break;
@@ -195,6 +225,7 @@ try {
             $id = Helper::postInt('id');
             $deTaiId = Helper::postInt('de_tai_id');
             ensureMine($deTaiId, $u);
+            ensurePhaseEditable($deTaiId);
             $hd = new NCKH_HoiDong_PUBLIC();
             if ($id) $hd->id = $id;
             $hd->de_tai_id = $deTaiId;
@@ -216,6 +247,7 @@ try {
             $hd = NCKH_HoiDong_BUS::getById($id);
             if (!$hd) ResponseHelper::error('Không tìm thấy', 404);
             ensureMine($hd->de_tai_id, $u);
+            ensurePhaseEditable($hd->de_tai_id);
             $res = NCKH_HoiDong_BUS::trash($id, $u);
             ResponseHelper::success($res['message']);
             break;
@@ -232,6 +264,7 @@ try {
         case 'tl_upload':
             $deTaiId = Helper::postInt('de_tai_id');
             ensureMine($deTaiId, $u);
+            ensurePhaseEditable($deTaiId);
             $loai = Helper::postStr('loai_tai_lieu') ?: 'Khac';
             $tenTl = Helper::postStr('ten_tai_lieu');
             $moTa = Helper::postStr('mo_ta') ?: null;
@@ -268,6 +301,7 @@ try {
             $tl = NCKH_TaiLieu_BUS::getById($id);
             if (!$tl) ResponseHelper::error('Không tìm thấy', 404);
             ensureMine($tl->de_tai_id, $u);
+            ensurePhaseEditable($tl->de_tai_id);
             $res = NCKH_TaiLieu_BUS::trash($id, $u, $UPLOAD_DIR);
             ResponseHelper::success($res['message']);
             break;
@@ -276,6 +310,7 @@ try {
         case 'getComboCapDo':    ResponseHelper::success('OK', DM_NCKH_CapDo_BUS::getCombo()); break;
         case 'getComboTheLoai':  ResponseHelper::success('OK', DM_NCKH_TheLoai_BUS::getCombo()); break;
         case 'getComboKhoaPhong': ResponseHelper::success('OK', DM_KhoaPhong_BUS::getCombo()); break;
+        case 'getComboDot':      ResponseHelper::success('OK', NCKH_DotDangKy_BUS::getCombo(true)); break;
         case 'getComboNhanVien':
             $kw = Helper::postStr('kw');
             $r = DM_NhanVien_BUS::getPaged(1, 50, $kw, 0, 0);

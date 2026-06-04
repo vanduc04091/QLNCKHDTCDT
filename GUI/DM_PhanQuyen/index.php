@@ -60,10 +60,11 @@ require __DIR__ . '/../layouts/header.php';
                     <th class="text-center" style="width:90px"><svg class="icon icon-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Thêm<br><label style="font-size:11px;font-weight:400"><input type="checkbox" class="col-all" data-col="them"> tất cả</label></th>
                     <th class="text-center" style="width:90px"><svg class="icon icon-edit" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Sửa<br><label style="font-size:11px;font-weight:400"><input type="checkbox" class="col-all" data-col="sua"> tất cả</label></th>
                     <th class="text-center" style="width:90px"><svg class="icon icon-trash" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg> Xóa<br><label style="font-size:11px;font-weight:400"><input type="checkbox" class="col-all" data-col="xoa"> tất cả</label></th>
+                    <th class="text-center" style="width:90px"><svg class="icon icon-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg> Duyệt<br><label style="font-size:11px;font-weight:400"><input type="checkbox" class="col-all" data-col="duyet"> tất cả</label></th>
                 </tr>
             </thead>
             <tbody id="tbody">
-                <tr><td colspan="7"><div class="empty-state"><div class="icon"><svg class="icon icon-key" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="m15.5 7l3.5-3.5"></path></svg></div>Chọn nhóm tài khoản để xem phân quyền</div></td></tr>
+                <tr><td colspan="8"><div class="empty-state"><div class="icon"><svg class="icon icon-key" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="m15.5 7l3.5-3.5"></path></svg></div>Chọn nhóm tài khoản để xem phân quyền</div></td></tr>
             </tbody>
         </table>
     </div>
@@ -77,7 +78,7 @@ var currentNhom = 0;
 $('#selNhom').on('change', function () {
     currentNhom = parseInt(this.value, 10) || 0;
     if (!currentNhom) {
-        $('#tbody').html('<tr><td colspan="7"><div class="empty-state"><div class="icon"><svg class="icon icon-key" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="m15.5 7l3.5-3.5"></path></svg></div>Chọn nhóm tài khoản để xem phân quyền</div></td></tr>');
+        $('#tbody').html('<tr><td colspan="8"><div class="empty-state"><div class="icon"><svg class="icon icon-key" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="m15.5 7l3.5-3.5"></path></svg></div>Chọn nhóm tài khoản để xem phân quyền</div></td></tr>');
         $('#btnBar').hide();
         $('#adminWarn').hide();
         return;
@@ -99,11 +100,11 @@ function loadMatrix() {
 function renderMatrix(forms, perms) {
     var $tb = $('#tbody').empty();
     if (!forms.length) {
-        $tb.append('<tr><td colspan="7"><div class="empty-state"><div class="icon"><svg class="icon icon-empty" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg></div>Chưa có form nào</div></td></tr>');
+        $tb.append('<tr><td colspan="8"><div class="empty-state"><div class="icon"><svg class="icon icon-empty" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg></div>Chưa có form nào</div></td></tr>');
         return;
     }
     forms.forEach(function (f, i) {
-        var p = perms[f.id] || {xem: 0, them: 0, sua: 0, xoa: 0};
+        var p = perms[f.id] || {xem: 0, them: 0, sua: 0, xoa: 0, duyet: 0};
         var dis = CAN_EDIT ? '' : 'disabled';
         $tb.append(
             '<tr>' +
@@ -114,6 +115,7 @@ function renderMatrix(forms, perms) {
                 cb(f.id, 'them', p.them, dis) +
                 cb(f.id, 'sua', p.sua, dis) +
                 cb(f.id, 'xoa', p.xoa, dis) +
+                cb(f.id, 'duyet', p.duyet, dis) +
             '</tr>'
         );
     });
@@ -132,9 +134,9 @@ $('#tbody').on('change', '.pq-cb', function () {
     if (checked && q !== 'xem') {
         $row.find('.pq-cb[data-q="xem"]').prop('checked', true);
     }
-    // Nếu bỏ tick "xem" thì bỏ luôn them/sua/xoa
+    // Nếu bỏ tick "xem" thì bỏ luôn them/sua/xoa/duyet
     if (!checked && q === 'xem') {
-        $row.find('.pq-cb[data-q="them"],.pq-cb[data-q="sua"],.pq-cb[data-q="xoa"]').prop('checked', false);
+        $row.find('.pq-cb[data-q="them"],.pq-cb[data-q="sua"],.pq-cb[data-q="xoa"],.pq-cb[data-q="duyet"]').prop('checked', false);
     }
 });
 

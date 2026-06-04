@@ -9,6 +9,7 @@ class DT_KhoaHoc_PUBLIC
     public ?int $loai_hinh_dao_tao_id = null;
     public ?int $hinh_thuc_hoc_id = null;
     public ?int $doi_tuong_hoc_vien_id = null;
+    public ?int $dot_dang_ky_id = null;
     public ?string $dieu_kien = null;
     public int $so_tiet_ly_thuyet = 0;
     public int $so_tiet_thuc_hanh = 0;

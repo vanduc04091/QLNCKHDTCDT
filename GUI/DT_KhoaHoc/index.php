@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../BUS/DM_LoaiHinhDaoTao_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_HinhThucHoc_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_DoiTuongHocVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_MonHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_DotDangKy_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_KhoaHoc', PhanQuyenHelper::QUYEN_XEM)) {
@@ -23,6 +24,7 @@ $canKhmDel  = PhanQuyenHelper::hasQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUY
 $loaiHinhCombo = DM_LoaiHinhDaoTao_BUS::getCombo();
 $hinhThucCombo = DM_HinhThucHoc_BUS::getCombo();
 $doiTuongCombo = DM_DoiTuongHocVien_BUS::getCombo();
+$dotCombo = DT_DotDangKy_BUS::getCombo(false);
 $monHocCombo   = DT_MonHoc_BUS::getCombo();
 
 $pageTitle = 'Quản lý khóa học';
@@ -145,6 +147,17 @@ require __DIR__ . '/../layouts/header.php';
                             <option value="">-- Chọn --</option>
                             <?php foreach ($doiTuongCombo as $r): ?>
                                 <option value="<?= $r['id'] ?>"><?= Helper::h($r['ten_doi_tuong']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Đợt đăng ký</label>
+                        <select name="dot_dang_ky_id" id="f_dot" class="form-select">
+                            <option value="">-- Không gán đợt (không nhận đăng ký công khai) --</option>
+                            <?php foreach ($dotCombo as $r): ?>
+                                <option value="<?= $r['id'] ?>"><?= Helper::h($r['ten_dot'] . ' (' . $r['nam'] . ')') ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -405,6 +418,7 @@ function openEdit(id) {
         $('#f_loai_hinh').val(e.loai_hinh_dao_tao_id || '');
         $('#f_hinh_thuc').val(e.hinh_thuc_hoc_id || '');
         $('#f_doi_tuong').val(e.doi_tuong_hoc_vien_id || '');
+        $('#f_dot').val(e.dot_dang_ky_id || '');
         $('#f_slt').val(e.so_tiet_ly_thuyet || 0);
         $('#f_sth').val(e.so_tiet_thuc_hanh || 0);
         $('#f_stc').val(e.so_tin_chi || 0);

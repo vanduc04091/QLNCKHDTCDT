@@ -40,6 +40,7 @@ try {
             $e->loai_hinh_dao_tao_id = Helper::postInt('loai_hinh_dao_tao_id') ?: null;
             $e->hinh_thuc_hoc_id = Helper::postInt('hinh_thuc_hoc_id') ?: null;
             $e->doi_tuong_hoc_vien_id = Helper::postInt('doi_tuong_hoc_vien_id') ?: null;
+            $e->dot_dang_ky_id = Helper::postInt('dot_dang_ky_id') ?: null;
             $e->dieu_kien = Helper::postStr('dieu_kien');
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
@@ -61,6 +62,7 @@ try {
             $e->loai_hinh_dao_tao_id = Helper::postInt('loai_hinh_dao_tao_id') ?: null;
             $e->hinh_thuc_hoc_id = Helper::postInt('hinh_thuc_hoc_id') ?: null;
             $e->doi_tuong_hoc_vien_id = Helper::postInt('doi_tuong_hoc_vien_id') ?: null;
+            $e->dot_dang_ky_id = Helper::postInt('dot_dang_ky_id') ?: null;
             $e->dieu_kien = Helper::postStr('dieu_kien');
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
