@@ -318,7 +318,7 @@ function ttDiemDanhLabel(int $tt): array {
                 <button type="button" class="tab-btn active" data-tab="info">Thông tin</button>
                 <button type="button" class="tab-btn" data-tab="lop">Lớp học (<?= count($lopList) ?>)</button>
                 <button type="button" class="tab-btn" data-tab="khoa">Khóa học (<?= count($ov['khoa_hoc'] ?? []) ?>)</button>
-                <button type="button" class="tab-btn" data-tab="mon">Môn học (<?= count($ov['mon_hoc'] ?? []) ?>)</button>
+                <button type="button" class="tab-btn" data-tab="mon">Bài học (<?= count($ov['mon_hoc'] ?? []) ?>)</button>
                 <button type="button" class="tab-btn" data-tab="lich">Lịch học (<?= count($ov['lich_hoc'] ?? []) ?>)</button>
                 <button type="button" class="tab-btn" data-tab="dd">Điểm danh</button>
                 <button type="button" class="tab-btn" data-tab="diem">Bảng điểm (<?= count($ov['ket_qua'] ?? []) ?>)</button>
@@ -386,10 +386,10 @@ function ttDiemDanhLabel(int $tt): array {
 
             <div class="tab-pane" data-pane="mon">
                 <?php if (!$ov['mon_hoc']): ?>
-                    <div class="empty-mini">Chưa có môn học</div>
+                    <div class="empty-mini">Chưa có bài học</div>
                 <?php else: ?>
                     <table class="table-portal">
-                        <thead><tr><th>Mã môn</th><th>Tên môn</th><th>Khóa</th><th>Tiết</th><th>TC</th><th>Loại</th></tr></thead>
+                        <thead><tr><th>Mã bài</th><th>Tên bài</th><th>Khóa</th><th>Tiết</th><th>TC</th><th>Loại</th></tr></thead>
                         <tbody>
                         <?php foreach ($ov['mon_hoc'] as $m): ?>
                             <tr>
@@ -411,7 +411,7 @@ function ttDiemDanhLabel(int $tt): array {
                     <div class="empty-mini">Chưa có lịch học</div>
                 <?php else: ?>
                     <table class="table-portal">
-                        <thead><tr><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Lớp / Môn</th><th>GV</th><th>Phòng</th></tr></thead>
+                        <thead><tr><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Lớp / Bài</th><th>GV</th><th>Phòng</th></tr></thead>
                         <tbody>
                         <?php foreach ($ov['lich_hoc'] as $r): $gv = $r['ten_giang_vien'] ?: ($r['giang_vien_ngoai'] ?? '-'); ?>
                             <tr>
@@ -442,7 +442,7 @@ function ttDiemDanhLabel(int $tt): array {
                     <div class="empty-mini">Chưa có dữ liệu điểm danh</div>
                 <?php else: ?>
                     <table class="table-portal">
-                        <thead><tr><th>Ngày</th><th>Buổi</th><th>Lớp / Môn</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead>
+                        <thead><tr><th>Ngày</th><th>Buổi</th><th>Lớp / Bài</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead>
                         <tbody>
                         <?php foreach ($ov['diem_danh_detail'] as $r): [$lbl,$col]=ttDiemDanhLabel((int)$r['trang_thai']); ?>
                             <tr>
@@ -465,7 +465,7 @@ function ttDiemDanhLabel(int $tt): array {
                     <div class="empty-mini">Chưa có bảng điểm</div>
                 <?php else: ?>
                     <table class="table-portal">
-                        <thead><tr><th>Mã môn</th><th>Tên môn</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead>
+                        <thead><tr><th>Mã bài</th><th>Tên bài</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead>
                         <tbody>
                         <?php foreach ($ov['ket_qua'] as $r): ?>
                             <tr>

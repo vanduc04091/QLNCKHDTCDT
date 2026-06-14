@@ -282,9 +282,8 @@ require __DIR__ . '/../layouts/header.php';
         </div>
         <div class="drawer-body" style="padding:0">
             <div class="hvtab-bar" id="hvtabBar">
-                <button type="button" class="hvtab active" data-tab="lop">Lớp học</button>
-                <button type="button" class="hvtab" data-tab="khoa">Khóa học</button>
-                <button type="button" class="hvtab" data-tab="mon">Môn học</button>
+                <button type="button" class="hvtab active" data-tab="lop">Chương trình đào tạo</button>
+                <button type="button" class="hvtab" data-tab="mon">Bài học</button>
                 <button type="button" class="hvtab" data-tab="lich">Lịch học</button>
                 <button type="button" class="hvtab" data-tab="dd">Điểm danh</button>
                 <button type="button" class="hvtab" data-tab="diem">Bảng điểm</button>
@@ -293,22 +292,26 @@ require __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="hvtab-content">
-                <!-- Lớp học (giữ form ghi danh) -->
+                <!-- Chương trình đào tạo (form ghi danh) -->
                 <div class="hvtab-pane active" data-pane="lop">
                     <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--gray-200)">
-                        <div style="font-weight:600;margin-bottom:8px;font-size:13.5px">Ghi danh vào lớp mới</div>
+                        <div style="font-weight:600;margin-bottom:8px;font-size:13.5px">Ghi danh vào chương trình đào tạo</div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                            <select id="lopDrwSelect" class="form-select" style="flex:1;min-width:200px"></select>
+                            <select id="lopDrwKhoa" class="form-select" style="flex:1;min-width:180px">
+                                <option value="">-- Chọn khóa học --</option>
+                            </select>
+                            <select id="lopDrwSelect" class="form-select" style="flex:1;min-width:180px" disabled>
+                                <option value="">-- Chọn chương trình --</option>
+                            </select>
                             <input type="date" id="lopDrwNgay" class="form-control" style="width:160px">
                             <button type="button" class="btn btn-primary btn-sm" id="btnGhiDanh">Ghi danh</button>
                         </div>
-                        <div class="text-muted" style="font-size:11.5px;margin-top:6px">Lớp đầy hoặc đã kết thúc sẽ không được phép ghi danh.</div>
+                        <div class="text-muted" style="font-size:11.5px;margin-top:6px">Chọn khóa học trước, sau đó chọn chương trình đào tạo thuộc khóa đó.</div>
                     </div>
                     <div id="lopDrwList" style="display:flex;flex-direction:column;gap:8px"></div>
-                    <div id="lopDrwEmpty" class="hv-empty" style="display:none">Học viên chưa ghi danh vào lớp nào.</div>
+                    <div id="lopDrwEmpty" class="hv-empty" style="display:none">Học viên chưa ghi danh vào chương trình nào.</div>
                 </div>
 
-                <div class="hvtab-pane" data-pane="khoa"><div id="paneKhoa" class="hv-pane-loading">Chọn tab để tải...</div></div>
                 <div class="hvtab-pane" data-pane="mon"><div id="paneMon" class="hv-pane-loading">Chọn tab để tải...</div></div>
                 <div class="hvtab-pane" data-pane="lich"><div id="paneLich" class="hv-pane-loading">Chọn tab để tải...</div></div>
                 <div class="hvtab-pane" data-pane="dd"><div id="paneDD" class="hv-pane-loading">Chọn tab để tải...</div></div>
@@ -460,7 +463,7 @@ function renderCards(rows) {
 
         var actions = '';
         if (state.daXoa == 0) {
-            actions += '<button class="btn btn-sm" title="Lớp học đã ghi danh" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
+            actions += '<button class="btn btn-sm" title="Chương trình đã ghi danh" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">' + ICON_EDIT + '</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">' + ICON_TRASH + '</button>';
         } else {
@@ -500,7 +503,7 @@ function renderRows(rows) {
         var nvBadge = r.la_nhan_vien == 1 ? ' <span class="hv-chip hv-chip-blue" style="font-size:10.5px">NV</span>' : '';
         var actions = '';
         if (state.daXoa == 0) {
-            actions += '<button class="btn btn-sm" title="Lớp học" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
+            actions += '<button class="btn btn-sm" title="Chương trình đào tạo" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">Sửa</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">Xóa</button>';
         } else {
@@ -694,7 +697,8 @@ $('#formHV').on('submit', function (e) {
     fd.append('action', $('#f_id').val() ? 'update' : 'insert');
     $.ajax({
         url: URL, type: 'POST', data: fd,
-        processData: false, contentType: false, dataType: 'json'
+        processData: false, contentType: false, dataType: 'json',
+        headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {}
     }).done(function (res) {
         if (res.success) { APP.toast(res.message, 'success'); closeModal(); load(); loadStats(); }
         else APP.toast(res.message, 'error');
@@ -722,7 +726,7 @@ function deleteItem(id) {
 }
 
 // ====== Drawer: xem nhanh học viên (tabs) ======
-var lopDrw = { hocVienId: 0, hocVienTen: '', hocVienMa: '', combo: null, overview: null, overviewLoaded: false };
+var lopDrw = { hocVienId: 0, hocVienTen: '', hocVienMa: '', khoaCombo: null, overview: null, overviewLoaded: false };
 
 function openLopDrawer(hvId, hoTen, maHv) {
     lopDrw.hocVienId = hvId;
@@ -743,9 +747,13 @@ function openLopDrawer(hvId, hoTen, maHv) {
     $('.hvtab-pane[data-pane="lop"]').addClass('active');
     $('.hvtab-content .hv-pane-loading').text('Chọn tab để tải...');
 
+    // Reset 2 combo ghi danh
+    $('#lopDrwKhoa').val('');
+    $('#lopDrwSelect').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+
     $('#drawerLop').addClass('open').find('.drawer').addClass('open');
     loadLopCuaHv();
-    ensureLopCombo();
+    ensureKhoaCombo();
 }
 
 // Tab switching: lazy load overview lần đầu, sau đó chỉ render pane
@@ -774,8 +782,7 @@ function loadOverview(cb) {
 
 function renderPane(tab) {
     var ov = lopDrw.overview || {};
-    if (tab === 'khoa') renderKhoa(ov.khoa_hoc || []);
-    else if (tab === 'mon') renderMon(ov.mon_hoc || []);
+    if (tab === 'mon') renderMon(ov.mon_hoc || []);
     else if (tab === 'lich') renderLich(ov.lich_hoc || []);
     else if (tab === 'dd')   renderDD(ov.diem_danh_stats || {}, ov.diem_danh_detail || []);
     else if (tab === 'diem') renderDiem(ov.ket_qua || []);
@@ -783,23 +790,10 @@ function renderPane(tab) {
     else if (tab === 'cc')   renderCC(ov.chung_chi || []);
 }
 
-function renderKhoa(rows) {
-    var $p = $('#paneKhoa');
-    if (!rows.length) { $p.html('<div class="hv-empty">Chưa thuộc khóa học nào</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Mã khóa</th><th>Tên khóa</th><th class="text-center">Tổng tiết</th><th class="text-center">Tín chỉ</th></tr></thead><tbody>';
-    rows.forEach(function (r) {
-        h += '<tr><td><strong>' + APP.escape(r.ma_khoa_hoc || '') + '</strong></td>'
-           + '<td>' + APP.escape(r.ten_khoa_hoc || '') + '</td>'
-           + '<td class="text-center">' + (r.tong_so_tiet || 0) + '</td>'
-           + '<td class="text-center">' + (r.so_tin_chi || 0) + '</td></tr>';
-    });
-    $p.html(h + '</tbody></table>');
-}
-
 function renderMon(rows) {
     var $p = $('#paneMon');
-    if (!rows.length) { $p.html('<div class="hv-empty">Chưa có môn học</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Mã</th><th>Tên môn</th><th>Khóa</th><th class="text-center">Tiết</th><th class="text-center">TC</th><th>Loại</th></tr></thead><tbody>';
+    if (!rows.length) { $p.html('<div class="hv-empty">Chưa có bài học</div>'); return; }
+    var h = '<table class="hv-tbl"><thead><tr><th>Mã</th><th>Tên bài</th><th>Khóa</th><th class="text-center">Tiết</th><th class="text-center">TC</th><th>Loại</th></tr></thead><tbody>';
     rows.forEach(function (r) {
         var bb = parseInt(r.bat_buoc, 10) === 1 ? '<span class="hv-lop-tt t1">Bắt buộc</span>' : '<span class="hv-lop-tt t3">Tự chọn</span>';
         h += '<tr><td><code>' + APP.escape(r.ma_mon_hoc || '') + '</code></td>'
@@ -815,7 +809,7 @@ function renderMon(rows) {
 function renderLich(rows) {
     var $p = $('#paneLich');
     if (!rows.length) { $p.html('<div class="hv-empty">Chưa có lịch học</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Lớp / Môn</th><th>GV</th><th>Phòng</th></tr></thead><tbody>';
+    var h = '<table class="hv-tbl"><thead><tr><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Lớp / Bài</th><th>GV</th><th>Phòng</th></tr></thead><tbody>';
     rows.forEach(function (r) {
         var gv = r.ten_giang_vien || r.giang_vien_ngoai || '-';
         var time = (r.gio_bat_dau || '').substring(0, 5) + ' - ' + (r.gio_ket_thuc || '').substring(0, 5);
@@ -840,7 +834,7 @@ function renderDD(st, detail) {
           + '</div>';
     if (!detail.length) { h += '<div class="hv-empty">Chưa có chi tiết điểm danh</div>'; $p.html(h); return; }
     var labels = {0:['Vắng KP','#dc2626'], 1:['Có mặt','#16a34a'], 2:['Muộn','#0891b2'], 3:['Vắng CP','#ca8a04']};
-    h += '<table class="hv-tbl"><thead><tr><th>Ngày</th><th>Buổi</th><th>Lớp / Môn</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead><tbody>';
+    h += '<table class="hv-tbl"><thead><tr><th>Ngày</th><th>Buổi</th><th>Lớp / Bài</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead><tbody>';
     detail.forEach(function (r) {
         var lbl = labels[parseInt(r.trang_thai,10)] || ['?', '#64748b'];
         h += '<tr><td>' + APP.escape(r.ngay_hoc || '-') + '</td>'
@@ -855,7 +849,7 @@ function renderDD(st, detail) {
 function renderDiem(rows) {
     var $p = $('#paneDiem');
     if (!rows.length) { $p.html('<div class="hv-empty">Chưa có bảng điểm</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Mã môn</th><th>Tên môn</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead><tbody>';
+    var h = '<table class="hv-tbl"><thead><tr><th>Mã bài</th><th>Tên bài</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead><tbody>';
     rows.forEach(function (r) {
         var dat = r.dat === null || r.dat === '' ? '-'
                 : (parseInt(r.dat,10) === 1 ? '<span style="color:#16a34a;font-weight:600">Đạt</span>' : '<span style="color:#dc2626;font-weight:600">Chưa đạt</span>');
@@ -927,8 +921,8 @@ function loadLopCuaHv() {
             $l.append(
                 '<div class="hv-lop-row">' +
                     '<div class="hv-lop-info">' +
-                        '<div class="hv-lop-name">' + APP.escape(r.ten_lop || '') + '</div>' +
-                        '<div class="hv-lop-code">' + APP.escape(r.ma_lop || '') +
+                        '<div class="hv-lop-name">' + APP.escape(r.ten_chuong_trinh || '') + '</div>' +
+                        '<div class="hv-lop-code">' + APP.escape(r.ma_chuong_trinh || '') +
                             (r.ten_khoa_hoc ? ' · ' + APP.escape(r.ten_khoa_hoc) : '') + '</div>' +
                         '<div class="hv-lop-meta">' + thoiGian +
                             (r.ngay_ghi_danh ? ' · Ghi danh: ' + APP.formatDate(r.ngay_ghi_danh) : '') + '</div>' +
@@ -941,29 +935,48 @@ function loadLopCuaHv() {
     });
 }
 
-function ensureLopCombo() {
-    if (lopDrw.combo) { renderLopCombo(); return; }
-    APP.ajax(URL, {action: 'getLopCombo'}).done(function (res) {
+function ensureKhoaCombo() {
+    if (lopDrw.khoaCombo) { renderKhoaCombo(); return; }
+    APP.ajax(URL, {action: 'getKhoaHocCombo'}).done(function (res) {
         if (res.success) {
-            lopDrw.combo = res.data || [];
-            renderLopCombo();
+            lopDrw.khoaCombo = res.data || [];
+            renderKhoaCombo();
         }
     });
 }
 
-function renderLopCombo() {
-    var $s = $('#lopDrwSelect').empty().append('<option value="">-- Chọn lớp --</option>');
-    (lopDrw.combo || []).forEach(function (l) {
-        var pct = l.so_luong_toi_da > 0 ? Math.round((l.so_hoc_vien / l.so_luong_toi_da) * 100) : 0;
-        var label = (l.ma_lop || '') + ' - ' + (l.ten_lop || '') + ' (' + (l.so_hoc_vien || 0) + '/' + l.so_luong_toi_da + ')';
-        var disabled = pct >= 100 ? 'disabled' : '';
-        $s.append('<option value="' + l.id + '" ' + disabled + '>' + APP.escape(label) + (disabled ? ' — ĐẦY' : '') + '</option>');
+function renderKhoaCombo() {
+    var $s = $('#lopDrwKhoa').empty().append('<option value="">-- Chọn khóa học --</option>');
+    (lopDrw.khoaCombo || []).forEach(function (k) {
+        $s.append('<option value="' + k.id + '">' + APP.escape((k.ma_khoa_hoc ? k.ma_khoa_hoc + ' - ' : '') + (k.ten_khoa_hoc || '')) + '</option>');
     });
 }
 
+// Khi chọn khóa học -> nạp các CTĐT thuộc khóa đó vào combo thứ 2
+function loadChuongTrinhTheoKhoa(khoaId) {
+    var $ct = $('#lopDrwSelect').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+    if (!khoaId) return;
+    APP.ajax(URL, {action: 'getChuongTrinhTheoKhoa', khoa_hoc_id: khoaId}).done(function (res) {
+        if (!res.success) return;
+        var rows = res.data || [];
+        if (!rows.length) {
+            $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>');
+            return;
+        }
+        rows.forEach(function (c) {
+            $ct.append('<option value="' + c.id + '">' + APP.escape((c.ma_chuong_trinh ? c.ma_chuong_trinh + ' - ' : '') + (c.ten_chuong_trinh || '')) + '</option>');
+        });
+        $ct.prop('disabled', false);
+    });
+}
+$('#lopDrwKhoa').on('change', function () {
+    loadChuongTrinhTheoKhoa(parseInt(this.value, 10) || 0);
+});
+
 $('#btnGhiDanh').on('click', function () {
+    if (!parseInt($('#lopDrwKhoa').val(), 10)) { APP.toast('Chọn khóa học trước', 'error'); return; }
     var lopId = parseInt($('#lopDrwSelect').val(), 10);
-    if (!lopId) { APP.toast('Chọn lớp', 'error'); return; }
+    if (!lopId) { APP.toast('Chọn chương trình đào tạo', 'error'); return; }
     var ngay = $('#lopDrwNgay').val();
     APP.ajax(URL, {
         action: 'ghiDanhLop',
@@ -973,23 +986,19 @@ $('#btnGhiDanh').on('click', function () {
     }).done(function (res) {
         if (res.success) {
             APP.toast(res.message, 'success');
-            $('#lopDrwSelect').val('');
+            $('#lopDrwKhoa').val('');
+            $('#lopDrwSelect').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
             loadLopCuaHv();
-            // Refresh combo để cập nhật số lượng
-            lopDrw.combo = null;
-            ensureLopCombo();
         } else APP.toast(res.message, 'error');
     });
 });
 
 function huyGhiDanh(id) {
-    APP.confirm('Hủy ghi danh học viên khỏi lớp này?', function () {
+    APP.confirm('Hủy ghi danh học viên khỏi chương trình này?', function () {
         APP.ajax(URL, {action: 'huyGhiDanh', id: id}).done(function (res) {
             if (res.success) {
                 APP.toast(res.message, 'success');
                 loadLopCuaHv();
-                lopDrw.combo = null;
-                ensureLopCombo();
             } else APP.toast(res.message, 'error');
         });
     });

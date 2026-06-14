@@ -4,7 +4,8 @@ require_once __DIR__ . '/../../BUS/DM_HocVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_DoiTuongHocVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_NhanVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_HocVienLop_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_HoSoHocVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_ChungChi_BUS.php';
 
@@ -129,20 +130,27 @@ try {
             break;
 
         case 'getLopCombo':
-            // Lấy lớp đang mở/chờ khai giảng (trang_thai 0 hoặc 1) để ghi danh
+            // Lấy danh sách (khóa học + chương trình đào tạo) để ghi danh
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
-            $rows = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'] ?? [];
-            // Chỉ trả lớp chưa kết thúc
-            $rows = array_values(array_filter($rows, function ($r) {
-                return (int)$r['trang_thai'] !== 3;  // 3 = đã kết thúc (giả định theo enum)
-            }));
-            ResponseHelper::success('OK', $rows);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getCombo());
+            break;
+
+        case 'getKhoaHocCombo':
+            // Combo khóa học (bước 1 của ghi danh 2 cấp)
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DT_KhoaHoc_BUS::getCombo());
+            break;
+
+        case 'getChuongTrinhTheoKhoa':
+            // Các CTĐT (cặp khct) thuộc 1 khóa học (bước 2)
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getByKhoaHoc(Helper::postInt('khoa_hoc_id')));
             break;
 
         case 'ghiDanhLop':
             PhanQuyenHelper::requireQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_THEM);
             $hvl = new DT_HocVienLop_PUBLIC();
-            $hvl->lop_hoc_id = Helper::postInt('lop_hoc_id');
+            $hvl->khoa_hoc_chuong_trinh_id = Helper::postInt('lop_hoc_id');
             $hvl->hoc_vien_id = Helper::postInt('hoc_vien_id');
             $hvl->ngay_ghi_danh = Helper::postStr('ngay_ghi_danh') ?: date('Y-m-d');
             $hvl->trang_thai = 1;

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KetQuaHocTap_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -12,14 +12,15 @@ $MODULE = DT_KetQuaHocTap_BUS::MODULE_KEY;
 try {
     switch ($action) {
         case 'getComboLop':
-            ResponseHelper::success('OK', DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data']);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getCombo());
             break;
 
         case 'load':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
             $lopId = Helper::postInt('lop_hoc_id');
             ResponseHelper::success('OK', [
-                'mon_hoc' => DT_KetQuaHocTap_BUS::getMonHocByLop($lopId),
+                // Điểm tính theo CTĐT/khóa của học viên (mỗi HV 1 điểm tổng), không tách theo bài học
+                'mon_hoc' => [],
                 'rows' => DT_KetQuaHocTap_BUS::getByLop($lopId),
                 'stats' => DT_KetQuaHocTap_BUS::statsByLop($lopId),
             ]);

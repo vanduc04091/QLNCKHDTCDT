@@ -7,15 +7,17 @@ class DT_ChungChi_DAL
     private static function selectSql(): string
     {
         return "SELECT cc.*,
+                       cc.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        hv.ma_hv, hv.ho_ten AS ho_ten_hoc_vien, hv.don_vi_cong_tac,
-                       lop.ma_lop, lop.ten_lop,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
                        kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                        u1.tai_khoan AS tai_khoan_nguoi_tao,
                        u2.tai_khoan AS tai_khoan_nguoi_cap_nhat
                 FROM DT_CHUNG_CHI cc
                 LEFT JOIN DM_HOC_VIEN hv  ON hv.id  = cc.hoc_vien_id
-                LEFT JOIN DT_LOP_HOC lop  ON lop.id = cc.lop_hoc_id
-                LEFT JOIN DT_KHOA_HOC kh  ON kh.id  = lop.khoa_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = cc.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
+                LEFT JOIN DT_KHOA_HOC kh  ON kh.id  = khct.khoa_hoc_id
                 LEFT JOIN DM_NGUOI_DUNG u1 ON u1.id = cc.nguoi_tao
                 LEFT JOIN DM_NGUOI_DUNG u2 ON u2.id = cc.nguoi_cap_nhat";
     }
@@ -24,7 +26,7 @@ class DT_ChungChi_DAL
     {
         $u = $e->nguoi_tao ?? 0;
         $sql = "INSERT INTO DT_CHUNG_CHI
-                (hoc_vien_id, lop_hoc_id, so_chung_chi, ten_chung_chi, loai_chung_chi,
+                (hoc_vien_id, khoa_hoc_chuong_trinh_id, so_chung_chi, ten_chung_chi, loai_chung_chi,
                  xep_loai_tot_nghiep, diem_trung_binh, ngay_cap, ngay_het_han,
                  nguoi_ky, chuc_vu_nguoi_ky, noi_cap, duong_dan_file, ghi_chu, trang_thai,
                  ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
@@ -59,7 +61,7 @@ class DT_ChungChi_DAL
     public static function update(DT_ChungChi_PUBLIC $e): int
     {
         $sql = "UPDATE DT_CHUNG_CHI SET
-                hoc_vien_id=:hv, lop_hoc_id=:lop, so_chung_chi=:so, ten_chung_chi=:ten, loai_chung_chi=:loai,
+                hoc_vien_id=:hv, khoa_hoc_chuong_trinh_id=:lop, so_chung_chi=:so, ten_chung_chi=:ten, loai_chung_chi=:loai,
                 xep_loai_tot_nghiep=:xl, diem_trung_binh=:dtb, ngay_cap=:ncap, ngay_het_han=:hhan,
                 nguoi_ky=:nky, chuc_vu_nguoi_ky=:cvnky, noi_cap=:noi, duong_dan_file=:file,
                 ghi_chu=:gc, trang_thai=:tt,
@@ -141,7 +143,7 @@ class DT_ChungChi_DAL
             $params[':hv'] = (int)$opts['hoc_vien_id'];
         }
         if (!empty($opts['lop_hoc_id'])) {
-            $where .= " AND cc.lop_hoc_id=:lop ";
+            $where .= " AND cc.khoa_hoc_chuong_trinh_id=:lop ";
             $params[':lop'] = (int)$opts['lop_hoc_id'];
         }
         if ($opts['trang_thai'] !== null && $opts['trang_thai'] !== '') {

@@ -11,10 +11,8 @@ class DT_KhoaHoc_PUBLIC
     public ?int $doi_tuong_hoc_vien_id = null;
     public ?int $dot_dang_ky_id = null;
     public ?string $dieu_kien = null;
-    public int $so_tiet_ly_thuyet = 0;
-    public int $so_tiet_thuc_hanh = 0;
-    public int $tong_so_tiet = 0;
-    public float $so_tin_chi = 0;
+    public ?string $ngay_bat_dau = null;
+    public ?string $ngay_ket_thuc = null;
     public int $trang_thai = 1;
     public ?string $ngay_tao = null;
     public ?string $ngay_cap_nhat = null;

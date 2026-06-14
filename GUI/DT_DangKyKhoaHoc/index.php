@@ -421,10 +421,10 @@ function openApprove(id){
                 var html = '<option value="">-- Chỉ duyệt, chưa ghi danh lớp --</option>';
                 if (r2.success && r2.data && r2.data.length){
                     r2.data.forEach(function(l){
-                        html += '<option value="'+l.id+'">'+APP.escape(l.ma_lop+' - '+l.ten_lop)+'</option>';
+                        html += '<option value="'+l.id+'">'+APP.escape(l.ma_chuong_trinh+' - '+l.ten_chuong_trinh)+'</option>';
                     });
                 } else {
-                    html += '<option value="" disabled>(Khóa này chưa có lớp nào)</option>';
+                    html += '<option value="" disabled>(Khóa này chưa có chương trình đào tạo nào)</option>';
                 }
                 $('#aLop').html(html);
             });

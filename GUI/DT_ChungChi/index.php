@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DM_HocVien_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_ChungChi', PhanQuyenHelper::QUYEN_XEM)) {
@@ -12,7 +12,7 @@ $canEdit = PhanQuyenHelper::hasQuyen('DT_ChungChi', PhanQuyenHelper::QUYEN_SUA);
 $canDel  = PhanQuyenHelper::hasQuyen('DT_ChungChi', PhanQuyenHelper::QUYEN_XOA);
 
 $hocVienList = DM_HocVien_BUS::getCombo();
-$lopList     = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList     = DT_KhoaHocChuongTrinh_BUS::getCombo();
 
 $pageTitle  = 'Chứng chỉ';
 $activeMenu = 'DT_ChungChi';
@@ -53,9 +53,9 @@ require __DIR__ . '/../layouts/header.php';
             <?php endforeach; ?>
         </select>
         <select id="fLop" class="form-select" style="min-width:180px">
-            <option value="0">Tất cả lớp</option>
+            <option value="0">Tất cả chương trình</option>
             <?php foreach ($lopList as $l): ?>
-                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
             <?php endforeach; ?>
         </select>
         <select id="fLoai" class="form-select" style="width:140px">
@@ -115,11 +115,11 @@ require __DIR__ . '/../layouts/header.php';
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Lớp học <span class="required">*</span></label>
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
                         <select name="lop_hoc_id" id="f_lop" class="form-select" required>
-                            <option value="">-- Chọn lớp --</option>
+                            <option value="">-- Chọn chương trình --</option>
                             <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -443,7 +443,7 @@ $('#formCC').on('submit', function(e){
     var fd = new FormData(this);
     fd.append('action', $('#f_id').val() ? 'update' : 'insert');
     var $btn = $('#btnSubmit').prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url:URL_AJAX, type:'POST', data:fd, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url:URL_AJAX, type:'POST', data:fd, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $btn.prop('disabled', false).text('Lưu');
             if (res.success){ APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }
@@ -503,7 +503,7 @@ function renderDetail(r){
     html += '<div class="lh-detail-grid">';
     html += dRow('Học viên', APP.escape((r.ma_hv||'')+' - '+(r.ho_ten_hoc_vien||'')));
     if (r.don_vi_cong_tac) html += dRow('Đơn vị', APP.escape(r.don_vi_cong_tac));
-    html += dRow('Lớp học', APP.escape((r.ma_lop||'')+' - '+(r.ten_lop||'')));
+    html += dRow('Chương trình đào tạo', APP.escape((r.ma_lop||'')+' - '+(r.ten_lop||'')));
     if (r.ten_khoa_hoc) html += dRow('Khóa học', APP.escape(r.ten_khoa_hoc));
     html += dRow('Số chứng chỉ', '<code>'+APP.escape(r.so_chung_chi||'-')+'</code>');
     html += dRow('Loại', APP.escape(r.loai_chung_chi||'-'));

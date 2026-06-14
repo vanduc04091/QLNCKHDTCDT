@@ -203,7 +203,7 @@ class DT_DangKyKhoaHoc_BUS
 
             if ($lopId) {
                 $hvl = new DT_HocVienLop_PUBLIC();
-                $hvl->lop_hoc_id = $lopId;
+                $hvl->khoa_hoc_chuong_trinh_id = $lopId;
                 $hvl->hoc_vien_id = $hocVienId;
                 $hvl->ngay_ghi_danh = date('Y-m-d');
                 $hvl->trang_thai = 1;

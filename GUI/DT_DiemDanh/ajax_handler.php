@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_DiemDanh_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -12,7 +12,7 @@ $MODULE = DT_DiemDanh_BUS::MODULE_KEY;
 try {
     switch ($action) {
         case 'getComboLop':
-            ResponseHelper::success('OK', DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data']);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getCombo());
             break;
 
         case 'lichByLop':

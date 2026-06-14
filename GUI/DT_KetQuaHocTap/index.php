@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_XEM)) {
@@ -8,7 +8,7 @@ if (!PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_XEM)) {
 }
 $canEdit = PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_SUA);
 
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
 
 $pageTitle = 'Kết quả học tập';
 $activeMenu = 'DT_KetQuaHocTap';
@@ -53,11 +53,11 @@ require __DIR__ . '/../layouts/header.php';
     <div class="kq-toolbar">
         <div class="kq-toolbar-left">
             <div class="form-group" style="margin:0;min-width:280px">
-                <label>Lớp học</label>
+                <label>Chương trình đào tạo</label>
                 <select id="fLop" class="form-select">
-                    <option value="">-- Chọn lớp --</option>
+                    <option value="">-- Chọn chương trình --</option>
                     <?php foreach ($lopList as $l): ?>
-                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -263,16 +263,10 @@ function updateStats(s) {
 }
 
 function renderTable() {
-    // Header
-    var thead = '<th style="width:44px" class="text-center">#</th><th style="min-width:220px">Học viên</th>';
-    if (state.monHoc.length) {
-        state.monHoc.forEach(function(m){
-            thead += '<th class="text-center kq-th-mon" title="'+APP.escape(m.ten_mon_hoc||'')+'"><div class="kq-mon-code">'+APP.escape(m.ma_mon_hoc||'')+'</div><div class="kq-mon-name">'+APP.escape(m.ten_mon_hoc||'')+'</div></th>';
-        });
-    } else {
-        thead += '<th class="text-center">Điểm</th>';
-    }
-    thead += '<th class="text-center" style="width:100px">TB lớp</th><th class="text-center" style="width:120px">Xếp loại</th>';
+    // Header — điểm theo CTĐT: mỗi HV 1 điểm tổng kết
+    var thead = '<th style="width:44px" class="text-center">#</th><th style="min-width:240px">Học viên</th>';
+    thead += '<th class="text-center" style="width:140px">Điểm tổng kết</th>';
+    thead += '<th class="text-center" style="width:140px">Xếp loại</th>';
     $('#kqThead').html(thead);
 
     // Body
@@ -289,28 +283,17 @@ function renderTable() {
     list.sort(function(a,b){ return (a.ho_ten||'').localeCompare(b.ho_ten||'', 'vi'); });
 
     if (!list.length) {
-        var colspan = 3 + (state.monHoc.length || 1) + 1;
-        $tb.append('<tr><td colspan="'+colspan+'"><div class="empty-state" style="padding:40px"><div class="icon">' + ICON_EMPTY + '</div>Không có dữ liệu</div></td></tr>');
+        $tb.append('<tr><td colspan="4"><div class="empty-state" style="padding:40px"><div class="icon">' + ICON_EMPTY + '</div>Không có dữ liệu</div></td></tr>');
         return;
     }
 
     list.forEach(function(g, i){
+        var s = g.scores['0'] || g.scores[null];
+        var xl = (s && s.xl) ? s.xl : '';
         var tr = '<tr>';
         tr += '<td class="text-center">'+(i+1)+'</td>';
         tr += '<td><div class="kq-hv">'+avatar(g)+'<div><div class="kq-hv-name">'+APP.escape(g.ho_ten||'')+'</div><div class="kq-hv-code">'+APP.escape(g.ma_hv||'')+'</div></div></div></td>';
-        if (state.monHoc.length) {
-            state.monHoc.forEach(function(m){
-                var s = g.scores[m.id];
-                tr += cellScore(g.hoc_vien_lop_id, m.id, s);
-            });
-        } else {
-            // Trường hợp lớp không có môn liên kết: 1 cột điểm duy nhất (mon_hoc_id = null)
-            var s = g.scores['0'] || g.scores[null];
-            tr += cellScore(g.hoc_vien_lop_id, null, s);
-        }
-        var dtb = g.diem_lop !== null && g.diem_lop !== undefined ? parseFloat(g.diem_lop).toFixed(1) : '—';
-        var xl = g.xep_loai_lop || '';
-        tr += '<td class="text-center"><strong>'+dtb+'</strong></td>';
+        tr += cellScore(g.hoc_vien_lop_id, null, s);
         tr += '<td class="text-center">'+(xl?'<span class="kq-badge kq-badge-'+xlClass(xl)+'">'+APP.escape(xl)+'</span>':'—')+'</td>';
         tr += '</tr>';
         $tb.append(tr);
@@ -384,20 +367,15 @@ $('#btnExport').on('click', function(){
     if (!state.lopId) { APP.toast('Chưa chọn lớp','warning'); return; }
     // Export đơn giản: tạo CSV từ bảng
     var rows = [];
-    var header = ['STT','Mã HV','Họ tên'];
-    state.monHoc.forEach(function(m){ header.push(m.ma_mon_hoc + ' - ' + m.ten_mon_hoc); });
-    header.push('TB lớp', 'Xếp loại');
-    rows.push(header);
+    rows.push(['STT','Mã HV','Họ tên','Điểm tổng kết','Xếp loại']);
 
     Object.values(state.grouped).forEach(function(g, i){
-        var row = [i+1, g.ma_hv||'', g.ho_ten||''];
-        if (state.monHoc.length) {
-            state.monHoc.forEach(function(m){ var s=g.scores[m.id]; row.push(s && s.dtk!=null ? parseFloat(s.dtk).toFixed(1) : ''); });
-        } else {
-            var s = g.scores['0']; row.push(s && s.dtk!=null ? parseFloat(s.dtk).toFixed(1) : '');
-        }
-        row.push(g.diem_lop!=null ? parseFloat(g.diem_lop).toFixed(1) : '', g.xep_loai_lop||'');
-        rows.push(row);
+        var s = g.scores['0'] || g.scores[null];
+        rows.push([
+            i+1, g.ma_hv||'', g.ho_ten||'',
+            (s && s.dtk!=null ? parseFloat(s.dtk).toFixed(1) : ''),
+            (s && s.xl ? s.xl : '')
+        ]);
     });
     var csv = rows.map(function(r){ return r.map(function(c){ c=String(c||''); return c.indexOf(',')>=0||c.indexOf('"')>=0||c.indexOf('\n')>=0?'"'+c.replace(/"/g,'""')+'"':c; }).join(','); }).join('\n');
     var blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});

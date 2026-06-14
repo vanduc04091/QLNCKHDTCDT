@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_XEM)) {
@@ -8,7 +8,7 @@ if (!PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_XEM)) {
 }
 $canEdit = PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_SUA);
 
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
 
 $pageTitle = 'Điểm danh';
 $activeMenu = 'DT_DiemDanh';
@@ -54,11 +54,11 @@ require __DIR__ . '/../layouts/header.php';
     <div class="card dd-sidebar">
         <div class="dd-sidebar-header">
             <div class="form-group" style="margin:0">
-                <label>Lớp học</label>
+                <label>Chương trình đào tạo</label>
                 <select id="fLop" class="form-select">
-                    <option value="">-- Chọn lớp để xem các buổi --</option>
+                    <option value="">-- Chọn chương trình để xem các buổi --</option>
                     <?php foreach ($lopList as $l): ?>
-                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -291,7 +291,7 @@ $('#btnSave').on('click', function(){
         });
     });
     var $b = $(this).prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url: URL, type:'POST', data: form, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url: URL, type:'POST', data: form, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $b.prop('disabled', false).text('Lưu điểm danh');
             if (res.success) { APP.toast(res.message,'success'); loadLichByLop(); }

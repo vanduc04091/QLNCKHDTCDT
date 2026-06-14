@@ -945,7 +945,7 @@ $('#formTL').on('submit', function (e) {
     e.preventDefault();
     var fd = new FormData(this); fd.append('action', 'tl_upload');
     APP.showLoading('#modalTL .modal-body');
-    $.ajax({url:URL, data:fd, processData:false, contentType:false, type:'POST', dataType:'json'})
+    $.ajax({url:URL, data:fd, processData:false, contentType:false, type:'POST', dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {}})
         .done(function (r) {
             APP.hideLoading('#modalTL .modal-body');
             if (r.success) { APP.toast(r.message,'success'); $('#modalTL').removeClass('open'); loadDetail(); }

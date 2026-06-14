@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_DangKyKhoaHoc_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -45,11 +45,10 @@ try {
             break;
 
         case 'getLopByKhoa':
-            // Lấy danh sách lớp đang mở của 1 khóa học (cho dropdown khi duyệt)
+            // Lấy danh sách CTĐT gắn với 1 khóa học (cho dropdown khi duyệt). value = khct.id
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
             $khoaHocId = Helper::postInt('khoa_hoc_id');
-            $rows = DT_LopHoc_BUS::getPaged(1, 200, '', 0, $khoaHocId, -1)['data'] ?? [];
-            ResponseHelper::success('OK', $rows);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getByKhoaHoc($khoaHocId));
             break;
 
         case 'approve':

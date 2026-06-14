@@ -1,77 +1,67 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_MonHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DM_NhanVien_BUS.php';
+require_once __DIR__ . '/../../BUS/DM_KhoaPhong_BUS.php';
+require_once __DIR__ . '/../../BUS/DM_DoiTuongHocVien_BUS.php';
 
 Helper::requireLogin();
-if (!PhanQuyenHelper::hasQuyen('DT_LopHoc', PhanQuyenHelper::QUYEN_XEM)) {
+if (!PhanQuyenHelper::hasQuyen('DT_ChuongTrinh', PhanQuyenHelper::QUYEN_XEM)) {
     echo 'Bạn không có quyền truy cập chức năng này.'; exit;
 }
 
-$canAdd = PhanQuyenHelper::hasQuyen('DT_LopHoc', PhanQuyenHelper::QUYEN_THEM);
-$canEdit = PhanQuyenHelper::hasQuyen('DT_LopHoc', PhanQuyenHelper::QUYEN_SUA);
-$canDel = PhanQuyenHelper::hasQuyen('DT_LopHoc', PhanQuyenHelper::QUYEN_XOA);
-$canHvlAdd = PhanQuyenHelper::hasQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_THEM);
-$canHvlEdit = PhanQuyenHelper::hasQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_SUA);
-$canHvlDel = PhanQuyenHelper::hasQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_XOA);
+$canAdd = PhanQuyenHelper::hasQuyen('DT_ChuongTrinh', PhanQuyenHelper::QUYEN_THEM);
+$canEdit = PhanQuyenHelper::hasQuyen('DT_ChuongTrinh', PhanQuyenHelper::QUYEN_SUA);
+$canDel = PhanQuyenHelper::hasQuyen('DT_ChuongTrinh', PhanQuyenHelper::QUYEN_XOA);
 
 $khoaCombo = DT_KhoaHoc_BUS::getCombo();
+$monCombo = DT_MonHoc_BUS::getCombo();
+$nvCombo = DM_NhanVien_BUS::getCombo();
+$khoaPhongCombo = DM_KhoaPhong_BUS::getCombo();
+$doiTuongCombo = DM_DoiTuongHocVien_BUS::getCombo();
 
-$pageTitle = 'Quản lý lớp học';
-$activeMenu = 'DT_LopHoc';
-$avatarUrl = AppConfig::baseUrl('assets/uploads/hocvien/');
+$pageTitle = 'Quản lý chương trình đào tạo';
+$activeMenu = 'DT_ChuongTrinh';
 require __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="breadcrumb">
     <a href="<?= AppConfig::baseUrl('GUI/dashboard/index.php') ?>">Trang chủ</a>
     <span class="sep">›</span> Đào tạo
-    <span class="sep">›</span> <span>Lớp học</span>
+    <span class="sep">›</span> <span>Chương trình đào tạo</span>
 </div>
 
-<!-- Stats -->
 <div class="hv-stats">
     <div class="hv-stat">
-        <div class="hv-stat-icon hv-stat-blue">
-            <?= IconHelper::svg('school', '22') ?>
-        </div>
-        <div><div class="hv-stat-label">Tổng lớp học</div><div class="hv-stat-value" id="stTotal">—</div></div>
+        <div class="hv-stat-icon hv-stat-blue"><?= IconHelper::svg('school', '22') ?></div>
+        <div><div class="hv-stat-label">Tổng chương trình</div><div class="hv-stat-value" id="stTotal">—</div></div>
     </div>
     <div class="hv-stat">
-        <div class="hv-stat-icon hv-stat-orange">
-            <?= IconHelper::svg('clock', '22') ?>
-        </div>
-        <div><div class="hv-stat-label">Chờ khai giảng</div><div class="hv-stat-value" id="stChoMo">—</div></div>
+        <div class="hv-stat-icon hv-stat-green"><?= IconHelper::svg('book-open', '22') ?></div>
+        <div><div class="hv-stat-label">Có gắn khóa học</div><div class="hv-stat-value" id="stCoKhoa">—</div></div>
     </div>
     <div class="hv-stat">
-        <div class="hv-stat-icon hv-stat-green">
-            <?= IconHelper::svg('play-circle', '22') ?>
-        </div>
-        <div><div class="hv-stat-label">Đang học</div><div class="hv-stat-value" id="stDangHoc">—</div></div>
-    </div>
-    <div class="hv-stat">
-        <div class="hv-stat-icon hv-stat-purple">
-            <?= IconHelper::svg('check-circle', '22') ?>
-        </div>
-        <div><div class="hv-stat-label">Đã kết thúc</div><div class="hv-stat-value" id="stKetThuc">—</div></div>
+        <div class="hv-stat-icon hv-stat-purple"><?= IconHelper::svg('list', '22') ?></div>
+        <div><div class="hv-stat-label">Có gắn bài học</div><div class="hv-stat-value" id="stCoMon">—</div></div>
     </div>
 </div>
 
 <div class="card">
     <div class="toolbar">
         <div class="left">
-            <input type="text" id="search" class="form-control" placeholder="Tìm mã lớp, tên lớp, địa điểm..." style="max-width:320px">
-            <select id="filterKhoa" class="form-select" style="max-width:260px">
+            <input type="text" id="search" class="form-control" placeholder="Tìm mã, tên chương trình, thời lượng..." style="max-width:320px">
+            <select id="filterKhoa" class="form-select" style="max-width:240px">
                 <option value="0">-- Tất cả khóa học --</option>
                 <?php foreach ($khoaCombo as $k): ?>
                     <option value="<?= $k['id'] ?>"><?= Helper::h($k['ma_khoa_hoc'] . ' - ' . $k['ten_khoa_hoc']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select id="filterTrangThai" class="form-select" style="max-width:180px">
-                <option value="">Tất cả trạng thái</option>
-                <option value="0">Chờ khai giảng</option>
-                <option value="1">Đang học</option>
-                <option value="2">Đã kết thúc</option>
-                <option value="3">Đã hủy</option>
+            <select id="filterDoiTuong" class="form-select" style="max-width:220px">
+                <option value="0">-- Tất cả đối tượng --</option>
+                <?php foreach ($doiTuongCombo as $dt): ?>
+                    <option value="<?= $dt['id'] ?>"><?= Helper::h($dt['ten_doi_tuong']) ?></option>
+                <?php endforeach; ?>
             </select>
             <select id="filterDaXoa" class="form-select" style="max-width:160px">
                 <option value="0">Đang hoạt động</option>
@@ -80,7 +70,7 @@ require __DIR__ . '/../layouts/header.php';
         </div>
         <div class="right">
             <?php if ($canAdd): ?>
-                <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm lớp học</button>
+                <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm chương trình</button>
             <?php endif; ?>
         </div>
     </div>
@@ -89,13 +79,15 @@ require __DIR__ . '/../layouts/header.php';
             <thead>
                 <tr>
                     <th style="width:50px" class="text-center">#</th>
-                    <th style="width:130px">Mã lớp</th>
-                    <th>Tên lớp</th>
-                    <th>Khóa học</th>
-                    <th>Thời gian</th>
-                    <th style="width:180px">Học viên</th>
-                    <th class="text-center" style="width:130px">Trạng thái</th>
-                    <th class="text-right" style="width:170px">Hành động</th>
+                    <th style="width:55px" class="text-center">TT</th>
+                    <th style="width:130px">Mã CTĐT</th>
+                    <th>Tên chương trình</th>
+                    <th style="width:120px">Thời lượng</th>
+                    <th>Khoa phụ trách</th>
+                    <th style="width:150px">Đối tượng</th>
+                    <th class="text-center" style="width:80px">Khóa</th>
+                    <th class="text-center" style="width:80px">Bài</th>
+                    <th class="text-right" style="width:150px">Hành động</th>
                 </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -107,72 +99,63 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
-<!-- ================== Modal Form Lớp ================== -->
+<!-- ================== Modal Form CTĐT ================== -->
 <div class="modal-backdrop" id="modalForm">
     <div class="modal" style="max-width:820px">
         <div class="modal-header">
-            <h3 id="modalTitle">Thêm lớp học</h3>
+            <h3 id="modalTitle">Thêm chương trình đào tạo</h3>
             <button type="button" class="close" onclick="closeModal()">&times;</button>
         </div>
-        <form id="formLop">
+        <form id="formCT">
             <div class="modal-body">
                 <input type="hidden" name="id" id="f_id">
-
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Mã lớp <span class="required">*</span></label>
-                        <input type="text" name="ma_lop" id="f_ma_lop" class="form-control" required maxlength="50">
+                        <label>Mã chương trình <span class="required">*</span></label>
+                        <input type="text" name="ma_chuong_trinh" id="f_ma" class="form-control" required maxlength="50">
                     </div>
                     <div class="form-group">
-                        <label>Khóa học <span class="required">*</span></label>
-                        <select name="khoa_hoc_id" id="f_khoa_hoc_id" class="form-select" required>
-                            <option value="">-- Chọn --</option>
-                            <?php foreach ($khoaCombo as $k): ?>
-                                <option value="<?= $k['id'] ?>"><?= Helper::h($k['ma_khoa_hoc'] . ' - ' . $k['ten_khoa_hoc']) ?></option>
+                        <label>Tên chương trình <span class="required">*</span></label>
+                        <input type="text" name="ten_chuong_trinh" id="f_ten" class="form-control" required maxlength="200">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Thời lượng</label>
+                        <input type="text" name="thoi_luong" id="f_thoi_luong" class="form-control" placeholder="VD: 3 tháng / 120 tiết" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Khoa phụ trách giảng dạy</label>
+                        <select name="khoa_phong_id" id="f_khoa_phong" class="form-select">
+                            <option value="">-- Chọn khoa/phòng --</option>
+                            <?php foreach ($khoaPhongCombo as $kp): ?>
+                                <option value="<?= $kp['id'] ?>"><?= Helper::h($kp['ten_khoa']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
-
-                <div class="form-group">
-                    <label>Tên lớp <span class="required">*</span></label>
-                    <input type="text" name="ten_lop" id="f_ten_lop" class="form-control" required maxlength="200">
-                </div>
-
-                <div class="form-row-3">
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Ngày bắt đầu</label>
-                        <input type="date" name="ngay_bat_dau" id="f_ngay_bat_dau" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Ngày kết thúc</label>
-                        <input type="date" name="ngay_ket_thuc" id="f_ngay_ket_thuc" class="form-control">
+                        <label>Đối tượng học viên</label>
+                        <select name="doi_tuong_id" id="f_doi_tuong" class="form-select">
+                            <option value="">-- Chọn đối tượng --</option>
+                            <?php foreach ($doiTuongCombo as $dt): ?>
+                                <option value="<?= $dt['id'] ?>"><?= Helper::h($dt['ten_doi_tuong']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Số lượng tối đa</label>
-                        <input type="number" name="so_luong_toi_da" id="f_so_luong_toi_da" class="form-control" min="1" value="30">
+                        <input type="number" name="so_luong_toi_da" id="f_sl" class="form-control" value="30" min="1">
                     </div>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Địa điểm</label>
-                        <input type="text" name="dia_diem" id="f_dia_diem" class="form-control" maxlength="200">
-                    </div>
-                    <div class="form-group">
-                        <label>Trạng thái</label>
-                        <select name="trang_thai" id="f_trang_thai" class="form-select">
-                            <option value="0">Chờ khai giảng</option>
-                            <option value="1">Đang học</option>
-                            <option value="2">Đã kết thúc</option>
-                            <option value="3">Đã hủy</option>
-                        </select>
-                    </div>
+                <div class="form-group" style="max-width:220px">
+                    <label>Thứ tự</label>
+                    <input type="number" name="thu_tu" id="f_thu_tu" class="form-control" value="0" min="0">
                 </div>
-
                 <div class="form-group">
                     <label>Mô tả</label>
-                    <textarea name="mo_ta" id="f_mo_ta" class="form-control" rows="2" maxlength="500"></textarea>
+                    <textarea name="mo_ta" id="f_mt" class="form-control" rows="2" maxlength="1000"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -183,483 +166,370 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
-<!-- ================== Drawer Học viên của lớp ================== -->
-<div class="drawer-backdrop" id="drawerHV">
-    <div class="drawer">
-        <div class="drawer-header">
-            <div>
-                <h3 id="drawerLopTen" style="margin:0">Học viên của lớp</h3>
-                <div id="drawerLopMeta" class="text-muted" style="font-size:12.5px;margin-top:2px"></div>
-            </div>
-            <button type="button" class="close" onclick="closeDrawer()">&times;</button>
-        </div>
-        <div class="drawer-body">
-            <div class="d-flex gap-2" style="align-items:center;margin-bottom:12px">
-                <input type="text" id="hvlSearch" class="form-control" placeholder="Tìm học viên trong lớp..." style="flex:1">
-                <?php if ($canHvlAdd): ?>
-                <button type="button" class="btn btn-primary" onclick="openPicker()">+ Thêm học viên</button>
-                <?php endif; ?>
-            </div>
-            <div id="hvlCapacityBar" class="hv-capacity" style="display:none">
-                <div class="hv-capacity-fill" style="width:0%"></div>
-                <span class="hv-capacity-label">0 / 0</span>
-            </div>
-            <div id="hvlList" class="hv-student-list" style="position:relative;min-height:200px"></div>
-        </div>
-    </div>
-</div>
-
-<!-- ================== Modal Picker học viên ================== -->
-<div class="modal-backdrop" id="modalPicker">
-    <div class="modal" style="max-width:760px">
+<!-- ================== Modal gắn/sửa khóa học vào CTĐT ================== -->
+<div class="modal-backdrop" id="modalKhoa">
+    <div class="modal" style="max-width:720px">
         <div class="modal-header">
-            <h3>Thêm học viên vào lớp</h3>
-            <button type="button" class="close" onclick="closePicker()">&times;</button>
+            <h3 id="modalKhoaTitle">Gắn khóa học</h3>
+            <button type="button" class="close" onclick="closeKhoaModal()">&times;</button>
         </div>
-        <div class="modal-body">
-            <input type="text" id="pickerSearch" class="form-control mb-2" placeholder="Tìm mã, họ tên, đơn vị...">
-            <div id="pickerInfo" class="text-muted" style="font-size:12.5px;margin-bottom:8px">Chọn học viên cần ghi danh.</div>
-            <div id="pickerList" class="hv-picker-list" style="max-height:420px;overflow-y:auto"></div>
-        </div>
-        <div class="modal-footer">
-            <div class="text-muted" id="pickerSelCount" style="flex:1;font-size:13px">0 đã chọn</div>
-            <button type="button" class="btn" onclick="closePicker()">Hủy</button>
-            <button type="button" class="btn btn-primary" onclick="submitPicker()">Ghi danh</button>
-        </div>
-    </div>
-</div>
-
-<!-- ================== Modal Sửa HVL (điểm, xếp loại) ================== -->
-<div class="modal-backdrop" id="modalHvlEdit">
-    <div class="modal" style="max-width:560px">
-        <div class="modal-header">
-            <h3>Thông tin ghi danh</h3>
-            <button type="button" class="close" onclick="closeHvlEdit()">&times;</button>
-        </div>
-        <form id="formHvl">
+        <form id="formKhoa">
             <div class="modal-body">
-                <input type="hidden" name="id" id="hf_id">
-                <div id="hf_summary" style="background:var(--gray-50);padding:12px;border-radius:var(--radius);margin-bottom:14px;display:flex;gap:12px;align-items:center"></div>
+                <input type="hidden" name="id" id="k_id">
+                <div class="form-group" id="k_khoa_wrap">
+                    <label>Khóa học <span class="required">*</span></label>
+                    <select name="khoa_hoc_id" id="k_khoa" class="form-select">
+                        <option value="">-- Chọn khóa học --</option>
+                        <?php foreach ($khoaCombo as $k): ?>
+                            <option value="<?= $k['id'] ?>"><?= Helper::h($k['ma_khoa_hoc'] . ' - ' . $k['ten_khoa_hoc']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Ngày ghi danh</label>
-                        <input type="date" name="ngay_ghi_danh" id="hf_ngay_ghi_danh" class="form-control">
+                        <label>Ngày bắt đầu</label>
+                        <input type="date" name="ngay_bat_dau" id="k_nbd" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày kết thúc</label>
+                        <input type="date" name="ngay_ket_thuc" id="k_nkt" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Địa điểm</label>
+                        <input type="text" name="dia_diem" id="k_dd" class="form-control" maxlength="200">
                     </div>
                     <div class="form-group">
                         <label>Trạng thái</label>
-                        <select name="trang_thai" id="hf_trang_thai" class="form-select">
-                            <option value="0">Chờ duyệt</option>
+                        <select name="trang_thai" id="k_tt" class="form-select">
+                            <option value="0">Chờ khai giảng</option>
                             <option value="1">Đang học</option>
-                            <option value="2">Hoàn thành</option>
-                            <option value="3">Bỏ học</option>
+                            <option value="2">Đã kết thúc</option>
+                            <option value="3">Đã hủy</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Điểm tổng kết (0-10)</label>
-                        <input type="number" step="0.1" min="0" max="10" name="diem_tong_ket" id="hf_diem" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Xếp loại</label>
-                        <select name="xep_loai" id="hf_xep_loai" class="form-select">
-                            <option value="">--</option>
-                            <option>Xuất sắc</option>
-                            <option>Giỏi</option>
-                            <option>Khá</option>
-                            <option>Trung bình</option>
-                            <option>Yếu</option>
+                        <label>Giáo viên chủ nhiệm</label>
+                        <select name="giao_vien_id" id="k_gv" class="form-select">
+                            <option value="">-- Chọn --</option>
+                            <?php foreach ($nvCombo as $nv): ?>
+                                <option value="<?= $nv['id'] ?>"><?= Helper::h(($nv['ma_nv'] ?? '') . ' - ' . ($nv['ho_ten'] ?? '')) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Ghi chú</label>
-                    <textarea name="ghi_chu" id="hf_ghi_chu" class="form-control" rows="2" maxlength="250"></textarea>
+                    <div class="form-group">
+                        <label>GVCN ngoài (nếu có)</label>
+                        <input type="text" name="giao_vien_ngoai" id="k_gvn" class="form-control" maxlength="200">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn" onclick="closeHvlEdit()">Hủy</button>
+                <button type="button" class="btn" onclick="closeKhoaModal()">Hủy</button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
             </div>
         </form>
     </div>
 </div>
 
+<style>
+.dt-tabs { display:flex; gap:4px; border-bottom:1px solid var(--gray-200); margin-bottom:14px; }
+.dt-tab { background:none; border:none; padding:8px 14px; font-size:13.5px; font-weight:500; color:var(--gray-500); cursor:pointer; border-bottom:2px solid transparent; }
+.dt-tab.is-active { color:var(--primary); border-bottom-color:var(--primary); }
+.drawer-header { display:flex; justify-content:space-between; align-items:flex-start; }
+</style>
+<!-- ================== Drawer chi tiết: gắn khóa + gắn môn ================== -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer(event)"></div>
+<div class="drawer" id="ctDrawer">
+    <div class="drawer-header">
+        <div>
+            <h3 id="drwTitle" style="margin:0">Chi tiết chương trình</h3>
+            <div id="drwSub" class="text-muted" style="font-size:12.5px;margin-top:2px"></div>
+        </div>
+        <button type="button" class="close" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body">
+        <div class="dt-tabs">
+            <button type="button" class="dt-tab is-active" data-tab="khoa" onclick="switchTab('khoa')">Khóa học áp dụng</button>
+            <button type="button" class="dt-tab" data-tab="mon" onclick="switchTab('mon')">Bài học</button>
+        </div>
+
+        <!-- Tab khóa học -->
+        <div class="dt-tabpane" id="paneKhoa">
+            <?php if ($canEdit): ?>
+            <div style="margin-bottom:10px">
+                <button type="button" class="btn btn-primary" onclick="openKhoaForm()">+ Gắn khóa học</button>
+                <span class="text-muted" style="font-size:12px;margin-left:6px">Mỗi khóa gắn vào CTĐT có lịch học vụ riêng (ngày, địa điểm, GVCN, trạng thái).</span>
+            </div>
+            <?php endif; ?>
+            <div id="khoaList"></div>
+        </div>
+
+        <!-- Tab bài học -->
+        <div class="dt-tabpane" id="paneMon" style="display:none">
+            <?php if ($canEdit): ?>
+            <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:12px;border:1px solid var(--gray-200)">
+                <div style="font-weight:600;margin-bottom:8px;font-size:13.5px">Thêm bài học vào chương trình</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <select id="monAddSelect" class="form-select" style="flex:1;min-width:240px">
+                        <option value="">-- Chọn bài học --</option>
+                    </select>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addMon()">Thêm bài</button>
+                </div>
+                <div class="text-muted" style="font-size:11.5px;margin-top:6px">Chỉ hiện bài học chưa thuộc chương trình nào (mỗi bài chỉ thuộc 1 CTĐT).</div>
+            </div>
+            <?php endif; ?>
+            <div id="monSummary" class="text-muted" style="font-size:12.5px;margin-bottom:8px"></div>
+            <div id="monList"></div>
+        </div>
+    </div>
+</div>
+
 <script>
-var URL = APP_BASE + 'GUI/DT_LopHoc/ajax_handler.php';
-var AVATAR_URL = <?= json_encode($avatarUrl) ?>;
-var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
-var CAN_DEL = <?= $canDel?'true':'false' ?>;
-var CAN_HVL_ADD = <?= $canHvlAdd?'true':'false' ?>;
-var CAN_HVL_EDIT = <?= $canHvlEdit?'true':'false' ?>;
-var CAN_HVL_DEL = <?= $canHvlDel?'true':'false' ?>;
-var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '16')) ?>';
-var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '16')) ?>';
-var ICON_USERS = '<?= addslashes(IconHelper::svg('users', '16')) ?>';
-var ICON_EMPTY = '<?= addslashes(IconHelper::svg('search', '40')) ?>';
-var ICON_EMPTY_HVL = '<?= addslashes(IconHelper::svg('users', '40')) ?>';
-var state = { page: 1, pageSize: 20, search: '', daXoa: 0, khoaId: 0, trangThai: '' };
-var currentLop = null;
-var pickerSelected = {};
+var URL = APP_BASE + 'GUI/DT_ChuongTrinh/ajax_handler.php';
+var CAN_ADD = <?= $canAdd?'true':'false' ?>, CAN_EDIT = <?= $canEdit?'true':'false' ?>, CAN_DEL = <?= $canDel?'true':'false' ?>;
+var state = { page:1, pageSize:20, search:'', khoaId:0, doiTuongId:0, daXoa:0 };
+var currentCT = null;
 
-// ====== Helpers ======
-function initials(name) {
-    if (!name) return '?';
-    var p = name.trim().split(/\s+/);
-    return p.length === 1 ? p[0].substr(0,2).toUpperCase() : (p[p.length-2][0] + p[p.length-1][0]).toUpperCase();
-}
-function colorFromName(name) {
-    var c = ['#2563eb','#7c3aed','#db2777','#dc2626','#ea580c','#d97706','#16a34a','#0891b2','#4f46e5','#0284c7'];
-    var h = 0; for (var i=0;i<(name||'').length;i++) h = (h*31 + name.charCodeAt(i)) & 0xffff;
-    return c[h % c.length];
-}
-function hvAvatar(hv, size) {
-    size = size || 40;
-    if (hv.avatar) {
-        return '<div class="hv-av" style="width:'+size+'px;height:'+size+'px"><img src="'+AVATAR_URL+APP.escape(hv.avatar)+'"></div>';
-    }
-    return '<div class="hv-av hv-av-initials" style="width:'+size+'px;height:'+size+'px;background:'+colorFromName(hv.ho_ten)+'">'+APP.escape(initials(hv.ho_ten))+'</div>';
-}
-function statusBadgeLop(tt) {
-    switch (parseInt(tt,10)) {
-        case 0: return '<span class="badge badge-warning">Chờ khai giảng</span>';
-        case 1: return '<span class="badge badge-success">Đang học</span>';
-        case 2: return '<span class="badge badge-info">Đã kết thúc</span>';
-        case 3: return '<span class="badge badge-danger">Đã hủy</span>';
-        default: return '';
-    }
-}
-function statusBadgeHvl(tt) {
-    switch (parseInt(tt,10)) {
-        case 0: return '<span class="badge badge-warning">Chờ duyệt</span>';
-        case 1: return '<span class="badge badge-success">Đang học</span>';
-        case 2: return '<span class="badge badge-info">Hoàn thành</span>';
-        case 3: return '<span class="badge badge-danger">Bỏ học</span>';
-        default: return '';
-    }
-}
+var ICON_DETAIL = '<?= addslashes(IconHelper::svg('eye', '15')) ?>';
+var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '15')) ?>';
+var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '15')) ?>';
+var ICON_RESTORE = '<?= addslashes(IconHelper::svg('refresh', '15')) ?>';
 
-// ====== Load list lớp ======
-function loadStats() {
+// Trạng thái học vụ của cặp (khóa+CTĐT)
+var TT_LABEL = {0:'Chờ khai giảng',1:'Đang học',2:'Đã kết thúc',3:'Đã hủy'};
+var TT_CLS = {0:'badge-warning',1:'badge-info',2:'badge-success',3:'badge-danger'};
+
+function loadStats(){
     APP.ajax(URL, {action:'getStats'}).done(function(res){
-        if (!res.success) return;
+        if(!res.success) return;
         $('#stTotal').text(res.data.total||0);
-        $('#stChoMo').text(res.data.cho_mo||0);
-        $('#stDangHoc').text(res.data.dang_hoc||0);
-        $('#stKetThuc').text(res.data.ket_thuc||0);
+        $('#stCoKhoa').text(res.data.co_khoa||0);
+        $('#stCoMon').text(res.data.co_mon||0);
     });
 }
 
-function load() {
+function load(){
     APP.showLoading('#tableWrap');
     APP.ajax(URL, {
         action:'getPaged', page:state.page, pageSize:state.pageSize,
-        search:state.search, da_xoa:state.daXoa,
-        khoa_hoc_id:state.khoaId, trang_thai:state.trangThai
+        search:state.search, khoa_hoc_id:state.khoaId, doi_tuong_id:state.doiTuongId, da_xoa:state.daXoa
     }).done(function(res){
         APP.hideLoading('#tableWrap');
-        if (!res.success) { APP.toast(res.message,'error'); return; }
-        renderRows(res.data);
-        renderInfo(res.pagination);
+        if(!res.success){ APP.toast(res.message,'error'); return; }
+        renderRows(res.data||[]);
+        var p = res.pagination || {};
+        var from = ((p.currentPage-1)*p.pageSize)+1, to = Math.min(p.currentPage*p.pageSize, p.totalRecords);
+        $('#pageInfo').text(p.totalRecords ? ('Hiển thị ' + from + '–' + to + ' / ' + p.totalRecords) : 'Không có bản ghi');
+        $('#pageNav').html(APP.renderPagination(p));
     });
 }
-
-function renderRows(rows) {
-    var $tb = $('#tbody').empty();
-    if (!rows.length) {
-        $tb.append('<tr><td colspan="9"><div class="empty-state"><div class="icon">' + ICON_EMPTY + '</div>Không có dữ liệu</div></td></tr>');
-        return;
-    }
-    var stt = (state.page - 1) * state.pageSize;
-    rows.forEach(function(r){
-        stt++;
-        var pct = Math.min(100, Math.round((r.so_hoc_vien / r.so_luong_toi_da) * 100));
-        var pctClass = pct >= 100 ? 'full' : (pct >= 80 ? 'warn' : '');
-        var tg = '';
-        if (r.ngay_bat_dau || r.ngay_ket_thuc) {
-            tg = (r.ngay_bat_dau ? APP.formatDate(r.ngay_bat_dau) : '?') + ' → ' + (r.ngay_ket_thuc ? APP.formatDate(r.ngay_ket_thuc) : '?');
-        } else tg = '-';
-
-        var actions = '';
-        if (state.daXoa == 0) {
-            actions += '<button class="btn btn-sm btn-primary" title="Học viên" onclick="openDrawer('+r.id+')">' + ICON_USERS + '</button>';
-            if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit('+r.id+')">' + ICON_EDIT + '</button>';
-            if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem('+r.id+')">' + ICON_TRASH + '</button>';
-        } else {
-            if (CAN_EDIT) actions += '<button class="btn btn-sm btn-success" onclick="restoreItem('+r.id+')">↺ Khôi phục</button>';
-            if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" onclick="deleteItem('+r.id+')">Xóa</button>';
-        }
-
-        $tb.append(
-            '<tr>'+
-                '<td class="text-center">'+stt+'</td>'+
-                '<td><strong>'+APP.escape(r.ma_lop)+'</strong></td>'+
-                '<td><div style="font-weight:500">'+APP.escape(r.ten_lop)+'</div>'+
-                    (r.dia_diem?'<div class="text-muted" style="font-size:12px">📍 '+APP.escape(r.dia_diem)+'</div>':'')+'</td>'+
-                '<td><div style="font-size:13px">'+APP.escape(r.ma_khoa_hoc||'')+'</div><div class="text-muted" style="font-size:11.5px">'+APP.escape(r.ten_khoa_hoc||'')+'</div></td>'+
-                '<td style="font-size:12.5px">'+tg+'</td>'+
-                '<td><div class="lop-capacity '+pctClass+'">'+
-                    '<div class="lop-capacity-fill" style="width:'+pct+'%"></div>'+
-                    '<span class="lop-capacity-text">'+r.so_hoc_vien+' / '+r.so_luong_toi_da+'</span>'+
-                '</div></td>'+
-                '<td class="text-center">'+statusBadgeLop(r.trang_thai)+'</td>'+
-                '<td><div class="actions">'+actions+'</div></td>'+
-            '</tr>'
-        );
-    });
-}
-
-function renderInfo(p) {
-    var from = (p.currentPage-1)*p.pageSize + 1;
-    var to = Math.min(from+p.pageSize-1, p.totalRecords);
-    $('#pageInfo').text(p.totalRecords ? 'Hiển thị '+from+'-'+to+' / '+p.totalRecords : 'Không có bản ghi');
-    $('#pageNav').html(APP.renderPagination(p));
-}
-
 $('#pageNav').on('click', 'button[data-p]', function(){
-    var p = parseInt($(this).data('p'),10); if (!p||p===state.page) return;
+    var p = parseInt($(this).data('p'),10);
+    if(!p || p===state.page) return;
     state.page = p; load();
 });
-$('#search').on('input', APP.debounce(function(){ state.search=$(this).val(); state.page=1; load(); },400));
-$('#filterKhoa').on('change', function(){ state.khoaId=parseInt(this.value,10)||0; state.page=1; load(); });
-$('#filterTrangThai').on('change', function(){ state.trangThai=this.value; state.page=1; load(); });
-$('#filterDaXoa').on('change', function(){ state.daXoa=parseInt(this.value,10)||0; state.page=1; load(); });
 
-// ====== Modal Form Lớp ======
-function openCreate() {
-    $('#modalTitle').text('Thêm lớp học');
-    $('#formLop')[0].reset(); $('#f_id').val('');
+function renderRows(rows){
+    var $b = $('#tbody').empty();
+    if(!rows.length){ $b.append('<tr><td colspan="10" class="text-center text-muted" style="padding:30px">Không có dữ liệu</td></tr>'); return; }
+    rows.forEach(function(r, i){
+        var acts = '';
+        if (state.daXoa==1){
+            if (CAN_EDIT) acts += '<button class="btn btn-sm btn-success" title="Khôi phục" onclick="restoreItem('+r.id+')">'+ICON_RESTORE+'</button> ';
+            if (CAN_DEL) acts += '<button class="btn btn-sm btn-danger" title="Xóa vĩnh viễn" onclick="deleteItem('+r.id+')">'+ICON_TRASH+'</button>';
+        } else {
+            acts += '<button class="btn btn-sm" title="Chi tiết" onclick="openDrawer('+r.id+')">'+ICON_DETAIL+'</button> ';
+            if (CAN_EDIT) acts += '<button class="btn btn-sm" title="Sửa" onclick="openEdit('+r.id+')">'+ICON_EDIT+'</button> ';
+            if (CAN_DEL) acts += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem('+r.id+')">'+ICON_TRASH+'</button>';
+        }
+        $b.append('<tr>'+
+            '<td class="text-center">'+((state.page-1)*state.pageSize+i+1)+'</td>'+
+            '<td class="text-center" style="font-weight:600">'+(r.thu_tu||0)+'</td>'+
+            '<td><strong>'+APP.escape(r.ma_chuong_trinh||'')+'</strong></td>'+
+            '<td>'+APP.escape(r.ten_chuong_trinh||'')+'</td>'+
+            '<td>'+APP.escape(r.thoi_luong||'—')+'</td>'+
+            '<td>'+APP.escape(r.ten_khoa_phong||'—')+'</td>'+
+            '<td>'+APP.escape(r.ten_doi_tuong||'—')+'</td>'+
+            '<td class="text-center">'+(r.so_khoa_hoc||0)+'</td>'+
+            '<td class="text-center">'+(r.so_mon_hoc||0)+'</td>'+
+            '<td><div class="actions">'+acts+'</div></td>'+
+        '</tr>');
+    });
+}
+
+// ============ Form CTĐT ============
+function openCreate(){
+    document.getElementById('formCT').reset();
+    $('#f_id').val(''); $('#f_sl').val(30); $('#f_thu_tu').val(0);
+    $('#modalTitle').text('Thêm chương trình đào tạo');
     $('#modalForm').addClass('open');
 }
-function openEdit(id) {
+function openEdit(id){
     APP.ajax(URL, {action:'getById', id:id}).done(function(res){
-        if (!res.success) { APP.toast(res.message,'error'); return; }
+        if(!res.success){ APP.toast(res.message,'error'); return; }
         var e = res.data;
-        $('#modalTitle').text('Sửa lớp học');
-        $('#f_id').val(e.id);
-        $('#f_ma_lop').val(e.ma_lop);
-        $('#f_ten_lop').val(e.ten_lop);
-        $('#f_khoa_hoc_id').val(e.khoa_hoc_id);
-        $('#f_ngay_bat_dau').val(e.ngay_bat_dau || '');
-        $('#f_ngay_ket_thuc').val(e.ngay_ket_thuc || '');
-        $('#f_so_luong_toi_da').val(e.so_luong_toi_da);
-        $('#f_dia_diem').val(e.dia_diem || '');
-        $('#f_mo_ta').val(e.mo_ta || '');
-        $('#f_trang_thai').val(e.trang_thai);
+        $('#f_id').val(e.id); $('#f_ma').val(e.ma_chuong_trinh); $('#f_ten').val(e.ten_chuong_trinh);
+        $('#f_thoi_luong').val(e.thoi_luong||''); $('#f_khoa_phong').val(e.khoa_phong_id||'');
+        $('#f_doi_tuong').val(e.doi_tuong_id||''); $('#f_sl').val(e.so_luong_toi_da||30);
+        $('#f_thu_tu').val(e.thu_tu||0);
+        $('#f_mt').val(e.mo_ta||'');
+        $('#modalTitle').text('Sửa chương trình đào tạo');
         $('#modalForm').addClass('open');
     });
 }
-function closeModal() { $('#modalForm').removeClass('open'); }
+function closeModal(){ $('#modalForm').removeClass('open'); }
 
-$('#formLop').on('submit', function(e){
+$('#formCT').on('submit', function(e){
     e.preventDefault();
-    var data = $(this).serializeArray();
-    data.push({name:'action', value: $('#f_id').val() ? 'update' : 'insert'});
+    var data = $(this).serializeArray().reduce(function(a,f){ a[f.name]=f.value; return a; },{});
+    data.action = $('#f_id').val() ? 'update' : 'insert';
     APP.ajax(URL, data).done(function(res){
-        if (res.success) { APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }
+        if(res.success){ APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }
         else APP.toast(res.message,'error');
     });
 });
 
-function trashItem(id) {
-    APP.confirm('Chuyển lớp này vào thùng rác?', function(){
-        APP.ajax(URL, {action:'trash', id:id}).done(function(res){
-            res.success ? (APP.toast(res.message,'success'), load(), loadStats()) : APP.toast(res.message,'error');
-        });
+function trashItem(id){ APP.confirm('Chuyển chương trình này vào thùng rác?', function(){ APP.ajax(URL,{action:'trash',id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),load(),loadStats()):APP.toast(res.message,'error'); }); }); }
+function restoreItem(id){ APP.ajax(URL,{action:'restore',id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),load(),loadStats()):APP.toast(res.message,'error'); }); }
+function deleteItem(id){ APP.confirm('Xóa VĨNH VIỄN chương trình này?', function(){ APP.ajax(URL,{action:'delete',id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),load(),loadStats()):APP.toast(res.message,'error'); }); }, {yesText:'Xóa vĩnh viễn'}); }
+
+// ============ Drawer chi tiết ============
+function openDrawer(id){
+    APP.ajax(URL, {action:'getById', id:id}).done(function(res){
+        if(!res.success){ APP.toast(res.message,'error'); return; }
+        currentCT = res.data;
+        $('#drwTitle').text(res.data.ten_chuong_trinh||'');
+        $('#drwSub').text((res.data.ma_chuong_trinh||'') + (res.data.ten_khoa_phong?(' · '+res.data.ten_khoa_phong):''));
+        $('#drawerBackdrop').addClass('open'); $('#ctDrawer').addClass('open');
+        switchTab('khoa');
     });
 }
-function restoreItem(id) {
-    APP.ajax(URL, {action:'restore', id:id}).done(function(res){
-        res.success ? (APP.toast(res.message,'success'), load(), loadStats()) : APP.toast(res.message,'error');
-    });
-}
-function deleteItem(id) {
-    APP.confirm('Xóa VĨNH VIỄN lớp này?', function(){
-        APP.ajax(URL, {action:'delete', id:id}).done(function(res){
-            res.success ? (APP.toast(res.message,'success'), load(), loadStats()) : APP.toast(res.message,'error');
-        });
-    }, {yesText:'Xóa vĩnh viễn'});
+function closeDrawer(ev){ if(ev && ev.target!==document.getElementById('drawerBackdrop')) return; $('#drawerBackdrop').removeClass('open'); $('#ctDrawer').removeClass('open'); }
+function switchTab(t){
+    $('.dt-tab').removeClass('is-active'); $('.dt-tab[data-tab="'+t+'"]').addClass('is-active');
+    $('#paneKhoa').toggle(t==='khoa'); $('#paneMon').toggle(t==='mon');
+    if(t==='khoa') loadKhoa(); else loadMon();
 }
 
-// ====== Drawer Học viên của lớp ======
-function openDrawer(lopId) {
-    APP.ajax(URL, {action:'getById', id:lopId}).done(function(res){
-        if (!res.success) { APP.toast(res.message,'error'); return; }
-        currentLop = res.data;
-        $('#drawerLopTen').text(currentLop.ten_lop + ' (' + currentLop.ma_lop + ')');
-        var meta = [];
-        if (currentLop.ten_khoa_hoc) meta.push('Khóa: ' + currentLop.ten_khoa_hoc);
-        meta.push('Tối đa: ' + currentLop.so_luong_toi_da + ' HV');
-        $('#drawerLopMeta').text(meta.join(' · '));
-        $('#hvlSearch').val('');
-        loadHvl();
-        $('#drawerHV').addClass('open').find('.drawer').addClass('open');
-    });
-}
-function closeDrawer() { $('#drawerHV').removeClass('open').find('.drawer').removeClass('open'); currentLop = null; load(); loadStats(); }
-
-function loadHvl() {
-    if (!currentLop) return;
-    APP.showLoading('#hvlList');
-    APP.ajax(URL, {action:'hvl_list', lop_hoc_id: currentLop.id, search: $('#hvlSearch').val()}).done(function(res){
-        APP.hideLoading('#hvlList');
-        if (!res.success) { APP.toast(res.message,'error'); return; }
-        renderHvlList(res.data);
-        renderCapacity(res.data.length);
-    });
-}
-
-function renderCapacity(count) {
-    if (!currentLop) return;
-    var max = currentLop.so_luong_toi_da || 1;
-    var pct = Math.min(100, Math.round((count/max)*100));
-    var cls = count >= max ? 'full' : (pct >= 80 ? 'warn' : '');
-    $('#hvlCapacityBar').show().attr('class', 'hv-capacity ' + cls);
-    $('#hvlCapacityBar .hv-capacity-fill').css('width', pct + '%');
-    $('#hvlCapacityBar .hv-capacity-label').text(count + ' / ' + max + ' học viên');
-}
-
-function renderHvlList(rows) {
-    var $w = $('#hvlList').empty();
-    if (!rows.length) {
-        $w.html('<div class="empty-state" style="padding:40px 20px"><div class="icon">' + ICON_EMPTY_HVL + '</div>Chưa có học viên nào trong lớp</div>');
-        return;
-    }
-    rows.forEach(function(r){
-        var nvChip = r.la_nhan_vien == 1 ? '<span class="hv-chip hv-chip-blue">NV '+APP.escape(r.ma_nv||'')+'</span>' : '<span class="hv-chip hv-chip-gray">Ngoài</span>';
-        var dtChip = r.ten_doi_tuong ? '<span class="hv-chip hv-chip-purple">'+APP.escape(r.ten_doi_tuong)+'</span>' : '';
-        var diem = r.diem_tong_ket !== null && r.diem_tong_ket !== undefined ? '<div class="hv-score">'+parseFloat(r.diem_tong_ket).toFixed(1)+'</div>' : '';
-        var xl = r.xep_loai ? '<div class="hv-rank">'+APP.escape(r.xep_loai)+'</div>' : '';
-        var actions = '';
-        if (CAN_HVL_EDIT) actions += '<button class="btn btn-sm" title="Sửa ghi danh" onclick="openHvlEdit('+r.id+')">Sửa</button>';
-        if (CAN_HVL_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa khỏi lớp" onclick="removeHvl('+r.id+')">Xóa</button>';
-
-        $w.append(
-            '<div class="hv-student-row">'+
-                hvAvatar(r, 44) +
-                '<div class="hv-student-main">'+
-                    '<div class="hv-student-name">'+APP.escape(r.ho_ten)+'</div>'+
-                    '<div class="hv-student-code">'+APP.escape(r.ma_hv)+'</div>'+
-                    '<div class="hv-chips" style="margin-top:4px">'+nvChip+' '+dtChip+' '+statusBadgeHvl(r.trang_thai)+'</div>'+
+var khoaRows = [];
+function loadKhoa(){
+    APP.ajax(URL,{action:'khoa_list', chuong_trinh_id:currentCT.id}).done(function(res){
+        if(!res.success) return;
+        khoaRows = res.data||[];
+        var $l=$('#khoaList').empty();
+        if(!khoaRows.length){ $l.html('<div class="text-muted" style="padding:16px">Chưa gắn khóa học nào.</div>'); return; }
+        khoaRows.forEach(function(r){
+            var tt = parseInt(r.trang_thai,10);
+            var meta = [];
+            if(r.ngay_bat_dau) meta.push(APP.formatDate(r.ngay_bat_dau)+(r.ngay_ket_thuc?(' → '+APP.formatDate(r.ngay_ket_thuc)):''));
+            else if(r.ngay_ket_thuc) meta.push('… → '+APP.formatDate(r.ngay_ket_thuc));
+            if(r.dia_diem) meta.push(APP.escape(r.dia_diem));
+            var gv = r.ten_giao_vien || r.giao_vien_ngoai || '';
+            if(gv) meta.push('GVCN: '+APP.escape(gv));
+            $l.append('<div class="pc-row" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:6px">'+
+                '<div style="flex:1">'+
+                    '<div><strong>'+APP.escape(r.ma_khoa_hoc||'')+'</strong> - '+APP.escape(r.ten_khoa_hoc||'')+
+                        ' <span class="badge '+(TT_CLS[tt]||'')+'">'+(TT_LABEL[tt]||'')+'</span></div>'+
+                    (meta.length?'<div class="text-muted" style="font-size:12px;margin-top:3px">'+meta.join(' · ')+'</div>':'')+
                 '</div>'+
-                '<div class="hv-student-score">'+diem+xl+'</div>'+
-                '<div class="actions">'+actions+'</div>'+
-            '</div>'
-        );
-    });
-}
-
-$('#hvlSearch').on('input', APP.debounce(loadHvl, 300));
-
-function removeHvl(id) {
-    APP.confirm('Xóa học viên này khỏi lớp?', function(){
-        APP.ajax(URL, {action:'hvl_delete', id:id}).done(function(res){
-            res.success ? (APP.toast(res.message,'success'), loadHvl()) : APP.toast(res.message,'error');
+                (CAN_EDIT?'<div style="white-space:nowrap">'+
+                    '<button class="btn btn-sm" onclick="editKhoa('+r.id+')">Sửa</button> '+
+                    '<button class="btn btn-sm btn-danger" onclick="removeKhoa('+r.id+')">Gỡ</button></div>':'')+
+            '</div>');
         });
     });
 }
-
-// ====== Modal Sửa HVL ======
-function openHvlEdit(id) {
-    APP.ajax(URL, {action:'hvl_getById', id:id}).done(function(res){
-        if (!res.success) { APP.toast(res.message,'error'); return; }
-        var e = res.data;
-        $('#hf_id').val(e.id);
-        $('#hf_ngay_ghi_danh').val(e.ngay_ghi_danh || '');
-        $('#hf_trang_thai').val(e.trang_thai);
-        $('#hf_diem').val(e.diem_tong_ket === null ? '' : e.diem_tong_ket);
-        $('#hf_xep_loai').val(e.xep_loai || '');
-        $('#hf_ghi_chu').val(e.ghi_chu || '');
-        $('#hf_summary').html(
-            hvAvatar(e, 44) +
-            '<div><div style="font-weight:600">'+APP.escape(e.ho_ten)+'</div>'+
-            '<div class="text-muted" style="font-size:12.5px">'+APP.escape(e.ma_hv)+'</div></div>'
-        );
-        $('#modalHvlEdit').addClass('open');
-    });
+function openKhoaForm(){
+    document.getElementById('formKhoa').reset();
+    $('#k_id').val(''); $('#k_tt').val(0);
+    $('#k_khoa_wrap').show(); $('#k_khoa').prop('disabled', false);
+    $('#modalKhoaTitle').text('Gắn khóa học');
+    $('#modalKhoa').addClass('open');
 }
-function closeHvlEdit() { $('#modalHvlEdit').removeClass('open'); }
-
-$('#formHvl').on('submit', function(e){
+function editKhoa(id){
+    var r = khoaRows.filter(function(x){ return parseInt(x.id,10)===id; })[0];
+    if(!r) return;
+    document.getElementById('formKhoa').reset();
+    $('#k_id').val(r.id);
+    $('#k_khoa').val(r.khoa_hoc_id); $('#k_khoa').prop('disabled', true); $('#k_khoa_wrap').show();
+    $('#k_nbd').val(r.ngay_bat_dau||''); $('#k_nkt').val(r.ngay_ket_thuc||'');
+    $('#k_dd').val(r.dia_diem||''); $('#k_tt').val(parseInt(r.trang_thai,10)||0);
+    $('#k_gv').val(r.giao_vien_id||''); $('#k_gvn').val(r.giao_vien_ngoai||'');
+    $('#modalKhoaTitle').text('Sửa thông tin khóa: '+(r.ma_khoa_hoc||''));
+    $('#modalKhoa').addClass('open');
+}
+function closeKhoaModal(){ $('#modalKhoa').removeClass('open'); }
+$('#formKhoa').on('submit', function(e){
     e.preventDefault();
-    var data = $(this).serializeArray();
-    data.push({name:'action', value:'hvl_update'});
+    var isEdit = !!$('#k_id').val();
+    if(!isEdit && !parseInt($('#k_khoa').val(),10)){ APP.toast('Chọn khóa học','error'); return; }
+    var data = {
+        action: isEdit ? 'khoa_update' : 'khoa_add',
+        id: $('#k_id').val(),
+        chuong_trinh_id: currentCT.id,
+        khoa_hoc_id: $('#k_khoa').val(),
+        ngay_bat_dau: $('#k_nbd').val(), ngay_ket_thuc: $('#k_nkt').val(),
+        dia_diem: $('#k_dd').val(), trang_thai: $('#k_tt').val(),
+        giao_vien_id: $('#k_gv').val(), giao_vien_ngoai: $('#k_gvn').val()
+    };
     APP.ajax(URL, data).done(function(res){
-        if (res.success) { APP.toast(res.message,'success'); closeHvlEdit(); loadHvl(); }
+        if(res.success){ APP.toast(res.message,'success'); closeKhoaModal(); loadKhoa(); load(); }
         else APP.toast(res.message,'error');
     });
 });
+function removeKhoa(id){ APP.confirm('Gỡ khóa học này khỏi chương trình?', function(){ APP.ajax(URL,{action:'khoa_remove', id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),loadKhoa(),load()):APP.toast(res.message,'error'); }); }); }
 
-// ====== Modal Picker ======
-function openPicker() {
-    if (!currentLop) return;
-    pickerSelected = {};
-    $('#pickerSearch').val('');
-    loadPickerList();
-    $('#modalPicker').addClass('open');
-}
-function closePicker() { $('#modalPicker').removeClass('open'); }
-
-function loadPickerList() {
-    APP.showLoading('#pickerList');
-    APP.ajax(URL, {action:'hvl_available', lop_hoc_id: currentLop.id, search: $('#pickerSearch').val()}).done(function(res){
-        APP.hideLoading('#pickerList');
-        if (!res.success) { APP.toast(res.message,'error'); return; }
-        renderPicker(res.data);
+function loadMon(){
+    if(CAN_EDIT) ensureMonCombo();
+    APP.ajax(URL,{action:'mon_list', chuong_trinh_id:currentCT.id}).done(function(res){
+        if(!res.success) return;
+        var items=res.data||[];
+        var tongTiet=0, tongTC=0;
+        items.forEach(function(r){ tongTiet+=parseInt(r.tong_so_tiet,10)||0; tongTC+=parseFloat(r.so_tin_chi)||0; });
+        $('#monSummary').text('Tổng: '+items.length+' bài · '+tongTiet+' tiết · '+tongTC+' tín chỉ');
+        var $l=$('#monList').empty();
+        if(!items.length){ $l.html('<div class="text-muted" style="padding:16px">Chưa có bài học nào thuộc chương trình này.</div>'); return; }
+        items.forEach(function(r){
+            $l.append('<div class="pc-row" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:6px">'+
+                '<div><span class="badge badge-info" style="margin-right:6px">'+(r.thu_tu||0)+'</span><strong>'+APP.escape(r.ma_mon_hoc||'')+'</strong> - '+APP.escape(r.ten_mon_hoc||'')+
+                    ' <span class="text-muted" style="font-size:11px">('+(r.tong_so_tiet||0)+' tiết · '+(r.so_tin_chi||0)+' tc)</span></div>'+
+                (CAN_EDIT?'<div style="white-space:nowrap"><button class="btn btn-sm" title="Lên" onclick="moveMon('+r.id+',\'up\')">↑</button> <button class="btn btn-sm" title="Xuống" onclick="moveMon('+r.id+',\'down\')">↓</button> <button class="btn btn-sm btn-danger" title="Bỏ khỏi chương trình" onclick="removeMon('+r.id+')">Gỡ</button></div>':'')+
+            '</div>');
+        });
     });
 }
-$('#pickerSearch').on('input', APP.debounce(loadPickerList, 300));
-
-function renderPicker(rows) {
-    var $w = $('#pickerList').empty();
-    if (!rows.length) {
-        $w.html('<div class="empty-state" style="padding:30px"><div class="icon">🔍</div>Không có học viên phù hợp (có thể tất cả đã được ghi danh)</div>');
-        updatePickerCount();
-        return;
-    }
-    rows.forEach(function(r){
-        var checked = pickerSelected[r.id] ? 'checked' : '';
-        var nvChip = r.la_nhan_vien == 1 ? '<span class="hv-chip hv-chip-blue">NV '+APP.escape(r.ma_nv||'')+'</span>' : '<span class="hv-chip hv-chip-gray">Ngoài</span>';
-        var dt = r.ten_doi_tuong ? '<span class="hv-chip hv-chip-purple">'+APP.escape(r.ten_doi_tuong)+'</span>' : '';
-        $w.append(
-            '<label class="hv-picker-row '+(checked?'selected':'')+'">'+
-                '<input type="checkbox" value="'+r.id+'" '+checked+'>'+
-                hvAvatar(r, 38) +
-                '<div class="hv-picker-main">'+
-                    '<div class="hv-picker-name">'+APP.escape(r.ho_ten)+'</div>'+
-                    '<div class="hv-picker-meta">'+APP.escape(r.ma_hv)+' · '+nvChip+' '+dt+'</div>'+
-                '</div>'+
-            '</label>'
-        );
+var monComboLoaded=false;
+function ensureMonCombo(){
+    APP.ajax(URL,{action:'mon_combo'}).done(function(res){
+        if(!res.success) return;
+        var $s=$('#monAddSelect').empty().append('<option value="">-- Chọn bài học --</option>');
+        (res.data||[]).forEach(function(m){
+            $s.append('<option value="'+m.id+'">'+APP.escape((m.ma_mon_hoc?m.ma_mon_hoc+' - ':'')+(m.ten_mon_hoc||''))+'</option>');
+        });
+        monComboLoaded=true;
     });
-    updatePickerCount();
 }
-
-$('#pickerList').on('change', 'input[type=checkbox]', function(){
-    var id = parseInt(this.value,10);
-    if (this.checked) pickerSelected[id] = true; else delete pickerSelected[id];
-    $(this).closest('.hv-picker-row').toggleClass('selected', this.checked);
-    updatePickerCount();
-});
-
-function updatePickerCount() {
-    var n = Object.keys(pickerSelected).length;
-    $('#pickerSelCount').text(n + ' đã chọn');
-}
-
-function submitPicker() {
-    var ids = Object.keys(pickerSelected).map(Number);
-    if (!ids.length) { APP.toast('Chưa chọn học viên nào','warning'); return; }
-    APP.ajax(URL, {action:'hvl_bulk_add', lop_hoc_id: currentLop.id, 'hoc_vien_ids[]': ids}, {traditional:true})
-      .done(function(res){
-        if (res.success) { APP.toast(res.message,'success'); closePicker(); loadHvl(); }
+function addMon(){
+    var monId=parseInt($('#monAddSelect').val(),10);
+    if(!monId){ APP.toast('Chọn bài học','error'); return; }
+    APP.ajax(URL,{action:'mon_add', chuong_trinh_id:currentCT.id, mon_hoc_id:monId}).done(function(res){
+        if(res.success){ APP.toast(res.message,'success'); ensureMonCombo(); loadMon(); load(); }
         else APP.toast(res.message,'error');
     });
 }
+function moveMon(id,dir){ APP.ajax(URL,{action:'mon_move', id:id, dir:dir}).done(function(res){ res.success?(loadMon(),load()):APP.toast(res.message,'error'); }); }
+function removeMon(id){ APP.confirm('Bỏ bài học này khỏi chương trình?', function(){ APP.ajax(URL,{action:'mon_remove', id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),ensureMonCombo(),loadMon(),load()):APP.toast(res.message,'error'); }); }); }
 
-// Init
-load();
-loadStats();
+// ============ Filters ============
+$('#search').on('input', APP.debounce(function(){ state.search=this.value; state.page=1; load(); }, 350));
+$('#filterKhoa').on('change', function(){ state.khoaId=parseInt(this.value,10)||0; state.page=1; load(); });
+$('#filterDoiTuong').on('change', function(){ state.doiTuongId=parseInt(this.value,10)||0; state.page=1; load(); });
+$('#filterDaXoa').on('change', function(){ state.daXoa=parseInt(this.value,10)||0; state.page=1; load(); });
+
+loadStats(); load();
 </script>
 
 <?php require __DIR__ . '/../layouts/footer.php'; ?>

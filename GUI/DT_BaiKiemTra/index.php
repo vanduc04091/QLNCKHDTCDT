@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_BaiKiemTra', PhanQuyenHelper::QUYEN_XEM)) {
@@ -10,7 +11,8 @@ $canAdd = PhanQuyenHelper::hasQuyen('DT_BaiKiemTra', PhanQuyenHelper::QUYEN_THEM
 $canEdit = PhanQuyenHelper::hasQuyen('DT_BaiKiemTra', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_BaiKiemTra', PhanQuyenHelper::QUYEN_XOA);
 
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
+$khoaList = DT_KhoaHoc_BUS::getCombo();
 
 $pageTitle = 'Bài kiểm tra';
 $activeMenu = 'DT_BaiKiemTra';
@@ -66,17 +68,13 @@ require __DIR__ . '/../layouts/header.php';
 
     <div class="lh-filter">
         <div class="lh-filter-field">
-            <label>Lớp học</label>
+            <label>Chương trình đào tạo</label>
             <select id="fLop" class="form-select">
-                <option value="0">Tất cả lớp</option>
+                <option value="0">Tất cả chương trình</option>
                 <?php foreach ($lopList as $l): ?>
-                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                 <?php endforeach; ?>
             </select>
-        </div>
-        <div class="lh-filter-field">
-            <label>Môn học</label>
-            <select id="fMon" class="form-select"><option value="0">Tất cả môn</option></select>
         </div>
         <div class="lh-filter-field">
             <label>Loại bài</label>
@@ -107,7 +105,7 @@ require __DIR__ . '/../layouts/header.php';
                     <th style="width:130px">Mã</th>
                     <th>Tiêu đề</th>
                     <th style="width:140px">Loại</th>
-                    <th style="width:200px">Lớp / Môn</th>
+                    <th style="width:200px">Chương trình</th>
                     <th style="width:120px">Ngày KT</th>
                     <th style="width:90px" class="text-center">Đề</th>
                     <th style="width:110px" class="text-center">Đáp án</th>
@@ -163,17 +161,19 @@ require __DIR__ . '/../layouts/header.php';
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Lớp học</label>
-                        <select name="lop_hoc_id" id="f_lop" class="form-select">
-                            <option value="">--</option>
-                            <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                        <label>Khóa học <span class="required">*</span></label>
+                        <select id="f_khoa" class="form-select">
+                            <option value="">-- Chọn khóa học --</option>
+                            <?php foreach ($khoaList as $k): ?>
+                                <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Môn học</label>
-                        <select name="mon_hoc_id" id="f_mon" class="form-select"><option value="">--</option></select>
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
+                        <select name="lop_hoc_id" id="f_lop" class="form-select" disabled>
+                            <option value="">-- Chọn chương trình --</option>
+                        </select>
                     </div>
                 </div>
 
@@ -199,24 +199,24 @@ require __DIR__ . '/../layouts/header.php';
                 <div class="bkt-upload-row">
                     <div class="bkt-upload-card">
                         <div class="bkt-upload-label">
-                            ' + ICON_FILE_TEXT + '
+                            <?= IconHelper::svg('file-text', '14') ?>
                             File đề kiểm tra
                         </div>
                         <input type="file" name="de_file" id="f_de" hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.png,.jpg,.jpeg">
                         <button type="button" class="btn btn-block" onclick="document.getElementById('f_de').click()">
-                            ' + ICON_DOWNLOAD + '
+                            <?= IconHelper::svg('download', '14') ?>
                             Chọn file đề
                         </button>
                         <div class="bkt-upload-info" id="deInfo"></div>
                     </div>
                     <div class="bkt-upload-card bkt-upload-secret">
                         <div class="bkt-upload-label">
-                            ' + ICON_LOCK + '
+                            <?= IconHelper::svg('lock', '14') ?>
                             File đáp án
                         </div>
                         <input type="file" name="dap_an_file" id="f_ap" hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,.png,.jpg,.jpeg">
                         <button type="button" class="btn btn-block" onclick="document.getElementById('f_ap').click()">
-                            ' + ICON_DOWNLOAD + '
+                            <?= IconHelper::svg('download', '14') ?>
                             Chọn file đáp án
                         </button>
                         <div class="bkt-upload-info" id="apInfo"></div>
@@ -255,8 +255,7 @@ var ICON_LOCK = '<?= addslashes(IconHelper::svg('lock', '14')) ?>';
 var ICON_UNLOCK = '<?= addslashes(IconHelper::svg('unlock', '14')) ?>';
 var ICON_EMPTY = '<?= addslashes(IconHelper::svg('search', '40')) ?>';
 var ICON_DOWNLOAD_SM = '<?= addslashes(IconHelper::svg('download', '13')) ?>';
-var state = { page:1, pageSize:20, daXoa:0, search:'', filter:{lop:0, mon:0, loai:0, tt:''} };
-var monLoaded = false;
+var state = { page:1, pageSize:20, daXoa:0, search:'', filter:{lop:0, loai:0, tt:''} };
 var LOAI_TXT = {1:'Thường xuyên', 2:'Giữa kỳ', 3:'Cuối kỳ', 4:'Ôn tập'};
 var TT_TXT = {0:'Nháp', 1:'Đang dùng', 2:'Lưu trữ'};
 
@@ -281,7 +280,7 @@ function load(){
     APP.ajax(URL_AJAX, {
         action:'getPaged', page:state.page, pageSize:state.pageSize,
         da_xoa:state.daXoa, search:state.search,
-        lop_hoc_id:state.filter.lop, mon_hoc_id:state.filter.mon,
+        lop_hoc_id:state.filter.lop,
         loai_bkt:state.filter.loai, trang_thai:state.filter.tt
     }).done(function(res){
         APP.hideLoading('#bktWrap');
@@ -351,29 +350,24 @@ function renderPager(p){
 $('#pageNav').on('click','button[data-p]',function(){ var p=parseInt($(this).data('p'),10); if(!p||p===state.page) return; state.page=p; load(); });
 $('#search').on('input', APP.debounce(function(){state.search=$(this).val();state.page=1;load();},350));
 $('#fLop').on('change',function(){state.filter.lop=parseInt(this.value,10)||0;state.page=1;load();});
-$('#fMon').on('change',function(){state.filter.mon=parseInt(this.value,10)||0;state.page=1;load();});
 $('#fLoai').on('change',function(){state.filter.loai=parseInt(this.value,10)||0;state.page=1;load();});
 $('#fTT').on('change',function(){state.filter.tt=this.value;state.page=1;load();});
 
-// Load combo môn cho filter
-APP.ajax(URL_AJAX,{action:'getComboMonHoc'}).done(function(res){
-    if (!res.success) return;
-    var html = '<option value="0">Tất cả môn</option>';
-    (res.data||[]).forEach(function(m){ html += '<option value="'+m.id+'">'+APP.escape(m.ma_mon_hoc+' - '+m.ten_mon_hoc)+'</option>'; });
-    $('#fMon').html(html);
-});
-
-// =========== Modal ===========
-function ensureMonForForm(cb){
-    if (monLoaded){ cb && cb(); return; }
-    APP.ajax(URL_AJAX,{action:'getComboMonHoc'}).done(function(res){
+// =========== Modal: chọn khóa -> nạp CTĐT ===========
+// preselectCt: nếu có, sẽ set sau khi nạp xong (dùng cho openEdit)
+function loadCTtheoKhoa(khoaId, preselectCt){
+    var $ct = $('#f_lop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+    if (!khoaId) return;
+    APP.ajax(URL_AJAX,{action:'getChuongTrinhTheoKhoa', khoa_hoc_id:khoaId}).done(function(res){
         if (!res.success) return;
-        var html = '<option value="">--</option>';
-        (res.data||[]).forEach(function(m){ html += '<option value="'+m.id+'">'+APP.escape(m.ma_mon_hoc+' - '+m.ten_mon_hoc)+'</option>'; });
-        $('#formBKT #f_mon').html(html);
-        monLoaded = true; cb && cb();
+        var rows = res.data||[];
+        if (!rows.length){ $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>'); return; }
+        rows.forEach(function(c){ $ct.append('<option value="'+c.id+'">'+APP.escape((c.ma_chuong_trinh?c.ma_chuong_trinh+' - ':'')+(c.ten_chuong_trinh||''))+'</option>'); });
+        $ct.prop('disabled', false);
+        if (preselectCt) $ct.val(preselectCt);
     });
 }
+$('#f_khoa').on('change', function(){ loadCTtheoKhoa(parseInt(this.value,10)||0); });
 
 function setFileInfo($input, $info){
     var f = $input[0].files && $input[0].files[0];
@@ -414,10 +408,11 @@ $(document).on('click', '.bkt-clear-server', function(){
 });
 
 function openCreate(){
-    ensureMonForForm();
     $('#modalTitle').text('Thêm bài kiểm tra');
     $('#formBKT')[0].reset();
     $('#f_id').val('');
+    $('#f_khoa').val('');
+    $('#f_lop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
     $('#deInfo').empty(); $('#apInfo').empty();
     $('#f_tt').val('1');
     $('#btnSubmit').text('Lưu');
@@ -425,29 +420,28 @@ function openCreate(){
 }
 
 function openEdit(id){
-    ensureMonForForm(function(){
-        APP.ajax(URL_AJAX,{action:'getById', id:id}).done(function(res){
-            if (!res.success){ APP.toast(res.message,'error'); return; }
-            var b = res.data;
-            $('#modalTitle').text('Sửa bài kiểm tra');
-            $('#formBKT')[0].reset();
-            $('#f_id').val(b.id);
-            $('#f_ma').val(b.ma_bkt);
-            $('#f_loai').val(b.loai_bkt);
-            $('#f_td').val(b.tieu_de);
-            $('#f_mt').val(b.mo_ta||'');
-            $('#f_lop').val(b.lop_hoc_id||'');
-            $('#formBKT #f_mon').val(b.mon_hoc_id||'');
-            $('#f_nkt').val(b.ngay_kiem_tra||'');
-            $('#f_tglb').val(b.thoi_gian_lam_bai||'');
-            $('#f_tt').val(b.trang_thai);
-            $('#f_cdk').prop('checked', parseInt(b.cong_khai_dap_an,10)===1);
-            $('#f_gc').val(b.ghi_chu||'');
-            showCurrent($('#deInfo'), b.de_file_goc, b.de_file_name, 'de', b.id, b.de_file_size);
-            showCurrent($('#apInfo'), b.dap_an_file_goc, b.dap_an_file_name, 'dap_an', b.id, b.dap_an_file_size);
-            $('#btnSubmit').text('Lưu thay đổi');
-            $('#modalForm').addClass('open');
-        });
+    APP.ajax(URL_AJAX,{action:'getById', id:id}).done(function(res){
+        if (!res.success){ APP.toast(res.message,'error'); return; }
+        var b = res.data;
+        $('#modalTitle').text('Sửa bài kiểm tra');
+        $('#formBKT')[0].reset();
+        $('#f_id').val(b.id);
+        $('#f_ma').val(b.ma_bkt);
+        $('#f_loai').val(b.loai_bkt);
+        $('#f_td').val(b.tieu_de);
+        $('#f_mt').val(b.mo_ta||'');
+        // Chọn khóa rồi nạp CTĐT thuộc khóa, sau đó chọn đúng CTĐT
+        $('#f_khoa').val(b.khoa_hoc_id||'');
+        loadCTtheoKhoa(parseInt(b.khoa_hoc_id,10)||0, b.lop_hoc_id||'');
+        $('#f_nkt').val(b.ngay_kiem_tra||'');
+        $('#f_tglb').val(b.thoi_gian_lam_bai||'');
+        $('#f_tt').val(b.trang_thai);
+        $('#f_cdk').prop('checked', parseInt(b.cong_khai_dap_an,10)===1);
+        $('#f_gc').val(b.ghi_chu||'');
+        showCurrent($('#deInfo'), b.de_file_goc, b.de_file_name, 'de', b.id, b.de_file_size);
+        showCurrent($('#apInfo'), b.dap_an_file_goc, b.dap_an_file_name, 'dap_an', b.id, b.dap_an_file_size);
+        $('#btnSubmit').text('Lưu thay đổi');
+        $('#modalForm').addClass('open');
     });
 }
 function closeModal(){ $('#modalForm').removeClass('open'); }
@@ -458,7 +452,7 @@ $('#formBKT').on('submit', function(e){
     fd.append('action', $('#f_id').val()?'update':'insert');
     if (!fd.has('cong_khai_dap_an')) fd.append('cong_khai_dap_an', '0');
     var $btn = $('#btnSubmit').prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $btn.prop('disabled', false).text('Lưu');
             if (res.success){ APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }

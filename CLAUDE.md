@@ -290,6 +290,27 @@ Xem chi tiết: `docs/de_xuat_phan_mem.md`.
 
 ## 12. Changelog quan trọng (cho người maintain sau)
 
+### 2026-06-12 — Chuyển "Lớp học" → "Chương trình đào tạo" (CTĐT)
+- ✅ Bảng `dt_lop_hoc` → `dt_chuong_trinh` (`ma_lop`/`ten_lop` → `ma_chuong_trinh`/`ten_chuong_trinh`; thêm `thoi_luong`, `khoa_phong_id`; bỏ `khoa_hoc_id`). Class/file/GUI `DT_LopHoc*` → `DT_ChuongTrinh*`. MODULE_KEY `DT_LopHoc` → `DT_ChuongTrinh`.
+- ✅ Khóa học ↔ CTĐT là **N:N** qua bảng mới `dt_khoa_hoc_chuong_trinh` (`id` = "ngữ cảnh học vụ"). Bridge: `DT_KhoaHocChuongTrinh_DAL/BUS` (`getCombo()` label "Khóa — CTĐT").
+- ✅ **Mọi bảng học vụ** (`dt_hoc_vien_lop`, `dt_lich_hoc`, `dt_phan_cong_giang_vien`, `dt_bai_kiem_tra`, `dt_chung_chi`, `dt_tai_lieu`, `dt_dang_ky_khoa_hoc`) đổi cột `lop_hoc_id` → `khoa_hoc_chuong_trinh_id` (FK → `dt_khoa_hoc_chuong_trinh.id`). DTO/PUBLIC giữ field PHP `lop_hoc_id` (alias) + SELECT alias `ma_lop`/`ten_lop` để giảm sửa GUI.
+- ✅ Môn gắn theo CTĐT: `dt_lop_hoc_mon_hoc` → `dt_chuong_trinh_mon_hoc`. Module `DT_KhoaHocMonHoc` (trỏ bảng ma `dt_khoa_hoc_mon_hoc` KHÔNG tồn tại → là **lỗi gốc khiến module Môn học không xem/thêm được**) đã xóa, viết mới `DT_ChuongTrinhMonHoc`. UI gán môn chuyển sang màn CTĐT (drawer 2 tab: gắn khóa N:N + gắn môn); màn Khóa học chỉ xem CTĐT áp dụng (read-only).
+- ✅ Migration backfill 1-1 giữ nguyên dữ liệu thật. Backup: `backup_truoc_ctdt_*.sql`.
+
+### 2026-06-13 — Bài học thuộc 1 CTĐT (1:N) + thứ tự
+- ✅ **Đổi quan hệ bài học↔CTĐT từ N:N → 1:N**: thêm `dt_mon_hoc.chuong_trinh_id` (FK → `dt_chuong_trinh`, nullable). Backfill từ `dt_chuong_trinh_mon_hoc` (mỗi bài ≤1 CTĐT nên không mất dữ liệu). Bảng nối `dt_chuong_trinh_mon_hoc` còn lại nhưng code KHÔNG dùng nữa (giữ để rollback).
+- ✅ **Thêm cột `thu_tu`** cho `dt_mon_hoc` và `dt_chuong_trinh`. Mọi combo + `getPaged` sort theo `thu_tu ASC, id ASC`. Bài insert với thu_tu=0 + có CTĐT → tự xếp cuối (`getMaxThuTuByChuongTrinh + 1`).
+- ✅ Màn **Bài học**: form thêm/sửa có chọn CTĐT (tùy chọn) + nhập thứ tự; bảng có cột TT + cột Chương trình; filter theo CTĐT. Bỏ drawer gán N:N cũ + các action `addMonToKhoa`/`removeMonKhoiKhoa`.
+- ✅ Màn **CTĐT** tab "Bài học": đổi từ gắn/gỡ N:N → danh sách bài thuộc CTĐT (theo thu_tu) + nút ↑/↓ (`DT_MonHoc_BUS::move` hoán đổi thu_tu). `mon_list` trả `getByChuongTrinh`.
+- ✅ `getOverview`/`getMonHocByLop`/subquery `so_mon_hoc`/`getStats.co_mon` đọc bài qua `dt_mon_hoc.chuong_trinh_id` thay vì bảng nối.
+
+### 2026-06-13 — Tách trường học vụ CTĐT sang bảng nối + fix HY093
+- 🐞 **Fix HY093 khi thêm/sửa CTĐT**: `DT_ChuongTrinh_DAL::insert` reuse placeholder `:u` 2 lần (`:u, :u`) — với `EMULATE_PREPARES=false` gây "Invalid parameter number". Đổi thành `:u1, :u2`.
+- ✅ **Bỏ khỏi `dt_chuong_trinh`** các cột: `ngay_bat_dau`, `ngay_ket_thuc`, `dia_diem`, `giao_vien_id`, `giao_vien_ngoai`, `trang_thai`. Các trường này **phụ thuộc ngữ cảnh khóa cụ thể** → chuyển sang bảng nối `dt_khoa_hoc_chuong_trinh` (mỗi cặp khóa+CTĐT có lịch học vụ riêng). Không backfill (dữ liệu cũ là test).
+- ✅ **Thêm `dt_chuong_trinh.doi_tuong_id`** (FK → `dm_doi_tuong_hoc_vien`): đối tượng học viên của CTĐT. Combo + filter + cột bảng + form.
+- ✅ Bảng nối thêm `updateInfo()` + action `khoa_update`; drawer tab "Khóa học áp dụng" giờ là modal nhập/sửa ngày/địa điểm/GVCN/trạng thái cho từng cặp khóa.
+- ✅ `getStats` CTĐT đổi từ đếm theo trạng thái → đếm `co_khoa`/`co_mon`. Dashboard `getKpis`/`getTopFullClasses` bỏ điều kiện `trang_thai` trên CTĐT. `getByHocVien`/`getByKhoaHoc`/`PhanCongGiangVien` đọc ngày/trạng thái từ `khct` thay vì `ct`/`lop`.
+
 ### 2026-05-01 — Hardening trước deploy
 - ✅ Thêm `Helper::requireAjaxCsrf()` + `APP.ajax` tự gắn `X-CSRF-Token`. Replace toàn bộ 33 `ajax_handler` từ `requireAjaxLogin()` → `requireAjaxCsrf()`.
 - ✅ Đặt `assets/uploads/.htaccess` chung chặn PHP execution cho cả cây uploads (thay vì rải mỗi subdir).

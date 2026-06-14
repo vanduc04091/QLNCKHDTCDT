@@ -32,8 +32,8 @@ $menu = [
     ['group' => 'Đào tạo', 'key' => 'dao-tao', 'icon' => 'academic-cap', 'items' => [
         ['key' => 'DT_DotDangKy', 'icon' => 'calendar', 'label' => 'Đợt đăng ký', 'url' => $base . 'GUI/DT_DotDangKy/index.php', 'module' => 'DT_DotDangKy'],
         ['key' => 'DT_KhoaHoc', 'icon' => 'book-open', 'label' => 'Khóa học', 'url' => $base . 'GUI/DT_KhoaHoc/index.php', 'module' => 'DT_KhoaHoc'],
-        ['key' => 'DT_MonHoc',  'icon' => 'book', 'label' => 'Môn học',  'url' => $base . 'GUI/DT_MonHoc/index.php',  'module' => 'DT_MonHoc'],
-        ['key' => 'DT_LopHoc',  'icon' => 'users', 'label' => 'Lớp học',  'url' => $base . 'GUI/DT_LopHoc/index.php',  'module' => 'DT_LopHoc'],
+        ['key' => 'DT_ChuongTrinh',  'icon' => 'users', 'label' => 'Chương trình đào tạo',  'url' => $base . 'GUI/DT_ChuongTrinh/index.php',  'module' => 'DT_ChuongTrinh'],
+        ['key' => 'DT_MonHoc',  'icon' => 'book', 'label' => 'Bài học',  'url' => $base . 'GUI/DT_MonHoc/index.php',  'module' => 'DT_MonHoc'],
         ['key' => 'DT_DangKyKhoaHoc', 'icon' => 'clipboard-list', 'label' => 'Đăng ký khóa học', 'url' => $base . 'GUI/DT_DangKyKhoaHoc/index.php', 'module' => 'DT_DangKyKhoaHoc'],
         ['key' => 'DT_LichHoc', 'icon' => 'clock-history', 'label' => 'Lịch học', 'url' => $base . 'GUI/DT_LichHoc/index.php', 'module' => 'DT_LichHoc'],
         ['key' => 'DT_DiemDanh', 'icon' => 'clipboard-list', 'label' => 'Điểm danh', 'url' => $base . 'GUI/DT_DiemDanh/index.php', 'module' => 'DT_DiemDanh'],
@@ -61,7 +61,9 @@ $menu = [
         ['key' => 'DM_NhomTaiKhoan', 'icon' => 'users', 'label' => 'Nhóm tài khoản', 'url' => $base . 'GUI/DM_NhomTaiKhoan/index.php', 'module' => 'DM_NhomTaiKhoan'],
         ['key' => 'DM_PhanQuyen', 'icon' => 'key', 'label' => 'Phân quyền', 'url' => $base . 'GUI/DM_PhanQuyen/index.php', 'module' => 'DM_PhanQuyen'],
         ['key' => 'DM_DanhSachForm', 'icon' => 'clipboard-list', 'label' => 'Danh sách form', 'url' => $base . 'GUI/DM_DanhSachForm/index.php', 'module' => 'DM_DanhSachForm'],
-        ['key' => 'DM_NhatKyHeThong', 'icon' => 'clock-history', 'label' => 'Nhật ký hệ thống', 'url' => $base . 'GUI/DM_NhatKyHeThong/index.php', 'module' => 'DM_NhatKyHeThong'],['key' => 'DM_CauHinh', 'icon' => 'settings', 'label' => 'Cấu hình', 'url' => $base . 'GUI/DM_CauHinh/index.php', 'module' => 'DM_CauHinh'],
+        ['key' => 'DM_NhatKyHeThong', 'icon' => 'clock-history', 'label' => 'Nhật ký hệ thống', 'url' => $base . 'GUI/DM_NhatKyHeThong/index.php', 'module' => 'DM_NhatKyHeThong'],
+        ['key' => 'DM_CauHinh', 'icon' => 'settings', 'label' => 'Cấu hình', 'url' => $base . 'GUI/DM_CauHinh/index.php', 'module' => 'DM_CauHinh'],
+        ['key' => 'DM_XoaCache', 'icon' => 'refresh', 'label' => 'Xóa cache', 'url' => $base . 'GUI/DM_XoaCache/index.php', 'module' => 'DM_XoaCache'],
     ]],
 ];
 

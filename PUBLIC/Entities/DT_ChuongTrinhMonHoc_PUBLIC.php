@@ -1,8 +1,8 @@
 <?php
-class DT_KhoaHocMonHoc_PUBLIC
+class DT_ChuongTrinhMonHoc_PUBLIC
 {
     public ?int $id = null;
-    public int $khoa_hoc_id = 0;
+    public int $chuong_trinh_id = 0;
     public int $mon_hoc_id = 0;
     public int $thu_tu = 0;
     public int $bat_buoc = 1;

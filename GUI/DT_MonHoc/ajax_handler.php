@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_MonHoc_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_KhoaHocMonHoc_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -19,7 +17,8 @@ try {
             $search = Helper::postStr('search');
             $daXoa = Helper::postInt('da_xoa', 0);
             $trangThai = Helper::postInt('trang_thai', -1);
-            $res = DT_MonHoc_BUS::getPaged($page, $size, $search, $daXoa, $trangThai);
+            $chuongTrinhId = Helper::postInt('chuong_trinh_id', 0);
+            $res = DT_MonHoc_BUS::getPaged($page, $size, $search, $daXoa, $trangThai, $chuongTrinhId);
             ResponseHelper::paged($res['data'], $page, $size, $res['totalRecords']);
             break;
 
@@ -44,6 +43,8 @@ try {
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
             $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
+            $e->thu_tu = Helper::postInt('thu_tu', 0);
+            $e->chuong_trinh_id = Helper::postInt('chuong_trinh_id') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_tao = $u;
             $res = DT_MonHoc_BUS::insert($e);
@@ -60,6 +61,8 @@ try {
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
             $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
+            $e->thu_tu = Helper::postInt('thu_tu', 0);
+            $e->chuong_trinh_id = Helper::postInt('chuong_trinh_id') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_cap_nhat = $u;
             $res = DT_MonHoc_BUS::update($e);
@@ -81,32 +84,6 @@ try {
         case 'delete':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XOA);
             $res = DT_MonHoc_BUS::delete(Helper::postInt('id'));
-            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
-            break;
-
-        // ====== Khóa học gắn với môn học (chiều ngược) ======
-        case 'listKhoaCuaMon':
-            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
-            ResponseHelper::success('OK', DT_KhoaHocMonHoc_BUS::listByMonHoc(Helper::postInt('mon_hoc_id')));
-            break;
-
-        case 'getKhoaCombo':
-            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
-            ResponseHelper::success('OK', DT_KhoaHoc_BUS::getCombo());
-            break;
-
-        case 'addMonToKhoa':
-            PhanQuyenHelper::requireQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_THEM);
-            $monId  = Helper::postInt('mon_hoc_id');
-            $khoaId = Helper::postInt('khoa_hoc_id');
-            $batBuoc = Helper::postInt('bat_buoc', 1);
-            $res = DT_KhoaHocMonHoc_BUS::addMonHoc($khoaId, $monId, $batBuoc, $u);
-            $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
-            break;
-
-        case 'removeMonKhoiKhoa':
-            PhanQuyenHelper::requireQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_XOA);
-            $res = DT_KhoaHocMonHoc_BUS::remove(Helper::postInt('id'), $u);
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
             break;
 

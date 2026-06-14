@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_BaiKiemTra_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -42,13 +43,15 @@ try {
             break;
 
         case 'getComboLop':
-            ResponseHelper::success('OK', DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data']);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getCombo());
             break;
 
-        case 'getComboMonHoc':
-            $stmt = Database::getConnection()->prepare("SELECT id, ma_mon_hoc, ten_mon_hoc FROM DT_MON_HOC WHERE da_xoa=0 ORDER BY ten_mon_hoc ASC");
-            $stmt->execute();
-            ResponseHelper::success('OK', $stmt->fetchAll());
+        case 'getComboKhoaHoc':
+            ResponseHelper::success('OK', DT_KhoaHoc_BUS::getCombo());
+            break;
+
+        case 'getChuongTrinhTheoKhoa':
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getByKhoaHoc(Helper::postInt('khoa_hoc_id')));
             break;
 
         case 'insert':
@@ -62,7 +65,7 @@ try {
             $e->mo_ta = Helper::postStr('mo_ta') ?: null;
             $e->loai_bkt = Helper::postInt('loai_bkt', 1);
             $e->lop_hoc_id = Helper::postInt('lop_hoc_id') ?: null;
-            $e->mon_hoc_id = Helper::postInt('mon_hoc_id') ?: null;
+            $e->mon_hoc_id = null; // Bài kiểm tra theo CTĐT, không gắn bài học
             $e->ngay_kiem_tra = Helper::postStr('ngay_kiem_tra') ?: null;
             $e->thoi_gian_lam_bai = isset($_POST['thoi_gian_lam_bai']) && $_POST['thoi_gian_lam_bai'] !== '' ? (int)$_POST['thoi_gian_lam_bai'] : null;
             $e->cong_khai_dap_an = Helper::postInt('cong_khai_dap_an', 0) ? 1 : 0;

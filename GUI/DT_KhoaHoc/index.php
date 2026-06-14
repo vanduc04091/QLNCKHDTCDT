@@ -15,11 +15,11 @@ $canAdd = PhanQuyenHelper::hasQuyen('DT_KhoaHoc', PhanQuyenHelper::QUYEN_THEM);
 $canEdit = PhanQuyenHelper::hasQuyen('DT_KhoaHoc', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_KhoaHoc', PhanQuyenHelper::QUYEN_XOA);
 
-// Quyền liên kết môn học (module DT_KhoaHocMonHoc)
-$canKhmView = PhanQuyenHelper::hasQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_XEM);
-$canKhmAdd  = PhanQuyenHelper::hasQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_THEM);
-$canKhmEdit = PhanQuyenHelper::hasQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_SUA);
-$canKhmDel  = PhanQuyenHelper::hasQuyen('DT_KhoaHocMonHoc', PhanQuyenHelper::QUYEN_XOA);
+// Quyền xem chương trình đào tạo của khóa (đọc danh sách CTĐT áp dụng)
+$canKhmView = PhanQuyenHelper::hasQuyen('DT_ChuongTrinh', PhanQuyenHelper::QUYEN_XEM);
+$canKhmAdd  = false;
+$canKhmEdit = false;
+$canKhmDel  = false;
 
 $loaiHinhCombo = DM_LoaiHinhDaoTao_BUS::getCombo();
 $hinhThucCombo = DM_HinhThucHoc_BUS::getCombo();
@@ -81,8 +81,8 @@ require __DIR__ . '/../layouts/header.php';
                     <th>Loại hình</th>
                     <th>Hình thức</th>
                     <th>Đối tượng</th>
-                    <th class="text-center" style="width:80px">Tổng tiết</th>
-                    <th class="text-center" style="width:80px">Tín chỉ</th>
+                    <th class="text-center" style="width:110px">Bắt đầu</th>
+                    <th class="text-center" style="width:110px">Kết thúc</th>
                     <th class="text-center" style="width:110px">Trạng thái</th>
                     <th style="width:180px" class="text-right">Hành động</th>
                 </tr>
@@ -164,20 +164,12 @@ require __DIR__ . '/../layouts/header.php';
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Số tiết lý thuyết</label>
-                        <input type="number" name="so_tiet_ly_thuyet" id="f_slt" class="form-control" value="0" min="0">
+                        <label>Ngày bắt đầu</label>
+                        <input type="date" name="ngay_bat_dau" id="f_nbd" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label>Số tiết thực hành</label>
-                        <input type="number" name="so_tiet_thuc_hanh" id="f_sth" class="form-control" value="0" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Tổng số tiết</label>
-                        <input type="number" id="f_tst" class="form-control" value="0" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Số tín chỉ</label>
-                        <input type="number" step="0.5" name="so_tin_chi" id="f_stc" class="form-control" value="0" min="0">
+                        <label>Ngày kết thúc</label>
+                        <input type="date" name="ngay_ket_thuc" id="f_nkt" class="form-control">
                     </div>
                 </div>
                 <div class="form-group">
@@ -216,78 +208,43 @@ require __DIR__ . '/../layouts/header.php';
             </div>
             <button type="button" class="close" onclick="closeChuongTrinh()" aria-label="Đóng">&times;</button>
         </div>
-        <!-- Summary row -->
-        <div class="stats-row" style="margin:14px 0 0;grid-template-columns:repeat(4,1fr);gap:8px">
-            <div class="stat-card" style="padding:10px 12px;border:1px solid var(--gray-200)">
-                <div>
-                    <div class="stat-label">Số môn</div>
-                    <div class="stat-value" id="sumSoMon" style="font-size:16px">0</div>
-                </div>
-            </div>
-            <div class="stat-card success" style="padding:10px 12px">
-                <div>
-                    <div class="stat-label">Bắt buộc</div>
-                    <div class="stat-value" id="sumBatBuoc" style="font-size:16px">0</div>
-                </div>
-            </div>
-            <div class="stat-card info" style="padding:10px 12px">
-                <div>
-                    <div class="stat-label">Tổng tiết (môn)</div>
-                    <div class="stat-value" id="sumTongTiet" style="font-size:16px">0</div>
-                    <div class="stat-sub" id="sumTongTietKh" style="font-size:11px">/ 0 KH</div>
-                </div>
-            </div>
-            <div class="stat-card warning" style="padding:10px 12px">
-                <div>
-                    <div class="stat-label">Tín chỉ (môn)</div>
-                    <div class="stat-value" id="sumTongTinChi" style="font-size:16px">0</div>
-                    <div class="stat-sub" id="sumTongTinChiKh" style="font-size:11px">/ 0 KH</div>
-                </div>
-            </div>
-        </div>
-        <!-- Progress: môn tiết so với khóa tiết -->
-        <div style="margin-top:10px">
-            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--gray-500);margin-bottom:4px">
-                <span>Tiến độ phủ tiết học</span>
-                <span id="progressLabel">0%</span>
-            </div>
-            <div class="progress" role="progressbar" aria-labelledby="progressLabel">
-                <div class="progress-bar" id="progressBar" style="width:0%"></div>
-            </div>
-        </div>
     </div>
 
     <div class="drawer-body">
-        <?php if ($canKhmAdd): ?>
-        <div class="inline-add">
-            <select id="ctSelectMon" class="form-select" aria-label="Chọn môn học để thêm">
-                <option value="">-- Chọn môn học để thêm --</option>
-                <?php foreach ($monHocCombo as $m): ?>
-                    <option value="<?= (int)$m['id'] ?>"
-                            data-tiet="<?= (int)($m['tong_so_tiet'] ?? 0) ?>"
-                            data-tin="<?= (float)($m['so_tin_chi'] ?? 0) ?>">
-                        <?= Helper::h($m['ma_mon_hoc']) ?> — <?= Helper::h($m['ten_mon_hoc']) ?>
-                        (<?= (int)($m['tong_so_tiet'] ?? 0) ?> tiết · <?= (float)($m['so_tin_chi'] ?? 0) ?> TC)
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <label class="icon-label" style="font-size:12.5px;color:var(--gray-700)">
-                <input type="checkbox" id="ctBatBuoc" checked> Bắt buộc
-            </label>
-            <button type="button" class="btn btn-primary" id="btnAddMon">+ Thêm môn</button>
+        <?php if ($canEdit): ?>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--gray-200)">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13.5px">Gắn chương trình đào tạo vào khóa học</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <select id="ctAddSelect" class="form-select" style="flex:1;min-width:220px">
+                    <option value="">-- Chọn chương trình đào tạo --</option>
+                </select>
+                <input type="date" id="ctAddNbd" class="form-control" style="width:150px" title="Ngày bắt đầu">
+                <input type="date" id="ctAddNkt" class="form-control" style="width:150px" title="Ngày kết thúc">
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+                <input type="text" id="ctAddDiaDiem" class="form-control" style="flex:1;min-width:180px" placeholder="Địa điểm (tùy chọn)">
+                <select id="ctAddTrangThai" class="form-select" style="width:160px">
+                    <option value="0">Chờ khai giảng</option>
+                    <option value="1">Đang học</option>
+                    <option value="2">Đã kết thúc</option>
+                    <option value="3">Đã hủy</option>
+                </select>
+                <button type="button" class="btn btn-primary btn-sm" id="btnAddCt">Gắn CTĐT</button>
+            </div>
         </div>
         <?php endif; ?>
+        <div class="text-muted" style="font-size:12.5px;margin-bottom:10px">
+            Quản lý bài học của từng CTĐT tại menu <strong>Chương trình đào tạo</strong>.
+        </div>
         <div id="ctTableWrap" style="position:relative;min-height:200px">
             <table class="table">
                 <thead>
                     <tr>
-                        <th style="width:64px" class="text-center">Thứ tự</th>
-                        <th style="width:110px">Mã môn</th>
-                        <th>Tên môn học</th>
-                        <th class="text-center" style="width:70px">Tiết</th>
-                        <th class="text-center" style="width:60px">TC</th>
-                        <th class="text-center" style="width:90px">Bắt buộc</th>
-                        <th style="width:60px" class="text-right"></th>
+                        <th style="width:50px" class="text-center">#</th>
+                        <th style="width:130px">Mã CTĐT</th>
+                        <th>Tên chương trình đào tạo</th>
+                        <th class="text-center" style="width:110px">Trạng thái</th>
+                        <?php if ($canEdit): ?><th class="text-right" style="width:80px"></th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody id="ctTbody"></tbody>
@@ -296,16 +253,12 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 
     <div class="drawer-footer">
-        <div class="text-muted" style="font-size:12.5px">
-            <?= $canKhmEdit ? 'Nhấn ↑/↓ để thay đổi thứ tự môn' : 'Chỉ xem · không có quyền chỉnh sửa' ?>
-        </div>
         <button type="button" class="btn" onclick="closeChuongTrinh()">Đóng</button>
     </div>
 </aside>
 
 <script>
 var URL = APP_BASE + 'GUI/DT_KhoaHoc/ajax_handler.php';
-var URL_KHM = APP_BASE + 'GUI/DT_KhoaHocMonHoc/ajax_handler.php';
 var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var CAN_KHM_VIEW = <?= $canKhmView?'true':'false' ?>;
@@ -317,7 +270,7 @@ var ICON_BOOK = '<?= addslashes(IconHelper::svg('book', '18')) ?>';
 var ICON_EMPTY = '<?= addslashes(IconHelper::svg('search', '40')) ?>';
 var CAN_KHM_DEL  = <?= $canKhmDel ?'true':'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, lh: 0, ht: 0, dt: 0 };
-var CT_state = { khoaHocId: 0 };
+var CT_state = { khoaHocId: 0, comboLoaded: false };
 
 function load() {
     APP.showLoading('#tableWrap');
@@ -349,7 +302,7 @@ function renderRows(rows) {
             : '<span class="badge badge-danger">Khóa</span>';
         var actions = '';
         if (state.daXoa == 0) {
-            if (CAN_KHM_VIEW) actions += '<button class="btn btn-sm" title="Chương trình học" onclick="openChuongTrinh(' + r.id + ')">' + ICON_BOOK + '</button>';
+            if (CAN_KHM_VIEW) actions += '<button class="btn btn-sm" title="Chương trình đào tạo áp dụng" onclick="openChuongTrinh(' + r.id + ', \'' + APP.escape(r.ma_khoa_hoc||'').replace(/\x27/g,"\\\x27") + '\', \'' + APP.escape(r.ten_khoa_hoc||'').replace(/\x27/g,"\\\x27") + '\')">' + ICON_BOOK + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">' + ICON_EDIT + '</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">' + ICON_TRASH + '</button>';
         } else {
@@ -364,8 +317,8 @@ function renderRows(rows) {
                 '<td>' + APP.escape(r.ten_loai_hinh || '-') + '</td>' +
                 '<td>' + APP.escape(r.ten_hinh_thuc || '-') + '</td>' +
                 '<td>' + APP.escape(r.ten_doi_tuong || '-') + '</td>' +
-                '<td class="text-center">' + (r.tong_so_tiet || 0) + '</td>' +
-                '<td class="text-center">' + (r.so_tin_chi || 0) + '</td>' +
+                '<td class="text-center">' + (r.ngay_bat_dau ? APP.formatDate(r.ngay_bat_dau) : '—') + '</td>' +
+                '<td class="text-center">' + (r.ngay_ket_thuc ? APP.formatDate(r.ngay_ket_thuc) : '—') + '</td>' +
                 '<td class="text-center">' + tt + '</td>' +
                 '<td><div class="actions">' + actions + '</div></td>' +
             '</tr>'
@@ -395,16 +348,9 @@ $('#filterHinhThuc').on('change', function () { state.ht = parseInt(this.value, 
 $('#filterDoiTuong').on('change', function () { state.dt = parseInt(this.value, 10) || 0; state.page = 1; load(); });
 $('#filterDaXoa').on('change', function () { state.daXoa = parseInt(this.value, 10) || 0; state.page = 1; load(); });
 
-function recalcTongTiet() {
-    var slt = parseInt($('#f_slt').val(), 10) || 0;
-    var sth = parseInt($('#f_sth').val(), 10) || 0;
-    $('#f_tst').val(slt + sth);
-}
-$('#f_slt, #f_sth').on('input', recalcTongTiet);
-
 function openCreate() {
     $('#modalTitle').text('Thêm khóa học');
-    $('#formMain')[0].reset(); $('#f_id').val(''); $('#f_tst').val(0);
+    $('#formMain')[0].reset(); $('#f_id').val('');
     $('#modalForm').addClass('open');
 }
 function openEdit(id) {
@@ -419,14 +365,12 @@ function openEdit(id) {
         $('#f_hinh_thuc').val(e.hinh_thuc_hoc_id || '');
         $('#f_doi_tuong').val(e.doi_tuong_hoc_vien_id || '');
         $('#f_dot').val(e.dot_dang_ky_id || '');
-        $('#f_slt').val(e.so_tiet_ly_thuyet || 0);
-        $('#f_sth').val(e.so_tiet_thuc_hanh || 0);
-        $('#f_stc').val(e.so_tin_chi || 0);
+        $('#f_nbd').val(e.ngay_bat_dau || '');
+        $('#f_nkt').val(e.ngay_ket_thuc || '');
         $('#f_dieu_kien').val(e.dieu_kien || '');
         $('#f_muc_tieu').val(e.muc_tieu || '');
         $('#f_mo_ta').val(e.mo_ta || '');
         $('#f_trang_thai').val(e.trang_thai);
-        recalcTongTiet();
         $('#modalForm').addClass('open');
     });
 }
@@ -467,11 +411,25 @@ load();
 /* ========================================================================
  * CHƯƠNG TRÌNH HỌC (Khóa học ↔ Môn học)  —  Drawer UI
  * ====================================================================== */
-function openChuongTrinh(khoaHocId) {
+function openChuongTrinh(khoaHocId, maKh, tenKh) {
     CT_state.khoaHocId = khoaHocId;
+    $('#ctMaKh').text(maKh || '—');
+    $('#ctTenKh').text(tenKh || '—');
     $('#drawerBackdrop').addClass('open');
     $('#drawerCT').addClass('open');
+    if (CAN_EDIT) ensureCtCombo();
     loadChuongTrinh();
+}
+function ensureCtCombo() {
+    if (CT_state.comboLoaded) return;
+    APP.ajax(URL, {action: 'getComboChuongTrinh'}).done(function (res) {
+        if (!res.success) return;
+        var $s = $('#ctAddSelect').empty().append('<option value="">-- Chọn chương trình đào tạo --</option>');
+        (res.data || []).forEach(function (c) {
+            $s.append('<option value="' + c.id + '">' + APP.escape((c.ma_chuong_trinh ? c.ma_chuong_trinh + ' - ' : '') + (c.ten_chuong_trinh || '')) + '</option>');
+        });
+        CT_state.comboLoaded = true;
+    });
 }
 function closeChuongTrinh() {
     $('#drawerBackdrop').removeClass('open');
@@ -485,121 +443,72 @@ $(document).on('keydown', function (e) {
 function loadChuongTrinh() {
     if (!CT_state.khoaHocId) return;
     APP.showLoading('#ctTableWrap');
-    APP.ajax(URL_KHM, {action: 'list', khoa_hoc_id: CT_state.khoaHocId}).done(function (res) {
+    APP.ajax(URL, {action: 'listChuongTrinh', khoa_hoc_id: CT_state.khoaHocId}).done(function (res) {
         APP.hideLoading('#ctTableWrap');
         if (!res.success) { APP.toast(res.message, 'error'); return; }
-        renderCTHeader(res.data);
-        renderCTRows(res.data.items || []);
+        renderCTRows(res.data || []);
     });
 }
 
-function renderCTHeader(d) {
-    var kh = d.khoa_hoc || {};
-    var s = d.summary || {};
-    $('#ctMaKh').text(kh.ma_khoa_hoc || '—');
-    $('#ctTenKh').text(kh.ten_khoa_hoc || '—');
-    $('#sumSoMon').text(s.so_mon || 0);
-    $('#sumBatBuoc').text(s.so_bat_buoc || 0);
-    $('#sumTongTiet').text(s.tong_tiet || 0);
-    $('#sumTongTinChi').text(s.tong_tin_chi || 0);
-    var khTiet = parseInt(kh.tong_so_tiet || 0, 10);
-    var khTC = parseFloat(kh.so_tin_chi || 0);
-    $('#sumTongTietKh').text('/ ' + khTiet + ' (KH)');
-    $('#sumTongTinChiKh').text('/ ' + khTC + ' (KH)');
-    var pct = khTiet > 0 ? Math.min(100, Math.round((s.tong_tiet / khTiet) * 100)) : 0;
-    var $bar = $('#progressBar').css('width', pct + '%');
-    $bar.removeClass('full over');
-    if (pct >= 100 && s.tong_tiet === khTiet) $bar.addClass('full');
-    else if (s.tong_tiet > khTiet) $bar.addClass('over');
-    $('#progressLabel').text(pct + '%');
-}
-
 function renderCTRows(rows) {
+    var colspan = CAN_EDIT ? 5 : 4;
     var $tb = $('#ctTbody').empty();
     if (!rows.length) {
         $tb.append(
-            '<tr><td colspan="7">' +
+            '<tr><td colspan="' + colspan + '">' +
                 '<div class="empty-state-pro">' +
-                    '<h4>Khóa học chưa có môn nào</h4>' +
-                    '<p>' + (CAN_KHM_ADD ? 'Chọn môn học từ ô phía trên và nhấn <strong>Thêm môn</strong>.' : 'Liên hệ quản trị để thêm môn.') + '</p>' +
+                    '<h4>Khóa học chưa có chương trình đào tạo nào</h4>' +
+                    '<p>Dùng form phía trên để gắn CTĐT vào khóa này.</p>' +
                 '</div>' +
             '</td></tr>'
         );
         return;
     }
-    var last = rows.length - 1;
     rows.forEach(function (r, idx) {
-        var toggle = '';
-        if (CAN_KHM_EDIT) {
-            toggle = '<label class="switch" title="Bắt buộc/Tự chọn">' +
-                '<input type="checkbox" ' + (r.bat_buoc == 1 ? 'checked' : '') + ' onchange="toggleBatBuoc(' + r.id + ', this.checked ? 1 : 0)">' +
-                '<span class="switch-slider"></span></label>';
-        } else {
-            toggle = r.bat_buoc == 1
-                ? '<span class="chip chip-success">Bắt buộc</span>'
-                : '<span class="chip chip-muted">Tự chọn</span>';
-        }
-        var orderCell = CAN_KHM_EDIT
-            ? '<span class="order-cell">' +
-                '<button class="order-btn" ' + (idx === 0 ? 'disabled' : '') + ' onclick="moveItem(' + r.id + ', \'up\')" aria-label="Lên">▲</button>' +
-                '<button class="order-btn" ' + (idx === last ? 'disabled' : '') + ' onclick="moveItem(' + r.id + ', \'down\')" aria-label="Xuống">▼</button>' +
-              '</span>'
-            : (r.thu_tu || (idx + 1));
-        var removeBtn = CAN_KHM_DEL
-            ? '<button class="btn btn-sm btn-danger" title="Gỡ khỏi khóa học" onclick="removeItem(' + r.id + ')">✕</button>'
-            : '';
-        var monInactive = r.mon_trang_thai == 0 ? ' <span class="chip chip-warning">Môn bị khóa</span>' : '';
+        var tt = parseInt(r.ct_trang_thai, 10);
+        var ttTxt = ({0:'Chờ khai giảng',1:'Đang học',2:'Đã kết thúc',3:'Đã hủy'})[tt] || '';
         $tb.append(
             '<tr>' +
-                '<td class="text-center">' + orderCell + '</td>' +
-                '<td><strong>' + APP.escape(r.ma_mon_hoc || '') + '</strong></td>' +
-                '<td>' + APP.escape(r.ten_mon_hoc || '') + monInactive + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums">' + (r.tong_so_tiet || 0) + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums">' + (r.so_tin_chi || 0) + '</td>' +
-                '<td class="text-center">' + toggle + '</td>' +
-                '<td class="text-right">' + removeBtn + '</td>' +
+                '<td class="text-center">' + (idx + 1) + '</td>' +
+                '<td><strong>' + APP.escape(r.ma_chuong_trinh || '') + '</strong></td>' +
+                '<td>' + APP.escape(r.ten_chuong_trinh || '') + '</td>' +
+                '<td class="text-center"><span class="chip">' + APP.escape(ttTxt) + '</span></td>' +
+                (CAN_EDIT ? '<td class="text-right"><button class="btn btn-sm btn-danger" title="Gỡ khỏi khóa" onclick="removeCt(' + r.id + ')">' + ICON_TRASH + '</button></td>' : '') +
             '</tr>'
         );
     });
 }
 
-$('#btnAddMon').on('click', function () {
-    var monId = parseInt($('#ctSelectMon').val(), 10) || 0;
-    if (!monId) { APP.toast('Chọn môn học để thêm', 'warning'); return; }
-    var bb = $('#ctBatBuoc').is(':checked') ? 1 : 0;
-    var $btn = $(this).prop('disabled', true);
-    APP.ajax(URL_KHM, {action: 'add', khoa_hoc_id: CT_state.khoaHocId, mon_hoc_id: monId, bat_buoc: bb}).done(function (res) {
-        $btn.prop('disabled', false);
+$('#btnAddCt').on('click', function () {
+    var ctId = parseInt($('#ctAddSelect').val(), 10);
+    if (!ctId) { APP.toast('Chọn chương trình đào tạo', 'error'); return; }
+    APP.ajax(URL, {
+        action: 'ct_add',
+        khoa_hoc_id: CT_state.khoaHocId,
+        chuong_trinh_id: ctId,
+        ngay_bat_dau: $('#ctAddNbd').val(),
+        ngay_ket_thuc: $('#ctAddNkt').val(),
+        dia_diem: $('#ctAddDiaDiem').val(),
+        trang_thai: $('#ctAddTrangThai').val()
+    }).done(function (res) {
         if (res.success) {
             APP.toast(res.message, 'success');
-            $('#ctSelectMon').val('');
-            loadChuongTrinh();
+            $('#ctAddSelect').val(''); $('#ctAddNbd').val(''); $('#ctAddNkt').val(''); $('#ctAddDiaDiem').val(''); $('#ctAddTrangThai').val('0');
+            loadChuongTrinh(); load();
         } else APP.toast(res.message, 'error');
-    }).fail(function () { $btn.prop('disabled', false); });
+    });
 });
 
-function toggleBatBuoc(id, val) {
-    APP.ajax(URL_KHM, {action: 'toggleBatBuoc', id: id, bat_buoc: val}).done(function (res) {
-        if (res.success) { APP.toast(res.message, 'success'); loadChuongTrinh(); }
-        else { APP.toast(res.message, 'error'); loadChuongTrinh(); }
-    });
-}
-
-function moveItem(id, dir) {
-    APP.ajax(URL_KHM, {action: 'move', id: id, dir: dir}).done(function (res) {
-        if (res.success) loadChuongTrinh();
-        else APP.toast(res.message, 'error');
-    });
-}
-
-function removeItem(id) {
-    APP.confirm('Gỡ môn học này khỏi khóa?', function () {
-        APP.ajax(URL_KHM, {action: 'remove', id: id}).done(function (res) {
-            if (res.success) { APP.toast(res.message, 'success'); loadChuongTrinh(); }
-            else APP.toast(res.message, 'error');
+function removeCt(id) {
+    APP.confirm('Gỡ chương trình đào tạo này khỏi khóa học?', function () {
+        APP.ajax(URL, {action: 'ct_remove', id: id}).done(function (res) {
+            res.success ? (APP.toast(res.message, 'success'), loadChuongTrinh(), load()) : APP.toast(res.message, 'error');
         });
     });
 }
+
+// Drawer "Chương trình đào tạo của khóa" giờ chỉ xem (read-only).
+// Quản lý gắn môn/khóa thực hiện tại menu Chương trình đào tạo.
 </script>
 
 <?php require __DIR__ . '/../layouts/footer.php'; ?>

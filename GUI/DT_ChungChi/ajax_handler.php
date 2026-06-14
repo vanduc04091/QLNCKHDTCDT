@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_ChungChi_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_HocVien_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -57,7 +57,7 @@ try {
             break;
 
         case 'getComboLop':
-            $rows = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+            $rows = DT_KhoaHocChuongTrinh_BUS::getCombo();
             ResponseHelper::success('OK', $rows);
             break;
 

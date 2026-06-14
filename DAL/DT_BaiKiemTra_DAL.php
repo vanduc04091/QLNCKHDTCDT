@@ -7,11 +7,15 @@ class DT_BaiKiemTra_DAL
     private static function selectSql(): string
     {
         return "SELECT bkt.*,
-                       lop.ma_lop, lop.ten_lop,
+                       bkt.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
+                       khct.khoa_hoc_id, kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                        mh.ma_mon_hoc, mh.ten_mon_hoc,
                        u.tai_khoan AS tai_khoan_nguoi_tao
                 FROM DT_BAI_KIEM_TRA bkt
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = bkt.lop_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = bkt.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
+                LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
                 LEFT JOIN DT_MON_HOC mh ON mh.id = bkt.mon_hoc_id
                 LEFT JOIN DM_NGUOI_DUNG u ON u.id = bkt.nguoi_tao";
     }
@@ -20,7 +24,7 @@ class DT_BaiKiemTra_DAL
     {
         $u = $e->nguoi_tao ?? 0;
         $sql = "INSERT INTO DT_BAI_KIEM_TRA
-                (ma_bkt, tieu_de, mo_ta, loai_bkt, lop_hoc_id, mon_hoc_id,
+                (ma_bkt, tieu_de, mo_ta, loai_bkt, khoa_hoc_chuong_trinh_id, mon_hoc_id,
                  ngay_kiem_tra, thoi_gian_lam_bai,
                  de_file_name, de_file_goc, de_file_size,
                  dap_an_file_name, dap_an_file_goc, dap_an_file_size,
@@ -49,7 +53,7 @@ class DT_BaiKiemTra_DAL
     {
         $sql = "UPDATE DT_BAI_KIEM_TRA SET
                 ma_bkt=:ma, tieu_de=:td, mo_ta=:mt, loai_bkt=:loai,
-                lop_hoc_id=:lop, mon_hoc_id=:mon,
+                khoa_hoc_chuong_trinh_id=:lop, mon_hoc_id=:mon,
                 ngay_kiem_tra=:nkt, thoi_gian_lam_bai=:tglb,
                 de_file_name=:df, de_file_goc=:dfg, de_file_size=:dfs,
                 dap_an_file_name=:af, dap_an_file_goc=:afg, dap_an_file_size=:afs,
@@ -120,7 +124,7 @@ class DT_BaiKiemTra_DAL
             $kw = '%' . $opts['search'] . '%';
             $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
-        if (!empty($opts['lop_hoc_id'])) { $where .= " AND bkt.lop_hoc_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
+        if (!empty($opts['lop_hoc_id'])) { $where .= " AND bkt.khoa_hoc_chuong_trinh_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
         if (!empty($opts['mon_hoc_id'])) { $where .= " AND bkt.mon_hoc_id=:mon "; $params[':mon'] = (int)$opts['mon_hoc_id']; }
         if (!empty($opts['loai_bkt']))   { $where .= " AND bkt.loai_bkt=:loai "; $params[':loai'] = (int)$opts['loai_bkt']; }
         if (isset($opts['trang_thai']) && $opts['trang_thai'] !== '' && (int)$opts['trang_thai'] >= 0) {

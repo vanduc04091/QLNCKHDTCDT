@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_ChuongTrinh_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -10,6 +12,36 @@ $MODULE = DT_KhoaHoc_BUS::MODULE_KEY;
 
 try {
     switch ($action) {
+        case 'listChuongTrinh':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getByKhoaHoc(Helper::postInt('khoa_hoc_id')));
+            break;
+
+        case 'getComboChuongTrinh':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', DT_ChuongTrinh_BUS::getCombo());
+            break;
+
+        case 'ct_add':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
+            $info = [
+                'ngay_bat_dau'    => Helper::postStr('ngay_bat_dau') ?: null,
+                'ngay_ket_thuc'   => Helper::postStr('ngay_ket_thuc') ?: null,
+                'dia_diem'        => Helper::postStr('dia_diem') ?: null,
+                'giao_vien_id'    => Helper::postInt('giao_vien_id') ?: null,
+                'giao_vien_ngoai' => Helper::postStr('giao_vien_ngoai') ?: null,
+                'trang_thai'      => Helper::postInt('trang_thai', 0),
+            ];
+            $res = DT_KhoaHocChuongTrinh_BUS::add(Helper::postInt('khoa_hoc_id'), Helper::postInt('chuong_trinh_id'), $u, $info);
+            $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'ct_remove':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
+            $res = DT_KhoaHocChuongTrinh_BUS::remove(Helper::postInt('id'), $u);
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
         case 'getPaged':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
             $page = Helper::postInt('page', 1);
@@ -42,9 +74,8 @@ try {
             $e->doi_tuong_hoc_vien_id = Helper::postInt('doi_tuong_hoc_vien_id') ?: null;
             $e->dot_dang_ky_id = Helper::postInt('dot_dang_ky_id') ?: null;
             $e->dieu_kien = Helper::postStr('dieu_kien');
-            $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
-            $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
-            $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
+            $e->ngay_bat_dau = Helper::postStr('ngay_bat_dau') ?: null;
+            $e->ngay_ket_thuc = Helper::postStr('ngay_ket_thuc') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_tao = $u;
             $res = DT_KhoaHoc_BUS::insert($e);
@@ -64,9 +95,8 @@ try {
             $e->doi_tuong_hoc_vien_id = Helper::postInt('doi_tuong_hoc_vien_id') ?: null;
             $e->dot_dang_ky_id = Helper::postInt('dot_dang_ky_id') ?: null;
             $e->dieu_kien = Helper::postStr('dieu_kien');
-            $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
-            $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
-            $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
+            $e->ngay_bat_dau = Helper::postStr('ngay_bat_dau') ?: null;
+            $e->ngay_ket_thuc = Helper::postStr('ngay_ket_thuc') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_cap_nhat = $u;
             $res = DT_KhoaHoc_BUS::update($e);

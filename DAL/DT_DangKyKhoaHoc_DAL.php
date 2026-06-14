@@ -7,14 +7,16 @@ class DT_DangKyKhoaHoc_DAL
     private static function selectSql(): string
     {
         return "SELECT dk.*,
+                       dk.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                        hv.ma_hv, hv.ho_ten AS ho_ten_hoc_vien,
-                       lop.ma_lop, lop.ten_lop,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
                        u.tai_khoan AS tai_khoan_nguoi_xu_ly
                 FROM DT_DANG_KY_KHOA_HOC dk
                 LEFT JOIN DT_KHOA_HOC kh ON kh.id = dk.khoa_hoc_id
                 LEFT JOIN DM_HOC_VIEN hv ON hv.id = dk.hoc_vien_id
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = dk.lop_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = dk.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
                 LEFT JOIN DM_NGUOI_DUNG u ON u.id = dk.nguoi_xu_ly";
     }
 
@@ -52,7 +54,7 @@ class DT_DangKyKhoaHoc_DAL
     public static function approve(int $id, int $userId, int $hocVienId, ?int $lopId, ?string $note): int
     {
         $sql = "UPDATE DT_DANG_KY_KHOA_HOC
-                SET trang_thai=1, hoc_vien_id=:hv, lop_hoc_id=:lop,
+                SET trang_thai=1, hoc_vien_id=:hv, khoa_hoc_chuong_trinh_id=:lop,
                     ly_do_xu_ly=:note, ngay_xu_ly=NOW(), nguoi_xu_ly=:u,
                     ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u2
                 WHERE id=:id AND da_xoa=0";

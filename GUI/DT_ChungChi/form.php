@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_ChungChi_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_HocVien_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 $id = Helper::get('id', 0);
@@ -173,15 +173,15 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     fd.append('id', <?= $id ?>);
     <?php endif; ?>
     
-    Helper.showLoading();
+    APP.showLoading();
     try {
-        const res = await fetch('ajax_handler.php', { method: 'POST', body: fd });
+        const res = await fetch('ajax_handler.php', { method: 'POST', body: fd, headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} });
         const data = await res.json();
-        Helper.hideLoading();
+        APP.hideLoading();
         alert(data.message);
         if (data.success) window.location.href = 'index.php';
     } catch(e) {
-        Helper.hideLoading();
+        APP.hideLoading();
         alert('Lỗi: ' + e.message);
     }
 });
@@ -189,6 +189,7 @@ document.getElementById('form').addEventListener('submit', async function(e) {
 // Load học viên
 fetch('ajax_handler.php', {
     method: 'POST',
+    headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {},
     body: new FormData((() => {
         const fd = new FormData();
         fd.append('action', 'getComboHocVien');
@@ -212,6 +213,7 @@ fetch('ajax_handler.php', {
 // Load lớp học
 fetch('ajax_handler.php', {
     method: 'POST',
+    headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {},
     body: new FormData((() => {
         const fd = new FormData();
         fd.append('action', 'getComboLop');
@@ -225,7 +227,7 @@ fetch('ajax_handler.php', {
         d.data.forEach(lop => {
             const opt = document.createElement('option');
             opt.value = lop.id;
-            opt.textContent = `${lop.ma_lop} - ${lop.ten_lop}`;
+            opt.textContent = lop.label || `${lop.ma_lop} - ${lop.ten_lop}`;
             if (<?= $id ?> > 0 && lop.id === <?= $e->lop_hoc_id ?? 0 ?>) opt.selected = true;
             sel.appendChild(opt);
         });

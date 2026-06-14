@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_XEM)) {
@@ -10,7 +10,7 @@ $canAdd = PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_THEM);
 $canEdit = PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_XOA);
 
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
 
 $pageTitle = 'Quản lý lịch học';
 $activeMenu = 'DT_LichHoc';
@@ -97,11 +97,11 @@ require __DIR__ . '/../layouts/header.php';
     <!-- Filter row -->
     <div class="lh-filter">
         <div class="lh-filter-field">
-            <label>Lớp học</label>
+            <label>Chương trình đào tạo</label>
             <select id="fLop" class="form-select">
-                <option value="0">Tất cả lớp</option>
+                <option value="0">Tất cả chương trình</option>
                 <?php foreach ($lopList as $l): ?>
-                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -177,11 +177,11 @@ require __DIR__ . '/../layouts/header.php';
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Lớp học <span class="required">*</span></label>
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
                         <select name="lop_hoc_id" id="f_lop" class="form-select" required>
-                            <option value="">-- Chọn lớp --</option>
+                            <option value="">-- Chọn chương trình --</option>
                             <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -217,7 +217,7 @@ require __DIR__ . '/../layouts/header.php';
                         <input type="text" name="phong_hoc" id="f_phong" class="form-control" maxlength="150" placeholder="VD: Giảng đường A - Tầng 2">
                     </div>
                     <div class="form-group">
-                        <label>Môn học</label>
+                        <label>Bài học</label>
                         <select name="mon_hoc_id" id="f_mon" class="form-select"><option value="">--</option></select>
                     </div>
                 </div>
@@ -276,20 +276,20 @@ require __DIR__ . '/../layouts/header.php';
                 <input type="hidden" name="force_conflict" id="b_force" value="0">
                 <div class="lh-bulk-step">
                     <div class="lh-step-num">1</div>
-                    <div class="lh-step-title">Chọn lớp và khoảng thời gian</div>
+                    <div class="lh-step-title">Chọn chương trình và khoảng thời gian</div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Lớp học <span class="required">*</span></label>
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
                         <select name="lop_hoc_id" id="b_lop" class="form-select" required>
-                            <option value="">-- Chọn lớp --</option>
+                            <option value="">-- Chọn chương trình --</option>
                             <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Môn học (tùy chọn)</label>
+                        <label>Bài học (tùy chọn)</label>
                         <select name="mon_hoc_id" id="b_mon" class="form-select"><option value="">--</option></select>
                     </div>
                 </div>
@@ -871,7 +871,7 @@ function renderDetail(e) {
     body += dRow('Giờ', (gbd||'-')+' – '+(gkt||'-'));
     body += dRow('Phòng', e.phong_hoc ? APP.escape(e.phong_hoc) : '-');
     body += dRow('Buổi thứ', e.buoi_thu != null ? e.buoi_thu : '-');
-    body += dRow('Môn học', monTxt);
+    body += dRow('Bài học', monTxt);
     body += dRow('Giảng viên', gv);
     body += '</div>';
 

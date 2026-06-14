@@ -115,15 +115,15 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     fd.append('id', <?= $id ?>);
     <?php endif; ?>
     
-    Helper.showLoading();
+    APP.showLoading();
     try {
-        const res = await fetch('ajax_handler.php', { method: 'POST', body: fd });
+        const res = await fetch('ajax_handler.php', { method: 'POST', body: fd, headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} });
         const data = await res.json();
-        Helper.hideLoading();
+        APP.hideLoading();
         alert(data.message);
         if (data.success) window.location.href = 'index.php';
     } catch(e) {
-        Helper.hideLoading();
+        APP.hideLoading();
         alert('Lỗi: ' + e.message);
     }
 });
@@ -131,6 +131,7 @@ document.getElementById('form').addEventListener('submit', async function(e) {
 // Load học viên
 fetch('ajax_handler.php', {
     method: 'POST',
+    headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {},
     body: new FormData((() => {
         const fd = new FormData();
         fd.append('action', 'getComboHocVien');
@@ -154,6 +155,7 @@ fetch('ajax_handler.php', {
 // Load loại hồ sơ
 fetch('ajax_handler.php', {
     method: 'POST',
+    headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {},
     body: new FormData((() => {
         const fd = new FormData();
         fd.append('action', 'getComboLoai');

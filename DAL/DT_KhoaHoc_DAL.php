@@ -26,9 +26,9 @@ class DT_KhoaHoc_DAL
     {
         $sql = "INSERT INTO DT_KHOA_HOC
                 (ma_khoa_hoc, ten_khoa_hoc, mo_ta, muc_tieu, loai_hinh_dao_tao_id, hinh_thuc_hoc_id,
-                 doi_tuong_hoc_vien_id, dot_dang_ky_id, dieu_kien, so_tiet_ly_thuyet, so_tiet_thuc_hanh, tong_so_tiet,
-                 so_tin_chi, trang_thai, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
-                VALUES (:ma, :ten, :mt, :muc, :lh, :ht, :dt, :dot, :dk, :slt, :sth, :tst, :stc, :tt,
+                 doi_tuong_hoc_vien_id, dot_dang_ky_id, dieu_kien, ngay_bat_dau, ngay_ket_thuc,
+                 trang_thai, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
+                VALUES (:ma, :ten, :mt, :muc, :lh, :ht, :dt, :dot, :dk, :nbd, :nkt, :tt,
                         NOW(), NOW(), :u1, :u2, 0)";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
@@ -36,8 +36,8 @@ class DT_KhoaHoc_DAL
             ':lh' => $e->loai_hinh_dao_tao_id, ':ht' => $e->hinh_thuc_hoc_id, ':dt' => $e->doi_tuong_hoc_vien_id,
             ':dot' => $e->dot_dang_ky_id,
             ':dk' => $e->dieu_kien,
-            ':slt' => $e->so_tiet_ly_thuyet, ':sth' => $e->so_tiet_thuc_hanh, ':tst' => $e->tong_so_tiet,
-            ':stc' => $e->so_tin_chi, ':tt' => $e->trang_thai,
+            ':nbd' => $e->ngay_bat_dau ?: null, ':nkt' => $e->ngay_ket_thuc ?: null,
+            ':tt' => $e->trang_thai,
             ':u1' => $e->nguoi_tao ?? 0, ':u2' => $e->nguoi_tao ?? 0,
         ]);
         return (int)Database::getConnection()->lastInsertId();
@@ -48,8 +48,8 @@ class DT_KhoaHoc_DAL
         $sql = "UPDATE DT_KHOA_HOC SET
                 ma_khoa_hoc=:ma, ten_khoa_hoc=:ten, mo_ta=:mt, muc_tieu=:muc,
                 loai_hinh_dao_tao_id=:lh, hinh_thuc_hoc_id=:ht, doi_tuong_hoc_vien_id=:dt, dot_dang_ky_id=:dot,
-                dieu_kien=:dk, so_tiet_ly_thuyet=:slt, so_tiet_thuc_hanh=:sth, tong_so_tiet=:tst,
-                so_tin_chi=:stc, trang_thai=:tt, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
+                dieu_kien=:dk, ngay_bat_dau=:nbd, ngay_ket_thuc=:nkt,
+                trang_thai=:tt, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
                 WHERE id=:id AND da_xoa=0";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
@@ -57,8 +57,8 @@ class DT_KhoaHoc_DAL
             ':lh' => $e->loai_hinh_dao_tao_id, ':ht' => $e->hinh_thuc_hoc_id, ':dt' => $e->doi_tuong_hoc_vien_id,
             ':dot' => $e->dot_dang_ky_id,
             ':dk' => $e->dieu_kien,
-            ':slt' => $e->so_tiet_ly_thuyet, ':sth' => $e->so_tiet_thuc_hanh, ':tst' => $e->tong_so_tiet,
-            ':stc' => $e->so_tin_chi, ':tt' => $e->trang_thai,
+            ':nbd' => $e->ngay_bat_dau ?: null, ':nkt' => $e->ngay_ket_thuc ?: null,
+            ':tt' => $e->trang_thai,
             ':u' => $e->nguoi_cap_nhat ?? 0, ':id' => $e->id,
         ]);
         return $stmt->rowCount();

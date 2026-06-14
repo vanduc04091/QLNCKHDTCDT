@@ -477,7 +477,7 @@ $('#formHS').on('submit', function(e){
     var fd = new FormData(this);
     fd.append('action', $('#f_id').val() ? 'update' : 'insert');
     var $btn = $('#btnSubmit').prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url:URL_AJAX, type:'POST', data:fd, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url:URL_AJAX, type:'POST', data:fd, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $btn.prop('disabled', false).text('Lưu');
             if (res.success){

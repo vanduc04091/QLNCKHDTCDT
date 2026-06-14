@@ -4,6 +4,8 @@ class DT_MonHoc_PUBLIC
     public ?int $id = null;
     public string $ma_mon_hoc = '';
     public string $ten_mon_hoc = '';
+    public int $thu_tu = 0;
+    public ?int $chuong_trinh_id = null;
     public ?string $mo_ta = null;
     public int $so_tiet_ly_thuyet = 0;
     public int $so_tiet_thuc_hanh = 0;

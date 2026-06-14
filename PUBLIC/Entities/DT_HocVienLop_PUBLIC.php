@@ -2,7 +2,7 @@
 class DT_HocVienLop_PUBLIC
 {
     public ?int $id = null;
-    public int $lop_hoc_id = 0;
+    public int $khoa_hoc_chuong_trinh_id = 0;
     public int $hoc_vien_id = 0;
     public ?string $ngay_ghi_danh = null;
     public int $trang_thai = 1;

@@ -16,7 +16,9 @@ class DT_KhoaHoc_BUS
         if (DT_KhoaHoc_DAL::checkMaExists($e->ma_khoa_hoc)) {
             return ['success' => false, 'message' => 'Mã khóa học đã tồn tại'];
         }
-        $e->tong_so_tiet = $e->so_tiet_ly_thuyet + $e->so_tiet_thuc_hanh;
+        if ($e->ngay_bat_dau && $e->ngay_ket_thuc && $e->ngay_bat_dau > $e->ngay_ket_thuc) {
+            return ['success' => false, 'message' => 'Ngày bắt đầu phải trước ngày kết thúc'];
+        }
         $id = DT_KhoaHoc_DAL::insert($e);
         MemcachedHelper::deleteByPrefix('dt_khoa_hoc:');
         DM_NhatKyHeThong_DAL::log($e->nguoi_tao ?? 0, self::MODULE_KEY, "Thêm khóa học: {$e->ten_khoa_hoc}", 'DT_KHOA_HOC', $id);
@@ -29,7 +31,9 @@ class DT_KhoaHoc_BUS
         if (DT_KhoaHoc_DAL::checkMaExists($e->ma_khoa_hoc, $e->id)) {
             return ['success' => false, 'message' => 'Mã khóa học đã tồn tại'];
         }
-        $e->tong_so_tiet = $e->so_tiet_ly_thuyet + $e->so_tiet_thuc_hanh;
+        if ($e->ngay_bat_dau && $e->ngay_ket_thuc && $e->ngay_bat_dau > $e->ngay_ket_thuc) {
+            return ['success' => false, 'message' => 'Ngày bắt đầu phải trước ngày kết thúc'];
+        }
         DT_KhoaHoc_DAL::update($e);
         MemcachedHelper::deleteByPrefix('dt_khoa_hoc:');
         DM_NhatKyHeThong_DAL::log($e->nguoi_cap_nhat ?? 0, self::MODULE_KEY, "Cập nhật khóa học: {$e->ten_khoa_hoc}", 'DT_KHOA_HOC', $e->id);

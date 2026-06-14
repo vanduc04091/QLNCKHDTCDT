@@ -7,13 +7,15 @@ class DT_TaiLieu_DAL
     private static function selectSql(): string
     {
         return "SELECT tl.*,
+                       tl.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        kh.ma_khoa_hoc, kh.ten_khoa_hoc,
-                       lop.ma_lop, lop.ten_lop,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
                        mh.ma_mon_hoc, mh.ten_mon_hoc,
                        u.tai_khoan AS tai_khoan_nguoi_tao
                 FROM DT_TAI_LIEU tl
                 LEFT JOIN DT_KHOA_HOC kh ON kh.id = tl.khoa_hoc_id
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = tl.lop_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = tl.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
                 LEFT JOIN DT_MON_HOC mh ON mh.id = tl.mon_hoc_id
                 LEFT JOIN DM_NGUOI_DUNG u ON u.id = tl.nguoi_tao";
     }
@@ -25,7 +27,7 @@ class DT_TaiLieu_DAL
                 (ma_tai_lieu, tieu_de, mo_ta, loai_tai_lieu, dinh_dang,
                  file_name, file_goc, file_size, link_ngoai,
                  tac_gia, nam_xuat_ban, nha_xuat_ban,
-                 khoa_hoc_id, lop_hoc_id, mon_hoc_id,
+                 khoa_hoc_id, khoa_hoc_chuong_trinh_id, mon_hoc_id,
                  cong_khai, bat_buoc, trang_thai, ghi_chu,
                  ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
                 VALUES (:ma, :td, :mt, :loai, :df,
@@ -56,7 +58,7 @@ class DT_TaiLieu_DAL
                 loai_tai_lieu=:loai, dinh_dang=:df,
                 file_name=:fn, file_goc=:fg, file_size=:fs, link_ngoai=:ln,
                 tac_gia=:tg, nam_xuat_ban=:nxb, nha_xuat_ban=:nhaxb,
-                khoa_hoc_id=:kh, lop_hoc_id=:lop, mon_hoc_id=:mon,
+                khoa_hoc_id=:kh, khoa_hoc_chuong_trinh_id=:lop, mon_hoc_id=:mon,
                 cong_khai=:ck, bat_buoc=:bb, trang_thai=:tt, ghi_chu=:gc,
                 ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
                 WHERE id=:id AND da_xoa=0";
@@ -117,7 +119,7 @@ class DT_TaiLieu_DAL
         if (!empty($opts['loai_tai_lieu'])) { $where .= " AND tl.loai_tai_lieu=:loai "; $params[':loai'] = (int)$opts['loai_tai_lieu']; }
         if (!empty($opts['dinh_dang']))    { $where .= " AND tl.dinh_dang=:df "; $params[':df'] = $opts['dinh_dang']; }
         if (!empty($opts['khoa_hoc_id']))  { $where .= " AND tl.khoa_hoc_id=:kh "; $params[':kh'] = (int)$opts['khoa_hoc_id']; }
-        if (!empty($opts['lop_hoc_id']))   { $where .= " AND tl.lop_hoc_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
+        if (!empty($opts['lop_hoc_id']))   { $where .= " AND tl.khoa_hoc_chuong_trinh_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
         if (!empty($opts['mon_hoc_id']))   { $where .= " AND tl.mon_hoc_id=:mon "; $params[':mon'] = (int)$opts['mon_hoc_id']; }
         if (!empty($opts['bat_buoc']))     { $where .= " AND tl.bat_buoc=1 "; }
         if (!empty($opts['cong_khai']))    { $where .= " AND tl.cong_khai=1 "; }

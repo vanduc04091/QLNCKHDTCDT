@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../DAL/DT_HocVienLop_DAL.php';
-require_once __DIR__ . '/../DAL/DT_LopHoc_DAL.php';
 
 class DT_HocVienLop_BUS
 {
@@ -8,32 +7,32 @@ class DT_HocVienLop_BUS
 
     public static function insert(DT_HocVienLop_PUBLIC $e): array
     {
-        if ($e->lop_hoc_id <= 0 || $e->hoc_vien_id <= 0) {
-            return ['success' => false, 'message' => 'Thiếu lớp hoặc học viên'];
+        if ($e->khoa_hoc_chuong_trinh_id <= 0 || $e->hoc_vien_id <= 0) {
+            return ['success' => false, 'message' => 'Thiếu khóa/chương trình hoặc học viên'];
         }
-        if (DT_HocVienLop_DAL::checkExists($e->lop_hoc_id, $e->hoc_vien_id)) {
-            return ['success' => false, 'message' => 'Học viên đã có trong lớp này'];
+        if (DT_HocVienLop_DAL::checkExists($e->khoa_hoc_chuong_trinh_id, $e->hoc_vien_id)) {
+            return ['success' => false, 'message' => 'Học viên đã có trong chương trình này'];
         }
-        if (!self::canAddMore($e->lop_hoc_id, 1)) {
-            return ['success' => false, 'message' => 'Lớp đã đủ số lượng tối đa'];
+        if (!self::canAddMore($e->khoa_hoc_chuong_trinh_id, 1)) {
+            return ['success' => false, 'message' => 'Chương trình đã đủ số lượng tối đa'];
         }
         $id = DT_HocVienLop_DAL::insert($e);
         return ['success' => true, 'message' => 'Đã ghi danh', 'data' => ['id' => $id]];
     }
 
-    public static function bulkAdd(int $lopId, array $hocVienIds, int $userId): array
+    public static function bulkAdd(int $khctId, array $hocVienIds, int $userId): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $hocVienIds))));
         if (!$ids) return ['success' => false, 'message' => 'Chưa chọn học viên nào'];
-        $lop = DT_LopHoc_DAL::getById($lopId);
-        if (!$lop) return ['success' => false, 'message' => 'Không tìm thấy lớp'];
-        $dangCo = DT_HocVienLop_DAL::getCountByLop($lopId);
-        $conTrong = max(0, $lop->so_luong_toi_da - $dangCo);
-        if ($conTrong <= 0) return ['success' => false, 'message' => 'Lớp đã đủ số lượng'];
+        $max = DT_HocVienLop_DAL::getSoLuongToiDaByKhct($khctId);
+        if ($max === null) return ['success' => false, 'message' => 'Không tìm thấy chương trình'];
+        $dangCo = DT_HocVienLop_DAL::getCountByKhct($khctId);
+        $conTrong = max(0, $max - $dangCo);
+        if ($conTrong <= 0) return ['success' => false, 'message' => 'Chương trình đã đủ số lượng'];
         if (count($ids) > $conTrong) {
             return ['success' => false, 'message' => "Chỉ còn {$conTrong} chỗ trống (bạn chọn " . count($ids) . ")"];
         }
-        $count = DT_HocVienLop_DAL::bulkInsert($lopId, $ids, $userId);
+        $count = DT_HocVienLop_DAL::bulkInsert($khctId, $ids, $userId);
         return ['success' => true, 'message' => "Đã ghi danh {$count} học viên", 'data' => ['count' => $count]];
     }
 
@@ -50,11 +49,11 @@ class DT_HocVienLop_BUS
     public static function delete(int $id): array
     {
         DT_HocVienLop_DAL::delete($id);
-        return ['success' => true, 'message' => 'Đã xóa khỏi lớp'];
+        return ['success' => true, 'message' => 'Đã xóa khỏi chương trình'];
     }
 
     public static function getById(int $id): ?DT_HocVienLop_DTO { return DT_HocVienLop_DAL::getById($id); }
-    public static function getByLop(int $lopId, string $q = ''): array { return DT_HocVienLop_DAL::getByLop($lopId, $q); }
+    public static function getByKhct(int $khctId, string $q = ''): array { return DT_HocVienLop_DAL::getByKhct($khctId, $q); }
     public static function getByHocVien(int $hocVienId): array { return DT_HocVienLop_DAL::getByHocVien($hocVienId); }
 
     /** Tổng hợp dữ liệu xem nhanh của 1 học viên cho drawer admin/portal. */
@@ -62,25 +61,26 @@ class DT_HocVienLop_BUS
     {
         $hvls = DT_HocVienLop_DAL::getByHocVien($hocVienId);
         $hvlIds = array_map(fn($r) => (int)$r['id'], $hvls);
-        $lopIds = array_unique(array_map(fn($r) => (int)$r['lop_hoc_id'], $hvls));
+        $khctIds = array_unique(array_map(fn($r) => (int)$r['khoa_hoc_chuong_trinh_id'], $hvls));
 
         $pdo = Database::getConnection();
 
-        // Lịch học (qua các lớp HV đang ghi danh)
+        // Lịch học (qua các ngữ cảnh khct HV đang ghi danh)
         $lichRows = [];
-        if ($lopIds) {
-            $in = implode(',', array_map('intval', $lopIds));
+        if ($khctIds) {
+            $in = implode(',', array_map('intval', $khctIds));
             $stmt = $pdo->query(
-                "SELECT lh.id, lh.lop_hoc_id, lh.ngay_hoc, lh.gio_bat_dau, lh.gio_ket_thuc,
+                "SELECT lh.id, lh.khoa_hoc_chuong_trinh_id, lh.ngay_hoc, lh.gio_bat_dau, lh.gio_ket_thuc,
                         lh.buoi_thu, lh.tieu_de, lh.phong_hoc, lh.giang_vien_ngoai,
-                        lop.ma_lop, lop.ten_lop,
+                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
                         mh.ten_mon_hoc,
                         gv.ho_ten AS ten_giang_vien
                  FROM DT_LICH_HOC lh
-                 INNER JOIN DT_LOP_HOC lop ON lop.id = lh.lop_hoc_id
+                 INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
+                 INNER JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
                  LEFT JOIN DT_MON_HOC mh ON mh.id = lh.mon_hoc_id
-                 LEFT JOIN DM_GIANG_VIEN gv ON gv.id = lh.giang_vien_id
-                 WHERE lh.lop_hoc_id IN ({$in}) AND lh.da_xoa=0
+                 LEFT JOIN DM_NHAN_VIEN gv ON gv.id = lh.giang_vien_id
+                 WHERE lh.khoa_hoc_chuong_trinh_id IN ({$in}) AND lh.da_xoa=0
                  ORDER BY lh.ngay_hoc DESC, lh.gio_bat_dau ASC LIMIT 200"
             );
             $lichRows = $stmt->fetchAll();
@@ -104,11 +104,12 @@ class DT_HocVienLop_BUS
 
             $stmt = $pdo->query(
                 "SELECT lh.ngay_hoc, dd.trang_thai, dd.ghi_chu, dd.gio_vao,
-                        lh.buoi_thu, lh.tieu_de, mh.ten_mon_hoc, lop.ma_lop
+                        lh.buoi_thu, lh.tieu_de, mh.ten_mon_hoc, ct.ma_chuong_trinh AS ma_lop
                  FROM DT_DIEM_DANH dd
                  LEFT JOIN DT_LICH_HOC lh ON lh.id = dd.lich_hoc_id
                  LEFT JOIN DT_MON_HOC mh ON mh.id = lh.mon_hoc_id
-                 LEFT JOIN DT_LOP_HOC lop ON lop.id = lh.lop_hoc_id
+                 LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
+                 LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
                  WHERE dd.hoc_vien_lop_id IN ({$in}) AND dd.da_xoa=0
                  ORDER BY lh.ngay_hoc DESC LIMIT 100"
             );
@@ -123,44 +124,45 @@ class DT_HocVienLop_BUS
                 "SELECT kq.diem_thuong_xuyen, kq.diem_giua_ky, kq.diem_cuoi_ky, kq.diem_tong_ket,
                         kq.xep_loai, kq.dat, kq.nhan_xet,
                         mh.ma_mon_hoc, mh.ten_mon_hoc,
-                        lop.ma_lop, lop.ten_lop
+                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop
                  FROM DT_KET_QUA_HOC_TAP kq
                  LEFT JOIN DT_MON_HOC mh ON mh.id = kq.mon_hoc_id
                  LEFT JOIN DT_HOC_VIEN_LOP hvl ON hvl.id = kq.hoc_vien_lop_id
-                 LEFT JOIN DT_LOP_HOC lop ON lop.id = hvl.lop_hoc_id
+                 LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id
+                 LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
                  WHERE kq.hoc_vien_lop_id IN ({$in}) AND kq.da_xoa=0
-                 ORDER BY lop.ma_lop, mh.ten_mon_hoc"
+                 ORDER BY ct.ma_chuong_trinh, mh.ten_mon_hoc"
             );
             $ketQuaRows = $stmt->fetchAll();
         }
 
-        // Khóa học (distinct qua các lớp đã ghi danh) + môn học của khóa
+        // Khóa học (đúng ngữ cảnh ghi danh: khóa của từng khct)
         $khoaHoc = [];
-        if ($lopIds) {
-            $in = implode(',', array_map('intval', $lopIds));
+        if ($khctIds) {
+            $in = implode(',', array_map('intval', $khctIds));
             $stmt = $pdo->query(
                 "SELECT DISTINCT kh.id, kh.ma_khoa_hoc, kh.ten_khoa_hoc,
-                        kh.tong_so_tiet, kh.so_tin_chi
+                        kh.ngay_bat_dau, kh.ngay_ket_thuc
                  FROM DT_KHOA_HOC kh
-                 INNER JOIN DT_LOP_HOC lop ON lop.khoa_hoc_id = kh.id
-                 WHERE lop.id IN ({$in}) AND kh.da_xoa=0
+                 INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.khoa_hoc_id = kh.id
+                 WHERE khct.id IN ({$in}) AND kh.da_xoa=0
                  ORDER BY kh.ten_khoa_hoc"
             );
             $khoaHoc = $stmt->fetchAll();
         }
 
-        // Môn học (distinct qua các khóa)
+        // Môn học (theo CTĐT của các ngữ cảnh ghi danh)
         $monHoc = [];
-        if ($khoaHoc) {
-            $khIds = implode(',', array_map(fn($k) => (int)$k['id'], $khoaHoc));
+        if ($khctIds) {
+            $in = implode(',', array_map('intval', $khctIds));
             $stmt = $pdo->query(
                 "SELECT DISTINCT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.tong_so_tiet, mh.so_tin_chi,
-                        km.bat_buoc, kh.ten_khoa_hoc
-                 FROM DT_KHOA_HOC_MON_HOC km
-                 INNER JOIN DT_MON_HOC mh ON mh.id = km.mon_hoc_id
-                 INNER JOIN DT_KHOA_HOC kh ON kh.id = km.khoa_hoc_id
-                 WHERE km.khoa_hoc_id IN ({$khIds}) AND km.da_xoa=0 AND mh.da_xoa=0
-                 ORDER BY kh.ten_khoa_hoc, km.thu_tu, mh.ten_mon_hoc"
+                        1 AS bat_buoc, ct.ten_chuong_trinh AS ten_khoa_hoc
+                 FROM DT_KHOA_HOC_CHUONG_TRINH khct
+                 INNER JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                 INNER JOIN DT_MON_HOC mh ON mh.chuong_trinh_id = ct.id AND mh.da_xoa=0
+                 WHERE khct.id IN ({$in})
+                 ORDER BY ct.ten_chuong_trinh, mh.thu_tu, mh.id"
             );
             $monHoc = $stmt->fetchAll();
         }
@@ -174,16 +176,17 @@ class DT_HocVienLop_BUS
             'mon_hoc'          => $monHoc,
         ];
     }
-    public static function getHocVienChuaGhiDanh(int $lopId, string $q = '', int $limit = 50): array
+
+    public static function getHocVienChuaGhiDanh(int $khctId, string $q = '', int $limit = 50): array
     {
-        return DT_HocVienLop_DAL::getHocVienChuaGhiDanh($lopId, $q, $limit);
+        return DT_HocVienLop_DAL::getHocVienChuaGhiDanh($khctId, $q, $limit);
     }
 
-    private static function canAddMore(int $lopId, int $count): bool
+    private static function canAddMore(int $khctId, int $count): bool
     {
-        $lop = DT_LopHoc_DAL::getById($lopId);
-        if (!$lop) return false;
-        $dangCo = DT_HocVienLop_DAL::getCountByLop($lopId);
-        return ($dangCo + $count) <= $lop->so_luong_toi_da;
+        $max = DT_HocVienLop_DAL::getSoLuongToiDaByKhct($khctId);
+        if ($max === null) return false;
+        $dangCo = DT_HocVienLop_DAL::getCountByKhct($khctId);
+        return ($dangCo + $count) <= $max;
     }
 }

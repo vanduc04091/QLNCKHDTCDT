@@ -85,8 +85,9 @@ class DM_KhoaPhong_DAL
         $where = " WHERE kp.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (kp.ma_khoa LIKE :s OR kp.ten_khoa LIKE :s OR kp.chuyen_khoa LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (kp.ma_khoa LIKE :s1 OR kp.ten_khoa LIKE :s2 OR kp.chuyen_khoa LIKE :s3) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw;
         }
         if ($loai !== '') {
             $where .= " AND kp.loai_don_vi=:lo ";

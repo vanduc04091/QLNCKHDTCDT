@@ -7,12 +7,16 @@ class DT_LichHoc_DAL
     private static function selectSql(): string
     {
         return "SELECT lh.*,
-                       lop.ma_lop, lop.ten_lop,
+                       lh.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
+                       ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
+                       kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                        mh.ma_mon_hoc, mh.ten_mon_hoc,
                        nv.ma_nv AS ma_giang_vien, nv.ho_ten AS ten_giang_vien,
                        u.tai_khoan AS tai_khoan_nguoi_tao
                 FROM DT_LICH_HOC lh
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = lh.lop_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
                 LEFT JOIN DT_MON_HOC mh  ON mh.id  = lh.mon_hoc_id
                 LEFT JOIN DM_NHAN_VIEN nv ON nv.id = lh.giang_vien_id
                 LEFT JOIN DM_NGUOI_DUNG u ON u.id  = lh.nguoi_tao";
@@ -22,7 +26,7 @@ class DT_LichHoc_DAL
     {
         $u = $e->nguoi_tao ?? 0;
         $sql = "INSERT INTO DT_LICH_HOC
-                (lop_hoc_id, buoi_thu, tieu_de, noi_dung, mon_hoc_id,
+                (khoa_hoc_chuong_trinh_id, buoi_thu, tieu_de, noi_dung, mon_hoc_id,
                  ngay_hoc, gio_bat_dau, gio_ket_thuc,
                  phong_hoc, giang_vien_id, giang_vien_ngoai,
                  trang_thai, ghi_chu,
@@ -49,7 +53,7 @@ class DT_LichHoc_DAL
     public static function update(DT_LichHoc_PUBLIC $e): int
     {
         $sql = "UPDATE DT_LICH_HOC SET
-                lop_hoc_id=:lop, buoi_thu=:buoi, tieu_de=:tieu_de, noi_dung=:noi_dung,
+                khoa_hoc_chuong_trinh_id=:lop, buoi_thu=:buoi, tieu_de=:tieu_de, noi_dung=:noi_dung,
                 mon_hoc_id=:mon,
                 ngay_hoc=:ngay, gio_bat_dau=:gbd, gio_ket_thuc=:gkt,
                 phong_hoc=:phong, giang_vien_id=:gv, giang_vien_ngoai=:gvn,
@@ -114,14 +118,14 @@ class DT_LichHoc_DAL
     {
         $where = " WHERE lh.da_xoa=0 AND lh.ngay_hoc BETWEEN :f AND :t ";
         $params = [':f' => $from, ':t' => $to];
-        if (!empty($opts['lop_hoc_id'])) { $where .= " AND lh.lop_hoc_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
+        if (!empty($opts['lop_hoc_id'])) { $where .= " AND lh.khoa_hoc_chuong_trinh_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
         if (!empty($opts['giang_vien_id'])) { $where .= " AND lh.giang_vien_id=:gv "; $params[':gv'] = (int)$opts['giang_vien_id']; }
         if (isset($opts['trang_thai']) && $opts['trang_thai'] !== '' && (int)$opts['trang_thai'] >= 0) {
             $where .= " AND lh.trang_thai=:tt ";
             $params[':tt'] = (int)$opts['trang_thai'];
         }
         if (!empty($opts['search'])) {
-            $where .= " AND (lh.tieu_de LIKE :s1 OR lh.phong_hoc LIKE :s2 OR lop.ten_lop LIKE :s3 OR lop.ma_lop LIKE :s4) ";
+            $where .= " AND (lh.tieu_de LIKE :s1 OR lh.phong_hoc LIKE :s2 OR ct.ten_chuong_trinh LIKE :s3 OR ct.ma_chuong_trinh LIKE :s4) ";
             $kw = '%' . $opts['search'] . '%';
             $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw; $params[':s4'] = $kw;
         }
@@ -141,20 +145,21 @@ class DT_LichHoc_DAL
         $params = [':dx' => $daXoa];
         if (!empty($opts['from'])) { $where .= " AND lh.ngay_hoc >= :f "; $params[':f'] = $opts['from']; }
         if (!empty($opts['to']))   { $where .= " AND lh.ngay_hoc <= :t "; $params[':t'] = $opts['to']; }
-        if (!empty($opts['lop_hoc_id'])) { $where .= " AND lh.lop_hoc_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
+        if (!empty($opts['lop_hoc_id'])) { $where .= " AND lh.khoa_hoc_chuong_trinh_id=:lop "; $params[':lop'] = (int)$opts['lop_hoc_id']; }
         if (!empty($opts['giang_vien_id'])) { $where .= " AND lh.giang_vien_id=:gv "; $params[':gv'] = (int)$opts['giang_vien_id']; }
         if (isset($opts['trang_thai']) && $opts['trang_thai'] !== '' && (int)$opts['trang_thai'] >= 0) {
             $where .= " AND lh.trang_thai=:tt ";
             $params[':tt'] = (int)$opts['trang_thai'];
         }
         if (!empty($opts['search'])) {
-            $where .= " AND (lh.tieu_de LIKE :s1 OR lh.phong_hoc LIKE :s2 OR lop.ten_lop LIKE :s3 OR lop.ma_lop LIKE :s4) ";
+            $where .= " AND (lh.tieu_de LIKE :s1 OR lh.phong_hoc LIKE :s2 OR ct.ten_chuong_trinh LIKE :s3 OR ct.ma_chuong_trinh LIKE :s4) ";
             $kw = '%' . $opts['search'] . '%';
             $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw; $params[':s4'] = $kw;
         }
 
         $countSql = "SELECT COUNT(*) FROM DT_LICH_HOC lh
-                     LEFT JOIN DT_LOP_HOC lop ON lop.id = lh.lop_hoc_id" . $where;
+                     LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
+                     LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id" . $where;
         $stmt = Database::getConnection()->prepare($countSql);
         $stmt->execute($params);
         $total = (int)$stmt->fetchColumn();
@@ -231,9 +236,23 @@ class DT_LichHoc_DAL
         return $stmt->fetchAll();
     }
 
+    /** Thông tin CTĐT (tên) theo dòng bridge khct.id — dùng cho tiêu đề buổi học mặc định. */
+    public static function getChuongTrinhTenByKhct(int $khctId): ?string
+    {
+        $stmt = Database::getConnection()->prepare(
+            "SELECT ct.ten_chuong_trinh
+             FROM DT_KHOA_HOC_CHUONG_TRINH khct
+             JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+             WHERE khct.id=:id AND khct.da_xoa=0"
+        );
+        $stmt->execute([':id' => $khctId]);
+        $v = $stmt->fetchColumn();
+        return $v === false ? null : (string)$v;
+    }
+
     public static function getMaxBuoi(int $lopId): int
     {
-        $stmt = Database::getConnection()->prepare("SELECT COALESCE(MAX(buoi_thu),0) FROM DT_LICH_HOC WHERE lop_hoc_id=:id AND da_xoa=0");
+        $stmt = Database::getConnection()->prepare("SELECT COALESCE(MAX(buoi_thu),0) FROM DT_LICH_HOC WHERE khoa_hoc_chuong_trinh_id=:id AND da_xoa=0");
         $stmt->execute([':id' => $lopId]);
         return (int)$stmt->fetchColumn();
     }

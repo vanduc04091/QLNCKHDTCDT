@@ -159,12 +159,13 @@ class DM_GiangVien_DAL
     /** Phân công của 1 giảng viên (cho drawer detail) */
     public static function getPhanCongByGV(int $gvId): array
     {
-        $sql = "SELECT pc.id, pc.lop_hoc_id, pc.mon_hoc_id, pc.vai_tro, pc.so_tiet_phan_cong,
+        $sql = "SELECT pc.id, pc.khoa_hoc_chuong_trinh_id AS lop_hoc_id, pc.mon_hoc_id, pc.vai_tro, pc.so_tiet_phan_cong,
                        pc.tu_ngay, pc.den_ngay, pc.trang_thai,
-                       lop.ma_lop, lop.ten_lop,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
                        mh.ma_mon_hoc, mh.ten_mon_hoc
                 FROM DT_PHAN_CONG_GIANG_VIEN pc
-                INNER JOIN DT_LOP_HOC lop ON lop.id = pc.lop_hoc_id
+                INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = pc.khoa_hoc_chuong_trinh_id
+                INNER JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
                 LEFT JOIN DT_MON_HOC mh ON mh.id = pc.mon_hoc_id
                 WHERE pc.giang_vien_id=:gv AND pc.da_xoa=0
                 ORDER BY pc.tu_ngay DESC, pc.id DESC";

@@ -204,7 +204,7 @@ $('#formCauHinh').on('submit', function(e){
         if (!this.checked && !fd.has(this.name)) fd.append(this.name, '0');
     });
     var $btn = $('#btnSave').prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $btn.prop('disabled', false).text('Lưu cấu hình');
             if (res.success){ APP.toast(res.message, 'success'); }

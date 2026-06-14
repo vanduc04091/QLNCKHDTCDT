@@ -7,20 +7,21 @@ class DT_DiemDanh_DAL
     private static function selectSql(): string
     {
         return "SELECT dd.*,
-                       hvl.hoc_vien_id, hvl.lop_hoc_id,
+                       hvl.hoc_vien_id, hvl.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        hv.ma_hv, hv.ho_ten, hv.avatar, hv.la_nhan_vien,
                        nv.ma_nv,
                        dt.ten_doi_tuong,
                        lh.tieu_de AS tieu_de_buoi, lh.ngay_hoc,
                        lh.gio_bat_dau AS gio_bat_dau_buoi, lh.gio_ket_thuc AS gio_ket_thuc_buoi, lh.buoi_thu,
-                       lop.ma_lop, lop.ten_lop
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop
                 FROM DT_DIEM_DANH dd
                 INNER JOIN DT_HOC_VIEN_LOP hvl ON hvl.id = dd.hoc_vien_lop_id
                 INNER JOIN DM_HOC_VIEN hv ON hv.id = hvl.hoc_vien_id
                 LEFT JOIN DM_NHAN_VIEN nv ON nv.id = hv.nhan_vien_id
                 LEFT JOIN DM_DOI_TUONG_HOC_VIEN dt ON dt.id = hv.doi_tuong_id
                 LEFT JOIN DT_LICH_HOC lh ON lh.id = dd.lich_hoc_id
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = hvl.lop_hoc_id";
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id";
     }
 
     /**
@@ -34,7 +35,7 @@ class DT_DiemDanh_DAL
                  ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
                 SELECT :lich, hvl.id, 1, NOW(), NOW(), :u1, :u2, 0
                 FROM DT_HOC_VIEN_LOP hvl
-                WHERE hvl.lop_hoc_id=:lop AND hvl.da_xoa=0";
+                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':lich' => $lichHocId, ':lop' => $lopHocId, ':u1' => $userId, ':u2' => $userId]);
         return $stmt->rowCount();
@@ -132,7 +133,7 @@ class DT_DiemDanh_DAL
         $sql = "SELECT lh.id, lh.buoi_thu, lh.tieu_de, lh.ngay_hoc, lh.gio_bat_dau, lh.gio_ket_thuc, lh.trang_thai,
                        (SELECT COUNT(*) FROM DT_DIEM_DANH dd WHERE dd.lich_hoc_id=lh.id AND dd.da_xoa=0) AS so_diem_danh
                 FROM DT_LICH_HOC lh
-                WHERE lh.lop_hoc_id=:lop AND lh.da_xoa=0";
+                WHERE lh.khoa_hoc_chuong_trinh_id=:lop AND lh.da_xoa=0";
         $params = [':lop' => $lopId];
         if ($from !== '') { $sql .= " AND lh.ngay_hoc >= :f"; $params[':f'] = $from; }
         if ($to !== '')   { $sql .= " AND lh.ngay_hoc <= :t"; $params[':t'] = $to; }

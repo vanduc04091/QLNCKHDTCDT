@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../DAL/DT_LichHoc_DAL.php';
-require_once __DIR__ . '/../DAL/DT_LopHoc_DAL.php';
 require_once __DIR__ . '/../DAL/DM_NhatKyHeThong_DAL.php';
 
 class DT_LichHoc_BUS
@@ -109,11 +108,11 @@ class DT_LichHoc_BUS
         string $pattern, array $weekdays, int $userId,
         bool $forceConflict = false
     ): array {
-        if ($lopId <= 0) return ['success' => false, 'message' => 'Chưa chọn lớp học'];
-        $lop = DT_LopHoc_DAL::getById($lopId);
-        if (!$lop) return ['success' => false, 'message' => 'Lớp học không tồn tại'];
+        if ($lopId <= 0) return ['success' => false, 'message' => 'Chưa chọn khóa học / chương trình'];
+        $tenCT = DT_LichHoc_DAL::getChuongTrinhTenByKhct($lopId);
+        if ($tenCT === null) return ['success' => false, 'message' => 'Khóa học / chương trình không tồn tại'];
 
-        $tpl['tieu_de'] = trim($tpl['tieu_de'] ?? '') ?: $lop->ten_lop;
+        $tpl['tieu_de'] = trim($tpl['tieu_de'] ?? '') ?: $tenCT;
         if (empty($tpl['gio_bat_dau']) || empty($tpl['gio_ket_thuc'])) {
             return ['success' => false, 'message' => 'Thiếu giờ bắt đầu/kết thúc'];
         }

@@ -56,10 +56,10 @@ foreach ($dkTrend as $r) $trendMax = max($trendMax, (int)$r['so_luong']);
             <div class="dt-kpi-value"><?= number_format($kpi['khoa_hoc']) ?></div>
         </div>
     </a>
-    <a href="<?= $base ?>GUI/DT_LopHoc/index.php" class="dt-kpi dt-kpi-green">
+    <a href="<?= $base ?>GUI/DT_ChuongTrinh/index.php" class="dt-kpi dt-kpi-green">
         <div class="dt-kpi-icon"><?= IconHelper::svg('school', '24') ?></div>
         <div class="dt-kpi-body">
-            <div class="dt-kpi-label">Lớp đang học</div>
+            <div class="dt-kpi-label">CTĐT đang học</div>
             <div class="dt-kpi-value"><?= number_format($kpi['lop_hoc']) ?></div>
         </div>
     </a>
@@ -91,7 +91,7 @@ foreach ($dkTrend as $r) $trendMax = max($trendMax, (int)$r['so_luong']);
 <div class="dt-quick">
     <span class="dt-quick-label">Thao tác nhanh:</span>
     <a href="<?= $base ?>GUI/DT_KhoaHoc/index.php" class="btn btn-sm">+ Khóa</a>
-    <a href="<?= $base ?>GUI/DT_LopHoc/index.php" class="btn btn-sm">+ Lớp</a>
+    <a href="<?= $base ?>GUI/DT_ChuongTrinh/index.php" class="btn btn-sm">+ CTĐT</a>
     <a href="<?= $base ?>GUI/DM_HocVien/index.php" class="btn btn-sm">+ Học viên</a>
     <a href="<?= $base ?>GUI/DT_LichHoc/index.php" class="btn btn-sm">+ Lịch học</a>
     <a href="<?= $base ?>GUI/DT_DangKyKhoaHoc/index.php" class="btn btn-sm btn-primary">Duyệt đăng ký</a>
@@ -181,7 +181,7 @@ foreach ($dkTrend as $r) $trendMax = max($trendMax, (int)$r['so_luong']);
     <div class="card">
         <div class="dt-card-head">
             <h3><?= IconHelper::svg('school', '18') ?> Lớp gần đầy nhất</h3>
-            <a href="<?= $base ?>GUI/DT_LopHoc/index.php" class="dt-card-link">Xem tất cả →</a>
+            <a href="<?= $base ?>GUI/DT_ChuongTrinh/index.php" class="dt-card-link">Xem tất cả →</a>
         </div>
         <?php if (!$lopFull): ?>
             <div class="dt-empty">Chưa có lớp nào.</div>

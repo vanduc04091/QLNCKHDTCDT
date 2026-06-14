@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 require_once __DIR__ . '/../../BUS/DM_GiangVien_BUS.php';
 
 Helper::requireLogin();
@@ -11,7 +11,7 @@ $canAdd = PhanQuyenHelper::hasQuyen('DT_PhanCongGiangVien', PhanQuyenHelper::QUY
 $canEdit = PhanQuyenHelper::hasQuyen('DT_PhanCongGiangVien', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_PhanCongGiangVien', PhanQuyenHelper::QUYEN_XOA);
 
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
 $gvList = DM_GiangVien_BUS::getCombo();
 
 $pageTitle = 'Phân công giảng viên';
@@ -70,7 +70,7 @@ require __DIR__ . '/../layouts/header.php';
             <?php if ($canAdd): ?>
                 <button type="button" class="btn" onclick="openBulk()">
                     <?= IconHelper::svg('plus', '16') ?>
-                    Phân công nhiều môn
+                    Phân công nhiều bài
                 </button>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">
                     + Thêm phân công
@@ -81,11 +81,11 @@ require __DIR__ . '/../layouts/header.php';
 
     <div class="lh-filter">
         <div class="lh-filter-field">
-            <label>Lớp học</label>
+            <label>Chương trình đào tạo</label>
             <select id="fLop" class="form-select">
-                <option value="0">Tất cả lớp</option>
+                <option value="0">Tất cả chương trình</option>
                 <?php foreach ($lopList as $l): ?>
-                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -156,16 +156,16 @@ require __DIR__ . '/../layouts/header.php';
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Lớp học <span class="required">*</span></label>
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
                         <select name="lop_hoc_id" id="f_lop" class="form-select" required>
-                            <option value="">-- Chọn lớp --</option>
+                            <option value="">-- Chọn chương trình --</option>
                             <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Môn học</label>
+                        <label>Bài học</label>
                         <select name="mon_hoc_id" id="f_mon" class="form-select">
                             <option value="">Phụ trách cả lớp</option>
                         </select>
@@ -217,7 +217,7 @@ require __DIR__ . '/../layouts/header.php';
 <div class="modal-backdrop" id="modalBulk">
     <div class="modal" style="max-width:680px">
         <div class="modal-header">
-            <h3>Phân công giảng viên cho nhiều môn</h3>
+            <h3>Phân công giảng viên cho nhiều bài</h3>
             <button type="button" class="close" onclick="closeBulk()">&times;</button>
         </div>
         <form id="formBulk">
@@ -242,18 +242,18 @@ require __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Lớp học <span class="required">*</span></label>
+                    <label>Chương trình đào tạo <span class="required">*</span></label>
                     <select name="lop_hoc_id" id="b_lop" class="form-select" required>
-                        <option value="">-- Chọn lớp --</option>
+                        <option value="">-- Chọn chương trình --</option>
                         <?php foreach ($lopList as $l): ?>
-                            <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                            <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Chọn các môn (lớp này có)</label>
+                    <label>Chọn các bài (lớp này có)</label>
                     <div id="bMonHocList" class="pc-mon-list">
-                        <div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn lớp để xem danh sách môn</div>
+                        <div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn chương trình để xem danh sách bài</div>
                     </div>
                 </div>
             </div>
@@ -482,12 +482,12 @@ $('#b_lop').on('change', function(){ renderBulkMon(parseInt(this.value,10)); });
 
 function renderBulkMon(lopId){
     var $w = $('#bMonHocList');
-    if (!lopId){ $w.html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn lớp để xem danh sách môn</div>'); return; }
+    if (!lopId){ $w.html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn chương trình để xem danh sách bài</div>'); return; }
     $w.html('<div style="padding:14px;text-align:center"><span class="spinner"></span></div>');
     APP.ajax(URL,{action:'getMonHocByLop',lop_hoc_id:lopId}).done(function(res){
         if (!res.success) return;
         state.monByLop[lopId] = res.data || [];
-        if (!res.data.length){ $w.html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Lớp này chưa liên kết môn nào (qua khóa học)</div>'); return; }
+        if (!res.data.length){ $w.html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Lớp này chưa liên kết bài nào (qua khóa học)</div>'); return; }
         var html = '';
         res.data.forEach(function(m){
             html += '<label class="lh-chip-check"><input type="checkbox" name="mon_hoc_ids[]" value="'+m.id+'"> <span>'+APP.escape(m.ma_mon_hoc)+' - '+APP.escape(m.ten_mon_hoc)+'</span></label>';
@@ -498,7 +498,7 @@ function renderBulkMon(lopId){
 
 function openBulk(){
     $('#formBulk')[0].reset();
-    $('#bMonHocList').html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn lớp để xem danh sách môn</div>');
+    $('#bMonHocList').html('<div class="text-muted" style="padding:14px;text-align:center;font-size:13px">Chọn chương trình để xem danh sách bài</div>');
     $('#modalBulk').addClass('open');
 }
 function closeBulk(){ $('#modalBulk').removeClass('open'); }

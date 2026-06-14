@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
-require_once __DIR__ . '/../../BUS/DT_LopHoc_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_TaiLieu', PhanQuyenHelper::QUYEN_XEM)) {
@@ -12,7 +12,7 @@ $canEdit = PhanQuyenHelper::hasQuyen('DT_TaiLieu', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_TaiLieu', PhanQuyenHelper::QUYEN_XOA);
 
 $khoaList = DT_KhoaHoc_BUS::getCombo();
-$lopList = DT_LopHoc_BUS::getPaged(1, 500, '', 0, 0, -1)['data'];
+$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
 
 $pageTitle = 'Tài liệu';
 $activeMenu = 'DT_TaiLieu';
@@ -95,18 +95,18 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="lh-filter-field">
-            <label>Lớp học</label>
+            <label>Chương trình đào tạo</label>
             <select id="fLop" class="form-select">
-                <option value="0">Tất cả lớp</option>
+                <option value="0">Tất cả chương trình</option>
                 <?php foreach ($lopList as $l): ?>
-                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="lh-filter-field">
-            <label>Môn học</label>
+            <label>Bài học</label>
             <select id="fMon" class="form-select">
-                <option value="0">Tất cả môn</option>
+                <option value="0">Tất cả bài</option>
             </select>
         </div>
     </div>
@@ -235,16 +235,16 @@ require __DIR__ . '/../layouts/header.php';
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Lớp học</label>
+                            <label>Chương trình đào tạo</label>
                             <select name="lop_hoc_id" id="f_lop" class="form-select">
                                 <option value="">--</option>
                                 <?php foreach ($lopList as $l): ?>
-                                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['ma_lop'] . ' - ' . $l['ten_lop']) ?></option>
+                                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Môn học</label>
+                            <label>Bài học</label>
                             <select name="mon_hoc_id" id="f_mon" class="form-select">
                                 <option value="">--</option>
                             </select>
@@ -401,8 +401,8 @@ function renderGrid(rows){
 
         var scope = '';
         if (t.ten_khoa_hoc) scope += '<span class="tl-scope-chip tl-scope-kh" title="Khóa học">' + ICON_GRADUATION + ' '+APP.escape(t.ma_khoa_hoc||'')+'</span>';
-        if (t.ten_lop) scope += '<span class="tl-scope-chip tl-scope-lop" title="Lớp học">' + ICON_USERS + ' '+APP.escape(t.ma_lop||'')+'</span>';
-        if (t.ten_mon_hoc) scope += '<span class="tl-scope-chip tl-scope-mon" title="Môn học">' + ICON_BOOK_OPEN + ' '+APP.escape(t.ma_mon_hoc||'')+'</span>';
+        if (t.ten_lop) scope += '<span class="tl-scope-chip tl-scope-lop" title="Chương trình đào tạo">' + ICON_USERS + ' '+APP.escape(t.ma_lop||'')+'</span>';
+        if (t.ten_mon_hoc) scope += '<span class="tl-scope-chip tl-scope-mon" title="Bài học">' + ICON_BOOK_OPEN + ' '+APP.escape(t.ma_mon_hoc||'')+'</span>';
 
         var flags = '';
         if (parseInt(t.bat_buoc,10)===1) flags += '<span class="tl-flag tl-flag-required">' + ICON_STAR + ' Bắt buộc</span>';
@@ -464,7 +464,7 @@ $('#fDX').on('change', function(){ state.daXoa=parseInt(this.value,10)||0; state
 // Load mon combo cho filter top
 APP.ajax(URL_AJAX,{action:'getComboMonHoc'}).done(function(res){
     if (!res.success) return;
-    var html = '<option value="0">Tất cả môn</option>';
+    var html = '<option value="0">Tất cả bài</option>';
     (res.data||[]).forEach(function(m){ html += '<option value="'+m.id+'">'+APP.escape(m.ma_mon_hoc+' - '+m.ten_mon_hoc)+'</option>'; });
     $('#fMon').html(html);
 });
@@ -601,7 +601,7 @@ $('#formTL').on('submit', function(e){
         if (!fd.has(k)) fd.append(k, '0');
     });
     var $btn = $('#btnSubmit').prop('disabled', true).text('Đang lưu...');
-    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json' })
+    $.ajax({ url: URL_AJAX, type:'POST', data: fd, processData:false, contentType:false, dataType:'json', headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
         .done(function(res){
             $btn.prop('disabled', false).text('Lưu');
             if (res.success){ APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }
@@ -671,8 +671,8 @@ function renderDetail(t){
 
     var scopeParts = [];
     if (t.ten_khoa_hoc) scopeParts.push('Khóa: <strong>'+APP.escape(t.ma_khoa_hoc+' - '+t.ten_khoa_hoc)+'</strong>');
-    if (t.ten_lop) scopeParts.push('Lớp: <strong>'+APP.escape(t.ma_lop+' - '+t.ten_lop)+'</strong>');
-    if (t.ten_mon_hoc) scopeParts.push('Môn: <strong>'+APP.escape(t.ma_mon_hoc+' - '+t.ten_mon_hoc)+'</strong>');
+    if (t.ten_lop) scopeParts.push('Chương trình: <strong>'+APP.escape(t.ma_lop+' - '+t.ten_lop)+'</strong>');
+    if (t.ten_mon_hoc) scopeParts.push('Bài: <strong>'+APP.escape(t.ma_mon_hoc+' - '+t.ten_mon_hoc)+'</strong>');
     if (scopeParts.length) html += '<div class="lh-detail-block"><div class="lh-detail-label">Phạm vi</div><div>'+scopeParts.join('<br>')+'</div></div>';
 
     var flagParts = [];

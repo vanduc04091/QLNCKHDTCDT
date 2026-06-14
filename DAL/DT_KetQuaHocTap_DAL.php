@@ -7,14 +7,15 @@ class DT_KetQuaHocTap_DAL
     private static function selectSql(): string
     {
         return "SELECT kq.*,
-                       hvl.hoc_vien_id, hvl.lop_hoc_id,
+                       hvl.hoc_vien_id, hvl.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        hv.ma_hv, hv.ho_ten, hv.avatar,
-                       lop.ma_lop, lop.ten_lop,
+                       lop.ma_chuong_trinh AS ma_lop, lop.ten_chuong_trinh AS ten_lop,
                        mh.ma_mon_hoc, mh.ten_mon_hoc
                 FROM DT_KET_QUA_HOC_TAP kq
                 INNER JOIN DT_HOC_VIEN_LOP hvl ON hvl.id = kq.hoc_vien_lop_id
                 INNER JOIN DM_HOC_VIEN hv ON hv.id = hvl.hoc_vien_id
-                LEFT JOIN DT_LOP_HOC lop ON lop.id = hvl.lop_hoc_id
+                LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id
+                LEFT JOIN DT_CHUONG_TRINH lop ON lop.id = khct.chuong_trinh_id
                 LEFT JOIN DT_MON_HOC mh ON mh.id = kq.mon_hoc_id";
     }
 
@@ -42,24 +43,23 @@ class DT_KetQuaHocTap_DAL
                 INNER JOIN DM_HOC_VIEN hv ON hv.id = hvl.hoc_vien_id
                 LEFT JOIN DT_KET_QUA_HOC_TAP kq
                   ON kq.hoc_vien_lop_id = hvl.id AND kq.da_xoa = 0
-                WHERE hvl.lop_hoc_id=:lop AND hvl.da_xoa=0
+                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0
                 ORDER BY hv.ho_ten ASC, kq.mon_hoc_id ASC";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':lop' => $lopId]);
         return $stmt->fetchAll();
     }
 
-    /** Môn học của lớp (qua khóa học → DT_KHOA_HOC_MON_HOC) */
-    public static function getMonHocByLop(int $lopId): array
+    /** Bài học của chương trình (theo ngữ cảnh khct → CTĐT → dt_mon_hoc.chuong_trinh_id) */
+    public static function getMonHocByLop(int $khctId): array
     {
         $sql = "SELECT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.so_tin_chi
-                FROM DT_LOP_HOC lop
-                INNER JOIN DT_KHOA_HOC_MON_HOC khmh ON khmh.khoa_hoc_id = lop.khoa_hoc_id AND khmh.da_xoa=0
-                INNER JOIN DT_MON_HOC mh ON mh.id = khmh.mon_hoc_id AND mh.da_xoa=0
-                WHERE lop.id=:lop AND lop.da_xoa=0
-                ORDER BY mh.ten_mon_hoc ASC";
+                FROM DT_KHOA_HOC_CHUONG_TRINH khct
+                INNER JOIN DT_MON_HOC mh ON mh.chuong_trinh_id = khct.chuong_trinh_id AND mh.da_xoa=0
+                WHERE khct.id=:khct AND khct.da_xoa=0
+                ORDER BY mh.thu_tu ASC, mh.id ASC";
         $stmt = Database::getConnection()->prepare($sql);
-        $stmt->execute([':lop' => $lopId]);
+        $stmt->execute([':khct' => $khctId]);
         return $stmt->fetchAll();
     }
 
@@ -135,7 +135,7 @@ class DT_KetQuaHocTap_DAL
                         ELSE 'Kém'
                     END,
                     hvl.ngay_cap_nhat=NOW(), hvl.nguoi_cap_nhat=:u
-                WHERE hvl.lop_hoc_id=:lop AND hvl.da_xoa=0";
+                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':u' => $userId, ':lop' => $lopId]);
         return $stmt->rowCount();
@@ -156,7 +156,7 @@ class DT_KetQuaHocTap_DAL
                     SUM(CASE WHEN kq.xep_loai IN ('Yếu','Kém') THEN 1 ELSE 0 END) AS yeu
                 FROM DT_HOC_VIEN_LOP hvl
                 LEFT JOIN DT_KET_QUA_HOC_TAP kq ON kq.hoc_vien_lop_id=hvl.id AND kq.da_xoa=0
-                WHERE hvl.lop_hoc_id=:lop AND hvl.da_xoa=0";
+                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':lop' => $lopId]);
         return $stmt->fetch() ?: [];
