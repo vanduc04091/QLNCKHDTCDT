@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_ChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_MonHoc', PhanQuyenHelper::QUYEN_XEM)) {
@@ -8,6 +9,7 @@ if (!PhanQuyenHelper::hasQuyen('DT_MonHoc', PhanQuyenHelper::QUYEN_XEM)) {
 }
 
 $ctCombo = DT_ChuongTrinh_BUS::getCombo();
+$khoaList = DT_KhoaHoc_BUS::getCombo();
 
 $canAdd = PhanQuyenHelper::hasQuyen('DT_MonHoc', PhanQuyenHelper::QUYEN_THEM);
 $canEdit = PhanQuyenHelper::hasQuyen('DT_MonHoc', PhanQuyenHelper::QUYEN_SUA);
@@ -68,11 +70,14 @@ require __DIR__ . '/../layouts/header.php';
                 <option value="1">Hoạt động</option>
                 <option value="0">Khóa</option>
             </select>
-            <select id="filterChuongTrinh" class="form-select" style="max-width:240px" aria-label="Lọc theo chương trình">
-                <option value="0">-- Tất cả chương trình --</option>
-                <?php foreach ($ctCombo as $ct): ?>
-                    <option value="<?= $ct['id'] ?>"><?= Helper::h($ct['ma_chuong_trinh'] . ' - ' . $ct['ten_chuong_trinh']) ?></option>
+            <select id="filterKhoa" class="form-select" style="max-width:220px" aria-label="Lọc theo khóa học">
+                <option value="0">-- Chọn khóa học --</option>
+                <?php foreach ($khoaList as $k): ?>
+                    <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                 <?php endforeach; ?>
+            </select>
+            <select id="filterChuongTrinh" class="form-select" style="max-width:240px" aria-label="Lọc theo chương trình" disabled>
+                <option value="0">-- Chọn chương trình --</option>
             </select>
             <select id="filterDaXoa" class="form-select" style="max-width:150px" aria-label="Lọc thùng rác">
                 <option value="0">Đang hoạt động</option>
@@ -342,6 +347,19 @@ $('#search').on('input', APP.debounce(function () {
 }, 400));
 
 $('#filterTrangThai').on('change', function () { state.trangThai = parseInt(this.value, 10); state.page = 1; load(); });
+$('#filterKhoa').on('change', function () {
+    var kh = parseInt(this.value, 10) || 0;
+    var $ct = $('#filterChuongTrinh').empty().append('<option value="0">-- Chọn chương trình --</option>').prop('disabled', true);
+    state.chuongTrinhId = 0; state.page = 1; load();
+    if (!kh) return;
+    APP.ajax(URL, {action: 'getChuongTrinhTheoKhoa', khoa_hoc_id: kh}).done(function (res) {
+        if (!res.success) return;
+        var rows = res.data || [];
+        if (!rows.length) { $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>'); return; }
+        rows.forEach(function (c) { $ct.append('<option value="'+c.chuong_trinh_id+'">'+APP.escape((c.ma_chuong_trinh?c.ma_chuong_trinh+' - ':'')+(c.ten_chuong_trinh||''))+'</option>'); });
+        $ct.prop('disabled', false);
+    });
+});
 $('#filterChuongTrinh').on('change', function () { state.chuongTrinhId = parseInt(this.value, 10) || 0; state.page = 1; load(); });
 $('#filterDaXoa').on('change', function () { state.daXoa = parseInt(this.value, 10) || 0; state.page = 1; load(); });
 

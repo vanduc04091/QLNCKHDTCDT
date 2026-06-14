@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_XEM)) {
@@ -8,7 +9,7 @@ if (!PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_XEM)) {
 }
 $canEdit = PhanQuyenHelper::hasQuyen('DT_DiemDanh', PhanQuyenHelper::QUYEN_SUA);
 
-$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
+$khoaList = DT_KhoaHoc_BUS::getCombo();
 
 $pageTitle = 'Điểm danh';
 $activeMenu = 'DT_DiemDanh';
@@ -53,13 +54,19 @@ require __DIR__ . '/../layouts/header.php';
 <div class="dd-layout">
     <div class="card dd-sidebar">
         <div class="dd-sidebar-header">
+            <div class="form-group" style="margin:0 0 8px">
+                <label>Khóa học</label>
+                <select id="fKhoa" class="form-select">
+                    <option value="">-- Chọn khóa học --</option>
+                    <?php foreach ($khoaList as $k): ?>
+                        <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <div class="form-group" style="margin:0">
                 <label>Chương trình đào tạo</label>
-                <select id="fLop" class="form-select">
-                    <option value="">-- Chọn chương trình để xem các buổi --</option>
-                    <?php foreach ($lopList as $l): ?>
-                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
-                    <?php endforeach; ?>
+                <select id="fLop" class="form-select" disabled>
+                    <option value="">-- Chọn chương trình --</option>
                 </select>
             </div>
         </div>
@@ -132,6 +139,22 @@ function statusLabel(tt){ switch(parseInt(tt,10)){case 1:return 'Có mặt';case
 function statusCls(tt){ switch(parseInt(tt,10)){case 1:return 'present';case 2:return 'late';case 3:return 'excused';case 0:return 'absent';default:return '';} }
 
 // ================== Lịch của lớp ==================
+$('#fKhoa').on('change', function(){
+    var kh = parseInt(this.value, 10) || 0;
+    var $ct = $('#fLop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+    // reset vùng buổi học
+    state.lopId = 0; state.lichId = 0;
+    $('#sessionHeader,#ddProgress').hide(); $('#ddGrid').empty();
+    $('#lichList').html('<div class="empty-state" style="padding:30px 16px;font-size:13px"><div class="icon">' + ICON_CALENDAR + '</div>Chọn chương trình để xem các buổi</div>');
+    if (!kh) return;
+    APP.ajax(URL, {action:'getChuongTrinhTheoKhoa', khoa_hoc_id: kh}).done(function(res){
+        if (!res.success) return;
+        var rows = res.data || [];
+        if (!rows.length) { $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>'); return; }
+        rows.forEach(function(c){ $ct.append('<option value="'+c.id+'">'+APP.escape((c.ma_chuong_trinh?c.ma_chuong_trinh+' - ':'')+(c.ten_chuong_trinh||''))+'</option>'); });
+        $ct.prop('disabled', false);
+    });
+});
 $('#fLop').on('change', function(){
     state.lopId = parseInt(this.value, 10) || 0;
     state.lichId = 0;

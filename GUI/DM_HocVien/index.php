@@ -793,15 +793,13 @@ function renderPane(tab) {
 function renderMon(rows) {
     var $p = $('#paneMon');
     if (!rows.length) { $p.html('<div class="hv-empty">Chưa có bài học</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Mã</th><th>Tên bài</th><th>Khóa</th><th class="text-center">Tiết</th><th class="text-center">TC</th><th>Loại</th></tr></thead><tbody>';
+    var h = '<table class="hv-tbl"><thead><tr><th>Chương trình đào tạo</th><th>Mã</th><th>Tên bài</th><th class="text-center">Tiết</th><th class="text-center">TC</th></tr></thead><tbody>';
     rows.forEach(function (r) {
-        var bb = parseInt(r.bat_buoc, 10) === 1 ? '<span class="hv-lop-tt t1">Bắt buộc</span>' : '<span class="hv-lop-tt t3">Tự chọn</span>';
-        h += '<tr><td><code>' + APP.escape(r.ma_mon_hoc || '') + '</code></td>'
+        h += '<tr><td class="text-muted">' + APP.escape((r.ma_chuong_trinh ? r.ma_chuong_trinh + ' - ' : '') + (r.ten_chuong_trinh || '')) + '</td>'
+           + '<td><code>' + APP.escape(r.ma_mon_hoc || '') + '</code></td>'
            + '<td>' + APP.escape(r.ten_mon_hoc || '') + '</td>'
-           + '<td class="text-muted">' + APP.escape(r.ten_khoa_hoc || '') + '</td>'
            + '<td class="text-center">' + (r.tong_so_tiet || 0) + '</td>'
-           + '<td class="text-center">' + (r.so_tin_chi || 0) + '</td>'
-           + '<td>' + bb + '</td></tr>';
+           + '<td class="text-center">' + (r.so_tin_chi || 0) + '</td></tr>';
     });
     $p.html(h + '</tbody></table>');
 }
@@ -809,14 +807,17 @@ function renderMon(rows) {
 function renderLich(rows) {
     var $p = $('#paneLich');
     if (!rows.length) { $p.html('<div class="hv-empty">Chưa có lịch học</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Lớp / Bài</th><th>GV</th><th>Phòng</th></tr></thead><tbody>';
+    var h = '<table class="hv-tbl"><thead><tr><th>Khóa / CTĐT</th><th>Buổi</th><th>Ngày</th><th>Giờ</th><th>Bài</th><th>GV</th><th>Phòng</th></tr></thead><tbody>';
     rows.forEach(function (r) {
         var gv = r.ten_giang_vien || r.giang_vien_ngoai || '-';
         var time = (r.gio_bat_dau || '').substring(0, 5) + ' - ' + (r.gio_ket_thuc || '').substring(0, 5);
-        h += '<tr><td>#' + (r.buoi_thu || '-') + '</td>'
+        var ctx = '<strong>' + APP.escape(r.ma_lop || '') + '</strong>'
+                + (r.ten_khoa_hoc ? '<div class="text-muted" style="font-size:11px">' + APP.escape(r.ma_khoa_hoc || '') + '</div>' : '');
+        h += '<tr><td>' + ctx + '</td>'
+           + '<td>#' + (r.buoi_thu || '-') + '</td>'
            + '<td>' + APP.escape(r.ngay_hoc || '-') + '</td>'
            + '<td>' + APP.escape(time) + '</td>'
-           + '<td>' + APP.escape(r.ma_lop || '') + (r.ten_mon_hoc ? '<div class="text-muted" style="font-size:11.5px">' + APP.escape(r.ten_mon_hoc) + '</div>' : '') + '</td>'
+           + '<td>' + APP.escape(r.tieu_de || r.ten_mon_hoc || '-') + '</td>'
            + '<td>' + APP.escape(gv) + '</td>'
            + '<td>' + APP.escape(r.phong_hoc || '-') + '</td></tr>';
     });
@@ -834,12 +835,14 @@ function renderDD(st, detail) {
           + '</div>';
     if (!detail.length) { h += '<div class="hv-empty">Chưa có chi tiết điểm danh</div>'; $p.html(h); return; }
     var labels = {0:['Vắng KP','#dc2626'], 1:['Có mặt','#16a34a'], 2:['Muộn','#0891b2'], 3:['Vắng CP','#ca8a04']};
-    h += '<table class="hv-tbl"><thead><tr><th>Ngày</th><th>Buổi</th><th>Lớp / Bài</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead><tbody>';
+    h += '<table class="hv-tbl"><thead><tr><th>Khóa / CTĐT</th><th>Ngày</th><th>Buổi</th><th>Trạng thái</th><th>Giờ vào</th></tr></thead><tbody>';
     detail.forEach(function (r) {
         var lbl = labels[parseInt(r.trang_thai,10)] || ['?', '#64748b'];
-        h += '<tr><td>' + APP.escape(r.ngay_hoc || '-') + '</td>'
+        var ctx = '<strong>' + APP.escape(r.ma_lop || '') + '</strong>'
+                + (r.ma_khoa_hoc ? '<div class="text-muted" style="font-size:11px">' + APP.escape(r.ma_khoa_hoc) + '</div>' : '');
+        h += '<tr><td>' + ctx + '</td>'
+           + '<td>' + APP.escape(r.ngay_hoc || '-') + '</td>'
            + '<td>#' + (r.buoi_thu || '-') + '</td>'
-           + '<td>' + APP.escape(r.ma_lop || '') + (r.ten_mon_hoc ? '<div class="text-muted" style="font-size:11.5px">' + APP.escape(r.ten_mon_hoc) + '</div>' : '') + '</td>'
            + '<td><span style="color:' + lbl[1] + ';font-weight:600">' + lbl[0] + '</span></td>'
            + '<td class="text-muted">' + ((r.gio_vao || '').substring(0,5) || '-') + '</td></tr>';
     });
@@ -849,13 +852,13 @@ function renderDD(st, detail) {
 function renderDiem(rows) {
     var $p = $('#paneDiem');
     if (!rows.length) { $p.html('<div class="hv-empty">Chưa có bảng điểm</div>'); return; }
-    var h = '<table class="hv-tbl"><thead><tr><th>Mã bài</th><th>Tên bài</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead><tbody>';
+    var h = '<table class="hv-tbl"><thead><tr><th>Khóa học</th><th>Chương trình đào tạo</th><th>TX</th><th>GK</th><th>CK</th><th>TK</th><th>Xếp loại</th><th>Đạt</th></tr></thead><tbody>';
     rows.forEach(function (r) {
         var dat = r.dat === null || r.dat === '' ? '-'
                 : (parseInt(r.dat,10) === 1 ? '<span style="color:#16a34a;font-weight:600">Đạt</span>' : '<span style="color:#dc2626;font-weight:600">Chưa đạt</span>');
         var fmt = function (x) { return x !== null && x !== undefined && x !== '' ? parseFloat(x).toFixed(1) : '-'; };
-        h += '<tr><td><code>' + APP.escape(r.ma_mon_hoc || '') + '</code></td>'
-           + '<td>' + APP.escape(r.ten_mon_hoc || '') + '<div class="text-muted" style="font-size:11px">' + APP.escape(r.ma_lop || '') + '</div></td>'
+        h += '<tr><td class="text-muted">' + APP.escape((r.ma_khoa_hoc ? r.ma_khoa_hoc + ' - ' : '') + (r.ten_khoa_hoc || '')) + '</td>'
+           + '<td><code>' + APP.escape(r.ma_lop || '') + '</code> ' + APP.escape(r.ten_lop || '') + '</td>'
            + '<td>' + fmt(r.diem_thuong_xuyen) + '</td>'
            + '<td>' + fmt(r.diem_giua_ky) + '</td>'
            + '<td>' + fmt(r.diem_cuoi_ky) + '</td>'

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_XEM)) {
@@ -8,7 +9,7 @@ if (!PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_XEM)) {
 }
 $canEdit = PhanQuyenHelper::hasQuyen('DT_KetQuaHocTap', PhanQuyenHelper::QUYEN_SUA);
 
-$lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
+$khoaList = DT_KhoaHoc_BUS::getCombo();
 
 $pageTitle = 'Kết quả học tập';
 $activeMenu = 'DT_KetQuaHocTap';
@@ -52,13 +53,19 @@ require __DIR__ . '/../layouts/header.php';
 <div class="card">
     <div class="kq-toolbar">
         <div class="kq-toolbar-left">
-            <div class="form-group" style="margin:0;min-width:280px">
-                <label>Chương trình đào tạo</label>
-                <select id="fLop" class="form-select">
-                    <option value="">-- Chọn chương trình --</option>
-                    <?php foreach ($lopList as $l): ?>
-                        <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
+            <div class="form-group" style="margin:0;min-width:220px">
+                <label>Khóa học</label>
+                <select id="fKhoa" class="form-select">
+                    <option value="">-- Chọn khóa học --</option>
+                    <?php foreach ($khoaList as $k): ?>
+                        <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                     <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;min-width:240px">
+                <label>Chương trình đào tạo</label>
+                <select id="fLop" class="form-select" disabled>
+                    <option value="">-- Chọn chương trình --</option>
                 </select>
             </div>
             <div class="form-group" style="margin:0;min-width:180px">
@@ -197,6 +204,19 @@ function xepLoai(d){
 }
 
 // ============ Load ============
+$('#fKhoa').on('change', function(){
+    var kh = parseInt(this.value,10) || 0;
+    var $ct = $('#fLop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+    state.lopId = 0; resetUI();
+    if (!kh) return;
+    APP.ajax(URL, {action:'getChuongTrinhTheoKhoa', khoa_hoc_id: kh}).done(function(res){
+        if (!res.success) return;
+        var rows = res.data || [];
+        if (!rows.length) { $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>'); return; }
+        rows.forEach(function(c){ $ct.append('<option value="'+c.id+'">'+APP.escape((c.ma_chuong_trinh?c.ma_chuong_trinh+' - ':'')+(c.ten_chuong_trinh||''))+'</option>'); });
+        $ct.prop('disabled', false);
+    });
+});
 $('#fLop').on('change', function(){
     state.lopId = parseInt(this.value,10) || 0;
     if (!state.lopId) { resetUI(); return; }
@@ -264,9 +284,12 @@ function updateStats(s) {
 
 function renderTable() {
     // Header — điểm theo CTĐT: mỗi HV 1 điểm tổng kết
-    var thead = '<th style="width:44px" class="text-center">#</th><th style="min-width:240px">Học viên</th>';
+    var thead = '<th style="width:44px" class="text-center">#</th><th style="min-width:220px">Học viên</th>';
+    thead += '<th class="text-center" style="width:90px" title="Thường xuyên (20%)">TX</th>';
+    thead += '<th class="text-center" style="width:90px" title="Giữa kỳ (30%)">GK</th>';
+    thead += '<th class="text-center" style="width:90px" title="Cuối kỳ (50%)">CK</th>';
     thead += '<th class="text-center" style="width:140px">Điểm tổng kết</th>';
-    thead += '<th class="text-center" style="width:140px">Xếp loại</th>';
+    thead += '<th class="text-center" style="width:130px">Xếp loại</th>';
     $('#kqThead').html(thead);
 
     // Body
@@ -283,7 +306,7 @@ function renderTable() {
     list.sort(function(a,b){ return (a.ho_ten||'').localeCompare(b.ho_ten||'', 'vi'); });
 
     if (!list.length) {
-        $tb.append('<tr><td colspan="4"><div class="empty-state" style="padding:40px"><div class="icon">' + ICON_EMPTY + '</div>Không có dữ liệu</div></td></tr>');
+        $tb.append('<tr><td colspan="7"><div class="empty-state" style="padding:40px"><div class="icon">' + ICON_EMPTY + '</div>Không có dữ liệu</div></td></tr>');
         return;
     }
 
@@ -293,6 +316,11 @@ function renderTable() {
         var tr = '<tr>';
         tr += '<td class="text-center">'+(i+1)+'</td>';
         tr += '<td><div class="kq-hv">'+avatar(g)+'<div><div class="kq-hv-name">'+APP.escape(g.ho_ten||'')+'</div><div class="kq-hv-code">'+APP.escape(g.ma_hv||'')+'</div></div></div></td>';
+        // Chi tiết điểm thành phần — chỉ hiển thị
+        tr += '<td class="text-center text-muted">'+(s ? fmtDiem(s.dtx) || '—' : '—')+'</td>';
+        tr += '<td class="text-center text-muted">'+(s ? fmtDiem(s.dgk) || '—' : '—')+'</td>';
+        tr += '<td class="text-center text-muted">'+(s ? fmtDiem(s.dck) || '—' : '—')+'</td>';
+        // Điểm tổng kết — bấm để sửa
         tr += cellScore(g.hoc_vien_lop_id, null, s);
         tr += '<td class="text-center">'+(xl?'<span class="kq-badge kq-badge-'+xlClass(xl)+'">'+APP.escape(xl)+'</span>':'—')+'</td>';
         tr += '</tr>';
@@ -367,12 +395,15 @@ $('#btnExport').on('click', function(){
     if (!state.lopId) { APP.toast('Chưa chọn lớp','warning'); return; }
     // Export đơn giản: tạo CSV từ bảng
     var rows = [];
-    rows.push(['STT','Mã HV','Họ tên','Điểm tổng kết','Xếp loại']);
+    rows.push(['STT','Mã HV','Họ tên','TX','GK','CK','Điểm tổng kết','Xếp loại']);
 
     Object.values(state.grouped).forEach(function(g, i){
         var s = g.scores['0'] || g.scores[null];
         rows.push([
             i+1, g.ma_hv||'', g.ho_ten||'',
+            (s && s.dtx!=null ? parseFloat(s.dtx).toFixed(1) : ''),
+            (s && s.dgk!=null ? parseFloat(s.dgk).toFixed(1) : ''),
+            (s && s.dck!=null ? parseFloat(s.dck).toFixed(1) : ''),
             (s && s.dtk!=null ? parseFloat(s.dtk).toFixed(1) : ''),
             (s && s.xl ? s.xl : '')
         ]);

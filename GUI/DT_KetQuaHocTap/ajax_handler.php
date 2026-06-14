@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KetQuaHocTap_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -13,6 +14,14 @@ try {
     switch ($action) {
         case 'getComboLop':
             ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getCombo());
+            break;
+
+        case 'getComboKhoaHoc':
+            ResponseHelper::success('OK', DT_KhoaHoc_BUS::getCombo());
+            break;
+
+        case 'getChuongTrinhTheoKhoa':
+            ResponseHelper::success('OK', DT_KhoaHocChuongTrinh_BUS::getByKhoaHoc(Helper::postInt('khoa_hoc_id')));
             break;
 
         case 'load':

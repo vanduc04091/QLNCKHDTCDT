@@ -9,7 +9,7 @@ class DT_LichHoc_DAL
         return "SELECT lh.*,
                        lh.khoa_hoc_chuong_trinh_id AS lop_hoc_id,
                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
-                       kh.ma_khoa_hoc, kh.ten_khoa_hoc,
+                       khct.khoa_hoc_id, kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                        mh.ma_mon_hoc, mh.ten_mon_hoc,
                        nv.ma_nv AS ma_giang_vien, nv.ho_ten AS ten_giang_vien,
                        u.tai_khoan AS tai_khoan_nguoi_tao

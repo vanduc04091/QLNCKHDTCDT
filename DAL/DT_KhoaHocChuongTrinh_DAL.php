@@ -53,7 +53,7 @@ class DT_KhoaHocChuongTrinh_DAL
              FROM DT_KHOA_HOC_CHUONG_TRINH khct
              JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id AND ct.da_xoa=0
              WHERE khct.khoa_hoc_id=:kh AND khct.da_xoa=0
-             ORDER BY ct.ten_chuong_trinh"
+             ORDER BY ct.thu_tu ASC, ct.id ASC"
         );
         $stmt->execute([':kh' => $khoaHocId]);
         return $stmt->fetchAll();

@@ -73,15 +73,17 @@ class DT_HocVienLop_BUS
                 "SELECT lh.id, lh.khoa_hoc_chuong_trinh_id, lh.ngay_hoc, lh.gio_bat_dau, lh.gio_ket_thuc,
                         lh.buoi_thu, lh.tieu_de, lh.phong_hoc, lh.giang_vien_ngoai,
                         ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
+                        kh.ma_khoa_hoc, kh.ten_khoa_hoc,
                         mh.ten_mon_hoc,
                         gv.ho_ten AS ten_giang_vien
                  FROM DT_LICH_HOC lh
                  INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
                  INNER JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                 LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
                  LEFT JOIN DT_MON_HOC mh ON mh.id = lh.mon_hoc_id
                  LEFT JOIN DM_NHAN_VIEN gv ON gv.id = lh.giang_vien_id
                  WHERE lh.khoa_hoc_chuong_trinh_id IN ({$in}) AND lh.da_xoa=0
-                 ORDER BY lh.ngay_hoc DESC, lh.gio_bat_dau ASC LIMIT 200"
+                 ORDER BY kh.ma_khoa_hoc, ct.thu_tu, lh.ngay_hoc DESC, lh.gio_bat_dau ASC LIMIT 200"
             );
             $lichRows = $stmt->fetchAll();
         }
@@ -104,12 +106,15 @@ class DT_HocVienLop_BUS
 
             $stmt = $pdo->query(
                 "SELECT lh.ngay_hoc, dd.trang_thai, dd.ghi_chu, dd.gio_vao,
-                        lh.buoi_thu, lh.tieu_de, mh.ten_mon_hoc, ct.ma_chuong_trinh AS ma_lop
+                        lh.buoi_thu, lh.tieu_de, mh.ten_mon_hoc,
+                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
+                        kh.ma_khoa_hoc, kh.ten_khoa_hoc
                  FROM DT_DIEM_DANH dd
                  LEFT JOIN DT_LICH_HOC lh ON lh.id = dd.lich_hoc_id
                  LEFT JOIN DT_MON_HOC mh ON mh.id = lh.mon_hoc_id
                  LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = lh.khoa_hoc_chuong_trinh_id
                  LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                 LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
                  WHERE dd.hoc_vien_lop_id IN ({$in}) AND dd.da_xoa=0
                  ORDER BY lh.ngay_hoc DESC LIMIT 100"
             );
@@ -123,15 +128,15 @@ class DT_HocVienLop_BUS
             $stmt = $pdo->query(
                 "SELECT kq.diem_thuong_xuyen, kq.diem_giua_ky, kq.diem_cuoi_ky, kq.diem_tong_ket,
                         kq.xep_loai, kq.dat, kq.nhan_xet,
-                        mh.ma_mon_hoc, mh.ten_mon_hoc,
-                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop
+                        ct.ma_chuong_trinh AS ma_lop, ct.ten_chuong_trinh AS ten_lop,
+                        kh.ma_khoa_hoc, kh.ten_khoa_hoc
                  FROM DT_KET_QUA_HOC_TAP kq
-                 LEFT JOIN DT_MON_HOC mh ON mh.id = kq.mon_hoc_id
                  LEFT JOIN DT_HOC_VIEN_LOP hvl ON hvl.id = kq.hoc_vien_lop_id
                  LEFT JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id
                  LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                 LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
                  WHERE kq.hoc_vien_lop_id IN ({$in}) AND kq.da_xoa=0
-                 ORDER BY ct.ma_chuong_trinh, mh.ten_mon_hoc"
+                 ORDER BY kh.ma_khoa_hoc, ct.thu_tu"
             );
             $ketQuaRows = $stmt->fetchAll();
         }
@@ -156,13 +161,13 @@ class DT_HocVienLop_BUS
         if ($khctIds) {
             $in = implode(',', array_map('intval', $khctIds));
             $stmt = $pdo->query(
-                "SELECT DISTINCT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.tong_so_tiet, mh.so_tin_chi,
-                        1 AS bat_buoc, ct.ten_chuong_trinh AS ten_khoa_hoc
+                "SELECT DISTINCT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.thu_tu, mh.tong_so_tiet, mh.so_tin_chi,
+                        ct.ma_chuong_trinh, ct.ten_chuong_trinh
                  FROM DT_KHOA_HOC_CHUONG_TRINH khct
                  INNER JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
                  INNER JOIN DT_MON_HOC mh ON mh.chuong_trinh_id = ct.id AND mh.da_xoa=0
                  WHERE khct.id IN ({$in})
-                 ORDER BY ct.ten_chuong_trinh, mh.thu_tu, mh.id"
+                 ORDER BY ct.thu_tu, mh.thu_tu, mh.id"
             );
             $monHoc = $stmt->fetchAll();
         }

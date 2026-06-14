@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../bootstrap.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 
 Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_XEM)) {
@@ -11,6 +12,7 @@ $canEdit = PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_SUA);
 $canDel = PhanQuyenHelper::hasQuyen('DT_LichHoc', PhanQuyenHelper::QUYEN_XOA);
 
 $lopList = DT_KhoaHocChuongTrinh_BUS::getCombo();
+$khoaList = DT_KhoaHoc_BUS::getCombo();
 
 $pageTitle = 'Quản lý lịch học';
 $activeMenu = 'DT_LichHoc';
@@ -97,12 +99,18 @@ require __DIR__ . '/../layouts/header.php';
     <!-- Filter row -->
     <div class="lh-filter">
         <div class="lh-filter-field">
-            <label>Chương trình đào tạo</label>
-            <select id="fLop" class="form-select">
-                <option value="0">Tất cả chương trình</option>
-                <?php foreach ($lopList as $l): ?>
-                    <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
+            <label>Khóa học</label>
+            <select id="fKhoa" class="form-select">
+                <option value="0">-- Chọn khóa học --</option>
+                <?php foreach ($khoaList as $k): ?>
+                    <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                 <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="lh-filter-field">
+            <label>Chương trình đào tạo</label>
+            <select id="fLop" class="form-select" disabled>
+                <option value="0">-- Chọn chương trình --</option>
             </select>
         </div>
         <div class="lh-filter-field">
@@ -177,14 +185,22 @@ require __DIR__ . '/../layouts/header.php';
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Chương trình đào tạo <span class="required">*</span></label>
-                        <select name="lop_hoc_id" id="f_lop" class="form-select" required>
-                            <option value="">-- Chọn chương trình --</option>
-                            <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
+                        <label>Khóa học <span class="required">*</span></label>
+                        <select id="f_khoa" class="form-select" required>
+                            <option value="">-- Chọn khóa học --</option>
+                            <?php foreach ($khoaList as $k): ?>
+                                <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
+                        <select name="lop_hoc_id" id="f_lop" class="form-select" required disabled>
+                            <option value="">-- Chọn chương trình --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group" style="max-width:140px">
                         <label>Buổi thứ</label>
                         <input type="number" name="buoi_thu" id="f_buoi" class="form-control" min="0" value="0" title="Để 0 để tự tăng">
@@ -280,14 +296,22 @@ require __DIR__ . '/../layouts/header.php';
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Chương trình đào tạo <span class="required">*</span></label>
-                        <select name="lop_hoc_id" id="b_lop" class="form-select" required>
-                            <option value="">-- Chọn chương trình --</option>
-                            <?php foreach ($lopList as $l): ?>
-                                <option value="<?= $l['id'] ?>"><?= Helper::h($l['label']) ?></option>
+                        <label>Khóa học <span class="required">*</span></label>
+                        <select id="b_khoa" class="form-select" required>
+                            <option value="">-- Chọn khóa học --</option>
+                            <?php foreach ($khoaList as $k): ?>
+                                <option value="<?= $k['id'] ?>"><?= Helper::h(($k['ma_khoa_hoc'] ? $k['ma_khoa_hoc'].' - ' : '').$k['ten_khoa_hoc']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Chương trình đào tạo <span class="required">*</span></label>
+                        <select name="lop_hoc_id" id="b_lop" class="form-select" required disabled>
+                            <option value="">-- Chọn chương trình --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
                         <label>Bài học (tùy chọn)</label>
                         <select name="mon_hoc_id" id="b_mon" class="form-select"><option value="">--</option></select>
@@ -657,6 +681,7 @@ $('#fLop,#fGv,#fTt').on('change', function(){
     state.filter.trang_thai = $('#fTt').val();
     state.listPage = 1; loadEvents();
 });
+// Lưu ý: #fKhoa được xử lý riêng ở handler 2 cấp phía trên
 $('#fSearch').on('input', APP.debounce(function(){
     state.filter.search = $(this).val();
     state.listPage = 1; loadEvents();
@@ -705,12 +730,40 @@ function ensureCombosAsync() {
     return $.when.apply($, jobs);
 }
 
+// ============== Combo khóa → CTĐT (2 cấp) ==============
+// $ct: jQuery select CTĐT; preselect: id khct cần chọn sau khi nạp (cho edit)
+function lhLoadCT($ct, khoaId, preselect) {
+    $ct.empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+    if (!khoaId) return;
+    APP.ajax(URL, {action:'getChuongTrinhTheoKhoa', khoa_hoc_id:khoaId}).done(function(res){
+        if (!res.success) return;
+        var rows = res.data || [];
+        if (!rows.length) { $ct.append('<option value="" disabled>(Khóa này chưa có chương trình)</option>'); return; }
+        rows.forEach(function(c){ $ct.append('<option value="'+c.id+'">'+APP.escape((c.ma_chuong_trinh?c.ma_chuong_trinh+' - ':'')+(c.ten_chuong_trinh||''))+'</option>'); });
+        $ct.prop('disabled', false);
+        if (preselect) $ct.val(preselect);
+    });
+}
+// Filter: chọn khóa -> nạp CTĐT (cho phép "tất cả CTĐT của khóa" = giá trị 0)
+$('#fKhoa').on('change', function(){
+    var kh = parseInt(this.value,10) || 0;
+    lhLoadCT($('#fLop'), kh, null);
+    state.filter.lop_hoc_id = 0;
+    state.listPage = 1; loadEvents();
+});
+// Form thêm/sửa
+$('#f_khoa').on('change', function(){ lhLoadCT($('#f_lop'), parseInt(this.value,10)||0, null); });
+// Form batch
+$('#b_khoa').on('change', function(){ lhLoadCT($('#b_lop'), parseInt(this.value,10)||0, null); });
+
 // ============== Modal: Create / Edit ==============
 function openCreate(presetDate) {
     ensureCombosAsync().then(function(){
         $('#modalTitle').text('Thêm buổi học');
         $('#formBuoi')[0].reset();
         $('#f_id').val(''); $('#f_force').val('0');
+        $('#f_khoa').val('');
+        $('#f_lop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
         $('#f_buoi').val(0);
         $('#f_tt').val('0');
         $('#f_ngay').val(presetDate || ymd(new Date()));
@@ -728,7 +781,8 @@ function openEdit(id) {
             var e = res.data;
             $('#modalTitle').text('Sửa buổi học');
             $('#f_id').val(e.id); $('#f_force').val('0');
-            $('#f_lop').val(e.lop_hoc_id);
+            $('#f_khoa').val(e.khoa_hoc_id || '');
+            lhLoadCT($('#f_lop'), parseInt(e.khoa_hoc_id,10)||0, e.lop_hoc_id);
             $('#f_buoi').val(e.buoi_thu);
             $('#f_tieu_de').val(e.tieu_de);
             $('#f_ngay').val(e.ngay_hoc);
@@ -786,6 +840,8 @@ function openBulk() {
     ensureCombosAsync().then(function(){
         $('#formBulk')[0].reset();
         $('#b_force').val('0');
+        $('#b_khoa').val('');
+        $('#b_lop').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
         $('input[name=pattern][value=weekly]').prop('checked', true);
         var t = new Date();
         $('#b_from').val(ymd(t));
