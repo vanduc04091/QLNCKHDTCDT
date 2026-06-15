@@ -171,6 +171,29 @@ class DM_HocVien_DAL
         return (int)$stmt->fetchColumn() > 0;
     }
 
+    /**
+     * Tìm học viên trùng CCCD hoặc SĐT (loại trừ chính bản ghi đang sửa).
+     * Trả về dòng đầu tiên trùng hoặc null.
+     */
+    public static function findDuplicate(?string $cccd, ?string $sdt, int $excludeId = 0): ?array
+    {
+        $cccd = trim((string)$cccd);
+        $sdt = trim((string)$sdt);
+        if ($cccd === '' && $sdt === '') return null;
+
+        $conds = [];
+        $params = [':id' => $excludeId];
+        if ($cccd !== '') { $conds[] = 'cccd = :cccd'; $params[':cccd'] = $cccd; }
+        if ($sdt !== '')  { $conds[] = 'dien_thoai = :sdt'; $params[':sdt'] = $sdt; }
+
+        $sql = "SELECT id, ma_hv, ho_ten, cccd, dien_thoai FROM DM_HOC_VIEN
+                WHERE da_xoa=0 AND id<>:id AND (" . implode(' OR ', $conds) . ") LIMIT 1";
+        $stmt = Database::getConnection()->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public static function getAvatarPath(int $id): ?string
     {
         $stmt = Database::getConnection()->prepare("SELECT avatar FROM DM_HOC_VIEN WHERE id=:id");

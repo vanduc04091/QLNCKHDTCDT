@@ -5,6 +5,8 @@ class DT_HocVienLop_PUBLIC
     public int $khoa_hoc_chuong_trinh_id = 0;
     public int $hoc_vien_id = 0;
     public ?string $ngay_ghi_danh = null;
+    public ?string $ngay_bat_dau = null;
+    public ?string $ngay_ket_thuc = null;
     public int $trang_thai = 1;
     public ?float $diem_tong_ket = null;
     public ?string $xep_loai = null;

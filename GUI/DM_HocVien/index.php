@@ -162,21 +162,16 @@ require __DIR__ . '/../layouts/header.php';
                         </div>
                     </div>
 
-                    <!-- Toggle: là nhân viên? -->
+                    <!-- Toggle: là nhân viên? (chỉ là cờ phân biệt) -->
                     <div class="hv-toggle-card">
                         <label class="hv-toggle">
                             <input type="checkbox" id="f_la_nhan_vien" name="la_nhan_vien" value="1">
                             <span class="hv-toggle-slider"></span>
                             <span class="hv-toggle-label">
                                 <strong>Học viên là nhân viên của cơ quan</strong>
-                                <small>Bật nếu học viên là nhân viên đang làm việc — tránh lặp hồ sơ 2 lần.</small>
+                                <small>Bật để đánh dấu học viên là nhân viên đang làm việc (chỉ để phân biệt).</small>
                             </span>
                         </label>
-                        <div id="nvSelectWrap" class="form-group" style="display:none;margin-top:10px;margin-bottom:0">
-                            <label>Chọn nhân viên <span class="required">*</span></label>
-                            <select name="nhan_vien_id" id="f_nhan_vien_id" class="form-select"></select>
-                            <div class="form-error" id="nvLinkedHint" style="display:none">⚠ Nhân viên này đã có hồ sơ học viên. Vui lòng chọn nhân viên khác.</div>
-                        </div>
                     </div>
                 </div>
 
@@ -303,10 +298,23 @@ require __DIR__ . '/../layouts/header.php';
                             <select id="lopDrwSelect" class="form-select" style="flex:1;min-width:180px" disabled>
                                 <option value="">-- Chọn chương trình --</option>
                             </select>
-                            <input type="date" id="lopDrwNgay" class="form-control" style="width:160px">
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px">
+                            <div>
+                                <label class="text-muted" style="font-size:11.5px;display:block">Ngày ghi danh</label>
+                                <input type="date" id="lopDrwNgay" class="form-control" style="width:150px">
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size:11.5px;display:block">Ngày học từ</label>
+                                <input type="date" id="lopDrwNbd" class="form-control" style="width:150px" title="Để trống nếu học toàn bộ">
+                            </div>
+                            <div>
+                                <label class="text-muted" style="font-size:11.5px;display:block">đến</label>
+                                <input type="date" id="lopDrwNkt" class="form-control" style="width:150px" title="Để trống nếu học toàn bộ">
+                            </div>
                             <button type="button" class="btn btn-primary btn-sm" id="btnGhiDanh">Ghi danh</button>
                         </div>
-                        <div class="text-muted" style="font-size:11.5px;margin-top:6px">Chọn khóa học trước, sau đó chọn chương trình đào tạo thuộc khóa đó.</div>
+                        <div class="text-muted" style="font-size:11.5px;margin-top:6px">Chọn khóa học trước, rồi chọn CTĐT. <strong>Ngày học từ–đến</strong>: để trống nếu HV học toàn bộ; nếu nhập, điểm danh chỉ hiện HV trong khoảng ngày đó.</div>
                     </div>
                     <div id="lopDrwList" style="display:flex;flex-direction:column;gap:8px"></div>
                     <div id="lopDrwEmpty" class="hv-empty" style="display:none">Học viên chưa ghi danh vào chương trình nào.</div>
@@ -365,8 +373,6 @@ var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var CAN_ADD = <?= $canAdd?'true':'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, doiTuongId: 0, laNhanVien: '', view: 'table' };
-var nhanVienList = [];
-var nhanVienLoaded = false;
 
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '16')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '16')) ?>';
@@ -567,94 +573,46 @@ function resetForm() {
     $('#avatarPreview').html('<span id="avatarInitials">HV</span>' + overlayHtml()).css('background', '').css('color', '');
     $('#btnRemoveAvatar').hide();
     $('#f_la_nhan_vien').prop('checked', false);
-    $('#nvSelectWrap').hide();
-    $('#nvLinkedHint').hide();
-}
-
-function ensureNhanVienCombo(cb) {
-    if (nhanVienLoaded) { cb && cb(); return; }
-    APP.ajax(URL, {action: 'getComboNhanVien'}).done(function (res) {
-        if (res.success) {
-            nhanVienList = res.data || [];
-            var $s = $('#f_nhan_vien_id').empty().append('<option value="">-- Chọn nhân viên --</option>');
-            nhanVienList.forEach(function (n) {
-                $s.append('<option value="' + n.id + '">' + APP.escape(n.ma_nv) + ' - ' + APP.escape(n.ho_ten) + '</option>');
-            });
-            nhanVienLoaded = true;
-            cb && cb();
-        }
-    });
 }
 
 function openCreate() {
     resetForm();
     $('#modalTitle').text('Thêm học viên');
-    ensureNhanVienCombo();
     $('#modalForm').addClass('open');
 }
 
 function openEdit(id) {
     resetForm();
-    ensureNhanVienCombo(function () {
-        APP.ajax(URL, {action: 'getById', id: id}).done(function (res) {
-            if (!res.success) { APP.toast(res.message, 'error'); return; }
-            var e = res.data;
-            $('#modalTitle').text('Sửa học viên');
-            $('#f_id').val(e.id);
-            $('#f_ma_hv').val(e.ma_hv);
-            $('#f_ho_ten').val(e.ho_ten);
-            $('#f_ngay_sinh').val(e.ngay_sinh || '');
-            $('#f_gioi_tinh').val(e.gioi_tinh || '');
-            $('#f_dien_thoai').val(e.dien_thoai || '');
-            $('#f_email').val(e.email || '');
-            $('#f_cccd').val(e.cccd || '');
-            $('#f_dia_chi').val(e.dia_chi || '');
-            $('#f_don_vi_cong_tac').val(e.don_vi_cong_tac || '');
-            $('#f_chuc_vu').val(e.chuc_vu || '');
-            $('#f_doi_tuong_id').val(e.doi_tuong_id || '');
-            $('#f_trang_thai').val(e.trang_thai);
-            $('#f_ghi_chu').val(e.ghi_chu || '');
-            // Set NV mà KHÔNG autofill (giữ nguyên dữ liệu đã nhập)
-            suppressNVAutofill = true;
-            $('#f_la_nhan_vien').prop('checked', e.la_nhan_vien == 1).trigger('change');
-            $('#f_nhan_vien_id').val(e.nhan_vien_id || '');
-            suppressNVAutofill = false;
-            if (e.avatar) {
-                $('#avatarPreview').html('<img src="' + UPLOAD_URL + APP.escape(e.avatar) + '">' + overlayHtml()).css('background', '').css('color', '');
-                $('#btnRemoveAvatar').show();
-            } else {
-                $('#avatarPreview').html('<span>' + APP.escape(initials(e.ho_ten)) + '</span>' + overlayHtml()).css('background', colorFromName(e.ho_ten)).css('color', '#fff');
-            }
-            $('#modalForm').addClass('open');
-        });
+    APP.ajax(URL, {action: 'getById', id: id}).done(function (res) {
+        if (!res.success) { APP.toast(res.message, 'error'); return; }
+        var e = res.data;
+        $('#modalTitle').text('Sửa học viên');
+        $('#f_id').val(e.id);
+        $('#f_ma_hv').val(e.ma_hv);
+        $('#f_ho_ten').val(e.ho_ten);
+        $('#f_ngay_sinh').val(e.ngay_sinh || '');
+        $('#f_gioi_tinh').val(e.gioi_tinh || '');
+        $('#f_dien_thoai').val(e.dien_thoai || '');
+        $('#f_email').val(e.email || '');
+        $('#f_cccd').val(e.cccd || '');
+        $('#f_dia_chi').val(e.dia_chi || '');
+        $('#f_don_vi_cong_tac').val(e.don_vi_cong_tac || '');
+        $('#f_chuc_vu').val(e.chuc_vu || '');
+        $('#f_doi_tuong_id').val(e.doi_tuong_id || '');
+        $('#f_trang_thai').val(e.trang_thai);
+        $('#f_ghi_chu').val(e.ghi_chu || '');
+        $('#f_la_nhan_vien').prop('checked', e.la_nhan_vien == 1);
+        if (e.avatar) {
+            $('#avatarPreview').html('<img src="' + UPLOAD_URL + APP.escape(e.avatar) + '">' + overlayHtml()).css('background', '').css('color', '');
+            $('#btnRemoveAvatar').show();
+        } else {
+            $('#avatarPreview').html('<span>' + APP.escape(initials(e.ho_ten)) + '</span>' + overlayHtml()).css('background', colorFromName(e.ho_ten)).css('color', '#fff');
+        }
+        $('#modalForm').addClass('open');
     });
 }
 
 function closeModal() { $('#modalForm').removeClass('open'); }
-
-$('#f_la_nhan_vien').on('change', function () {
-    var on = this.checked;
-    $('#nvSelectWrap').toggle(on);
-    if (on) {
-        // Nếu đang có giá trị sẵn từ combo, autofill thông tin từ NV
-        $('#f_nhan_vien_id').trigger('change');
-    } else {
-        $('#f_nhan_vien_id').val('');
-    }
-});
-
-// Auto-fill họ tên + mã HV MỖI KHI đổi nhân viên (kể cả chọn lại).
-// Có cờ riêng để không ghi đè khi người dùng đang edit bản ghi có sẵn.
-var suppressNVAutofill = false;
-$('#f_nhan_vien_id').on('change', function () {
-    if (suppressNVAutofill) return;
-    var id = parseInt(this.value, 10) || 0;
-    if (!id) return;
-    var nv = nhanVienList.find(function (x) { return x.id == id; });
-    if (!nv) return;
-    $('#f_ho_ten').val(nv.ho_ten).trigger('input');
-    $('#f_ma_hv').val('HV-' + nv.ma_nv);
-});
 
 $('#f_ho_ten').on('input', function () {
     // Cập nhật preview initials nếu chưa có ảnh thật
@@ -980,17 +938,21 @@ $('#btnGhiDanh').on('click', function () {
     if (!parseInt($('#lopDrwKhoa').val(), 10)) { APP.toast('Chọn khóa học trước', 'error'); return; }
     var lopId = parseInt($('#lopDrwSelect').val(), 10);
     if (!lopId) { APP.toast('Chọn chương trình đào tạo', 'error'); return; }
-    var ngay = $('#lopDrwNgay').val();
+    var nbd = $('#lopDrwNbd').val(), nkt = $('#lopDrwNkt').val();
+    if (nbd && nkt && nbd > nkt) { APP.toast('Ngày học "từ" phải trước "đến"', 'error'); return; }
     APP.ajax(URL, {
         action: 'ghiDanhLop',
         hoc_vien_id: lopDrw.hocVienId,
         lop_hoc_id: lopId,
-        ngay_ghi_danh: ngay
+        ngay_ghi_danh: $('#lopDrwNgay').val(),
+        ngay_bat_dau: nbd,
+        ngay_ket_thuc: nkt
     }).done(function (res) {
         if (res.success) {
             APP.toast(res.message, 'success');
             $('#lopDrwKhoa').val('');
             $('#lopDrwSelect').empty().append('<option value="">-- Chọn chương trình --</option>').prop('disabled', true);
+            $('#lopDrwNbd').val(''); $('#lopDrwNkt').val('');
             loadLopCuaHv();
         } else APP.toast(res.message, 'error');
     });

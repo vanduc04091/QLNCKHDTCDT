@@ -14,17 +14,13 @@ class DM_HocVien_BUS
         $v = self::validate($e);
         if (!$v['success']) return $v;
 
-        // Nếu là nhân viên và chưa có mã HV → tự sinh từ mã NV
-        if ($e->la_nhan_vien && $e->nhan_vien_id && $e->ma_hv === '') {
-            $nv = DM_NhanVien_DAL::getById($e->nhan_vien_id);
-            if ($nv) $e->ma_hv = 'HV-' . $nv->ma_nv;
-        }
-
         if (DM_HocVien_DAL::checkMaExists($e->ma_hv)) {
             return ['success' => false, 'message' => 'Mã học viên đã tồn tại'];
         }
-        if ($e->la_nhan_vien && $e->nhan_vien_id && DM_HocVien_DAL::checkNhanVienExists($e->nhan_vien_id)) {
-            return ['success' => false, 'message' => 'Nhân viên này đã có hồ sơ học viên — không thể thêm lại'];
+        $dup = DM_HocVien_DAL::findDuplicate($e->cccd, $e->dien_thoai);
+        if ($dup) {
+            $by = ($e->cccd && $dup['cccd'] === trim((string)$e->cccd)) ? 'CCCD' : 'số điện thoại';
+            return ['success' => false, 'message' => "Học viên đã tồn tại (trùng {$by}): {$dup['ho_ten']} — {$dup['ma_hv']}"];
         }
         $id = DM_HocVien_DAL::insert($e);
         MemcachedHelper::deleteByPrefix('dm_hoc_vien:');
@@ -41,8 +37,10 @@ class DM_HocVien_BUS
         if (DM_HocVien_DAL::checkMaExists($e->ma_hv, $e->id)) {
             return ['success' => false, 'message' => 'Mã học viên đã tồn tại'];
         }
-        if ($e->la_nhan_vien && $e->nhan_vien_id && DM_HocVien_DAL::checkNhanVienExists($e->nhan_vien_id, $e->id)) {
-            return ['success' => false, 'message' => 'Nhân viên này đã có hồ sơ học viên khác'];
+        $dup = DM_HocVien_DAL::findDuplicate($e->cccd, $e->dien_thoai, $e->id);
+        if ($dup) {
+            $by = ($e->cccd && $dup['cccd'] === trim((string)$e->cccd)) ? 'CCCD' : 'số điện thoại';
+            return ['success' => false, 'message' => "Học viên khác đã dùng {$by} này: {$dup['ho_ten']} — {$dup['ma_hv']}"];
         }
         DM_HocVien_DAL::update($e);
         MemcachedHelper::deleteByPrefix('dm_hoc_vien:');
@@ -55,16 +53,10 @@ class DM_HocVien_BUS
         $e->ho_ten = trim($e->ho_ten);
         $e->ma_hv = trim($e->ma_hv);
         if ($e->ho_ten === '') return ['success' => false, 'message' => 'Họ tên không được để trống'];
-        if ($e->la_nhan_vien) {
-            if (!$e->nhan_vien_id) return ['success' => false, 'message' => 'Đã chọn "là nhân viên" nhưng chưa chọn nhân viên'];
-        } else {
-            $e->nhan_vien_id = null;
-        }
+        // la_nhan_vien chỉ là cờ phân biệt, không gắn với nhân viên cụ thể
+        $e->nhan_vien_id = null;
         if ($e->ma_hv === '') {
-            // Auto mã khi bỏ trống mà không phải là NV
-            if (!$e->la_nhan_vien) {
-                $e->ma_hv = 'HV' . date('ymd') . substr((string)microtime(true), -4);
-            }
+            $e->ma_hv = 'HV' . date('ymd') . substr((string)microtime(true), -4);
         }
         if ($e->email && !Helper::isEmail($e->email)) {
             return ['success' => false, 'message' => 'Email không hợp lệ'];

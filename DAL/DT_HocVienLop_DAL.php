@@ -25,14 +25,17 @@ class DT_HocVienLop_DAL
     public static function insert(DT_HocVienLop_PUBLIC $e): int
     {
         $sql = "INSERT INTO DT_HOC_VIEN_LOP
-                (khoa_hoc_chuong_trinh_id, hoc_vien_id, ngay_ghi_danh, trang_thai, diem_tong_ket, xep_loai, ghi_chu,
+                (khoa_hoc_chuong_trinh_id, hoc_vien_id, ngay_ghi_danh, ngay_bat_dau, ngay_ket_thuc,
+                 trang_thai, diem_tong_ket, xep_loai, ghi_chu,
                  ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
-                VALUES (:khct, :hv, :ngd, :tt, :d, :xl, :gc, NOW(), NOW(), :u1, :u2, 0)";
+                VALUES (:khct, :hv, :ngd, :nbd, :nkt, :tt, :d, :xl, :gc, NOW(), NOW(), :u1, :u2, 0)";
         $stmt = Database::getConnection()->prepare($sql);
         $u = $e->nguoi_tao ?? 0;
         $stmt->execute([
             ':khct' => $e->khoa_hoc_chuong_trinh_id, ':hv' => $e->hoc_vien_id,
-            ':ngd' => $e->ngay_ghi_danh ?: null, ':tt' => $e->trang_thai,
+            ':ngd' => $e->ngay_ghi_danh ?: null,
+            ':nbd' => $e->ngay_bat_dau ?: null, ':nkt' => $e->ngay_ket_thuc ?: null,
+            ':tt' => $e->trang_thai,
             ':d' => $e->diem_tong_ket, ':xl' => $e->xep_loai, ':gc' => $e->ghi_chu,
             ':u1' => $u, ':u2' => $u,
         ]);
@@ -42,13 +45,15 @@ class DT_HocVienLop_DAL
     public static function update(DT_HocVienLop_PUBLIC $e): int
     {
         $sql = "UPDATE DT_HOC_VIEN_LOP SET
-                ngay_ghi_danh=:ngd, trang_thai=:tt,
+                ngay_ghi_danh=:ngd, ngay_bat_dau=:nbd, ngay_ket_thuc=:nkt, trang_thai=:tt,
                 diem_tong_ket=:d, xep_loai=:xl, ghi_chu=:gc,
                 ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
                 WHERE id=:id AND da_xoa=0";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
-            ':ngd' => $e->ngay_ghi_danh ?: null, ':tt' => $e->trang_thai,
+            ':ngd' => $e->ngay_ghi_danh ?: null,
+            ':nbd' => $e->ngay_bat_dau ?: null, ':nkt' => $e->ngay_ket_thuc ?: null,
+            ':tt' => $e->trang_thai,
             ':d' => $e->diem_tong_ket, ':xl' => $e->xep_loai, ':gc' => $e->ghi_chu,
             ':u' => $e->nguoi_cap_nhat ?? 0, ':id' => $e->id,
         ]);
@@ -76,7 +81,9 @@ class DT_HocVienLop_DAL
         $sql = "SELECT hvl.id, hvl.khoa_hoc_chuong_trinh_id, hvl.ngay_ghi_danh, hvl.trang_thai,
                        hvl.diem_tong_ket, hvl.xep_loai,
                        ct.id AS chuong_trinh_id, ct.ma_chuong_trinh, ct.ten_chuong_trinh,
-                       khct.ngay_bat_dau, khct.ngay_ket_thuc, ct.so_luong_toi_da,
+                       COALESCE(hvl.ngay_bat_dau, khct.ngay_bat_dau) AS ngay_bat_dau,
+                       COALESCE(hvl.ngay_ket_thuc, khct.ngay_ket_thuc) AS ngay_ket_thuc,
+                       ct.so_luong_toi_da,
                        khct.trang_thai AS lop_trang_thai,
                        kh.ma_khoa_hoc, kh.ten_khoa_hoc
                 FROM DT_HOC_VIEN_LOP hvl

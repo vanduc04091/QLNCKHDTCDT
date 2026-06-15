@@ -69,7 +69,7 @@ try {
             $e->chuc_vu = Helper::postStr('chuc_vu') ?: null;
             $e->doi_tuong_id = Helper::postInt('doi_tuong_id') ?: null;
             $e->la_nhan_vien = Helper::postInt('la_nhan_vien', 0) ? 1 : 0;
-            $e->nhan_vien_id = Helper::postInt('nhan_vien_id') ?: null;
+            $e->nhan_vien_id = null; // chỉ dùng cờ la_nhan_vien để phân biệt
             $e->ghi_chu = Helper::postStr('ghi_chu') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
 
@@ -153,6 +153,8 @@ try {
             $hvl->khoa_hoc_chuong_trinh_id = Helper::postInt('lop_hoc_id');
             $hvl->hoc_vien_id = Helper::postInt('hoc_vien_id');
             $hvl->ngay_ghi_danh = Helper::postStr('ngay_ghi_danh') ?: date('Y-m-d');
+            $hvl->ngay_bat_dau = Helper::postStr('ngay_bat_dau') ?: null;
+            $hvl->ngay_ket_thuc = Helper::postStr('ngay_ket_thuc') ?: null;
             $hvl->trang_thai = 1;
             $hvl->nguoi_tao = $u;
             $res = DT_HocVienLop_BUS::insert($hvl);

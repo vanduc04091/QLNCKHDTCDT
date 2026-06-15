@@ -30,20 +30,29 @@ class DT_DiemDanh_DAL
      */
     public static function ensureForLich(int $lichHocId, int $lopHocId, int $userId): int
     {
+        // Chỉ tạo bản ghi điểm danh cho học viên có khoảng thời gian học bao gồm ngày của buổi.
+        // HV không nhập ngày (NULL) => luôn tính (như cũ).
         $sql = "INSERT IGNORE INTO DT_DIEM_DANH
                 (lich_hoc_id, hoc_vien_lop_id, trang_thai,
                  ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
                 SELECT :lich, hvl.id, 1, NOW(), NOW(), :u1, :u2, 0
                 FROM DT_HOC_VIEN_LOP hvl
-                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0";
+                INNER JOIN DT_LICH_HOC lh ON lh.id = :lich2
+                WHERE hvl.khoa_hoc_chuong_trinh_id=:lop AND hvl.da_xoa=0
+                  AND (hvl.ngay_bat_dau IS NULL OR hvl.ngay_bat_dau <= lh.ngay_hoc)
+                  AND (hvl.ngay_ket_thuc IS NULL OR hvl.ngay_ket_thuc >= lh.ngay_hoc)";
         $stmt = Database::getConnection()->prepare($sql);
-        $stmt->execute([':lich' => $lichHocId, ':lop' => $lopHocId, ':u1' => $userId, ':u2' => $userId]);
+        $stmt->execute([':lich' => $lichHocId, ':lich2' => $lichHocId, ':lop' => $lopHocId, ':u1' => $userId, ':u2' => $userId]);
         return $stmt->rowCount();
     }
 
     public static function getByLich(int $lichHocId, string $search = ''): array
     {
-        $sql = self::selectSql() . " WHERE dd.lich_hoc_id=:lich AND dd.da_xoa=0";
+        // Lọc theo khoảng thời gian học của từng HV so với ngày buổi (lh.ngay_hoc).
+        // HV để trống ngày (NULL) => luôn hiện.
+        $sql = self::selectSql() . " WHERE dd.lich_hoc_id=:lich AND dd.da_xoa=0
+                  AND (hvl.ngay_bat_dau IS NULL OR lh.ngay_hoc IS NULL OR hvl.ngay_bat_dau <= lh.ngay_hoc)
+                  AND (hvl.ngay_ket_thuc IS NULL OR lh.ngay_hoc IS NULL OR hvl.ngay_ket_thuc >= lh.ngay_hoc)";
         $params = [':lich' => $lichHocId];
         if ($search !== '') {
             $sql .= " AND (hv.ma_hv LIKE :s1 OR hv.ho_ten LIKE :s2)";
