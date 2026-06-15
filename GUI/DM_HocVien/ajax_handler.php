@@ -167,6 +167,18 @@ try {
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
             break;
 
+        case 'suaNgayGhiDanh':
+            PhanQuyenHelper::requireQuyen('DT_HocVienLop', PhanQuyenHelper::QUYEN_SUA);
+            $res = DT_HocVienLop_BUS::updateNgay(
+                Helper::postInt('id'),
+                Helper::postStr('ngay_ghi_danh') ?: null,
+                Helper::postStr('ngay_bat_dau') ?: null,
+                Helper::postStr('ngay_ket_thuc') ?: null,
+                $u
+            );
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
         case 'getOverview':
             // Tổng hợp dữ liệu xem nhanh: lịch / điểm danh / điểm / khóa / môn / hồ sơ / chứng chỉ
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);

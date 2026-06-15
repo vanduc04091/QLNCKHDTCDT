@@ -52,6 +52,17 @@ class DT_HocVienLop_BUS
         return ['success' => true, 'message' => 'Đã xóa khỏi chương trình'];
     }
 
+    /** Cập nhật ngày ghi danh + khoảng ngày học của 1 ghi danh. */
+    public static function updateNgay(int $id, ?string $ngayGhiDanh, ?string $nbd, ?string $nkt, int $userId): array
+    {
+        if (!$id) return ['success' => false, 'message' => 'Thiếu ID'];
+        if ($nbd && $nkt && $nbd > $nkt) {
+            return ['success' => false, 'message' => 'Ngày học "từ" phải trước "đến"'];
+        }
+        DT_HocVienLop_DAL::updateNgay($id, $ngayGhiDanh, $nbd, $nkt, $userId);
+        return ['success' => true, 'message' => 'Đã cập nhật ngày'];
+    }
+
     public static function getById(int $id): ?DT_HocVienLop_DTO { return DT_HocVienLop_DAL::getById($id); }
     public static function getByKhct(int $khctId, string $q = ''): array { return DT_HocVienLop_DAL::getByKhct($khctId, $q); }
     public static function getByHocVien(int $hocVienId): array { return DT_HocVienLop_DAL::getByHocVien($hocVienId); }

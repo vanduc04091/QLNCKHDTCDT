@@ -42,6 +42,23 @@ class DT_HocVienLop_DAL
         return (int)Database::getConnection()->lastInsertId();
     }
 
+    /** Chỉ cập nhật các mốc ngày của 1 bản ghi ghi danh (không đụng điểm/trạng thái). */
+    public static function updateNgay(int $id, ?string $ngayGhiDanh, ?string $nbd, ?string $nkt, int $userId): int
+    {
+        $stmt = Database::getConnection()->prepare(
+            "UPDATE DT_HOC_VIEN_LOP SET
+                ngay_ghi_danh=:ngd, ngay_bat_dau=:nbd, ngay_ket_thuc=:nkt,
+                ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
+             WHERE id=:id AND da_xoa=0"
+        );
+        $stmt->execute([
+            ':ngd' => $ngayGhiDanh ?: null,
+            ':nbd' => $nbd ?: null, ':nkt' => $nkt ?: null,
+            ':u' => $userId, ':id' => $id,
+        ]);
+        return $stmt->rowCount();
+    }
+
     public static function update(DT_HocVienLop_PUBLIC $e): int
     {
         $sql = "UPDATE DT_HOC_VIEN_LOP SET

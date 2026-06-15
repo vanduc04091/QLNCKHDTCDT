@@ -331,6 +331,38 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
+<!-- Modal sửa ngày ghi danh / khoảng ngày học -->
+<div class="modal-backdrop" id="modalNgay">
+    <div class="modal" style="max-width:460px">
+        <div class="modal-header">
+            <h3>Sửa ngày của học viên</h3>
+            <button type="button" class="close" onclick="$('#modalNgay').removeClass('open')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="ngHvlId">
+            <div class="form-group">
+                <label>Ngày ghi danh</label>
+                <input type="date" id="ngGhiDanh" class="form-control">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ngày học từ</label>
+                    <input type="date" id="ngBatDau" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>đến</label>
+                    <input type="date" id="ngKetThuc" class="form-control">
+                </div>
+            </div>
+            <div class="text-muted" style="font-size:11.5px">Để trống "từ–đến" nếu học viên học toàn bộ. Nếu nhập, điểm danh chỉ hiện học viên trong khoảng ngày này.</div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="$('#modalNgay').removeClass('open')">Hủy</button>
+            <button type="button" class="btn btn-primary" id="btnLuuNgay">Lưu</button>
+        </div>
+    </div>
+</div>
+
 <style>
     .hv-lop-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--gray-200); border-radius:8px; background:#fff; }
     .hv-lop-row:hover { border-color: var(--primary); }
@@ -889,6 +921,7 @@ function loadLopCuaHv() {
                             (r.ngay_ghi_danh ? ' · Ghi danh: ' + APP.formatDate(r.ngay_ghi_danh) : '') + '</div>' +
                     '</div>' +
                     lopTtTag(parseInt(r.lop_trang_thai, 10)) +
+                    '<button type="button" class="btn btn-sm" title="Sửa ngày" onclick="moNgayModal(' + r.id + ',\'' + (r.ngay_ghi_danh||'') + '\',\'' + (r.ngay_bat_dau||'') + '\',\'' + (r.ngay_ket_thuc||'') + '\')">Sửa ngày</button> ' +
                     '<button type="button" class="btn btn-sm btn-danger" title="Hủy ghi danh" onclick="huyGhiDanh(' + r.id + ')">' + ICON_TRASH_SM + '</button>' +
                 '</div>'
             );
@@ -968,6 +1001,28 @@ function huyGhiDanh(id) {
         });
     });
 }
+
+function moNgayModal(id, ngd, nbd, nkt) {
+    $('#ngHvlId').val(id);
+    $('#ngGhiDanh').val(ngd || '');
+    $('#ngBatDau').val(nbd || '');
+    $('#ngKetThuc').val(nkt || '');
+    $('#modalNgay').addClass('open');
+}
+$('#btnLuuNgay').on('click', function () {
+    var nbd = $('#ngBatDau').val(), nkt = $('#ngKetThuc').val();
+    if (nbd && nkt && nbd > nkt) { APP.toast('Ngày học "từ" phải trước "đến"', 'error'); return; }
+    APP.ajax(URL, {
+        action: 'suaNgayGhiDanh',
+        id: $('#ngHvlId').val(),
+        ngay_ghi_danh: $('#ngGhiDanh').val(),
+        ngay_bat_dau: nbd,
+        ngay_ket_thuc: nkt
+    }).done(function (res) {
+        if (res.success) { APP.toast(res.message, 'success'); $('#modalNgay').removeClass('open'); loadLopCuaHv(); }
+        else APP.toast(res.message, 'error');
+    });
+});
 
 load();
 loadStats();
