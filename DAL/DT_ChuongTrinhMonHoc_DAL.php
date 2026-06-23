@@ -61,6 +61,17 @@ class DT_ChuongTrinhMonHoc_DAL
         ];
     }
 
+    /** Tìm cặp (CTĐT, bài) đang sống. */
+    public static function findByPair(int $ctId, int $monHocId): ?array
+    {
+        $stmt = Database::getConnection()->prepare(
+            "SELECT * FROM DT_CHUONG_TRINH_MON_HOC WHERE chuong_trinh_id=:ct AND mon_hoc_id=:mh AND da_xoa=0 LIMIT 1"
+        );
+        $stmt->execute([':ct' => $ctId, ':mh' => $monHocId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public static function exists(int $ctId, int $monHocId): bool
     {
         $stmt = Database::getConnection()->prepare(

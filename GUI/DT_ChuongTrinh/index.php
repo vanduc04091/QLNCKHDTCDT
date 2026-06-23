@@ -503,7 +503,7 @@ function loadMon(){
 }
 var monComboLoaded=false;
 function ensureMonCombo(){
-    APP.ajax(URL,{action:'mon_combo'}).done(function(res){
+    APP.ajax(URL,{action:'mon_combo', chuong_trinh_id:currentCT.id}).done(function(res){
         if(!res.success) return;
         var $s=$('#monAddSelect').empty().append('<option value="">-- Chọn bài học --</option>');
         (res.data||[]).forEach(function(m){

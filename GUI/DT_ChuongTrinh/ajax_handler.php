@@ -155,7 +155,7 @@ try {
 
         case 'mon_combo':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
-            ResponseHelper::success('OK', DT_MonHoc_BUS::getChuaGanCombo());
+            ResponseHelper::success('OK', DT_MonHoc_BUS::getChuaGanCombo(Helper::postInt('chuong_trinh_id')));
             break;
 
         case 'mon_add':

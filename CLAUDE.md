@@ -297,6 +297,12 @@ Xem chi tiết: `docs/de_xuat_phan_mem.md`.
 - ✅ Môn gắn theo CTĐT: `dt_lop_hoc_mon_hoc` → `dt_chuong_trinh_mon_hoc`. Module `DT_KhoaHocMonHoc` (trỏ bảng ma `dt_khoa_hoc_mon_hoc` KHÔNG tồn tại → là **lỗi gốc khiến module Môn học không xem/thêm được**) đã xóa, viết mới `DT_ChuongTrinhMonHoc`. UI gán môn chuyển sang màn CTĐT (drawer 2 tab: gắn khóa N:N + gắn môn); màn Khóa học chỉ xem CTĐT áp dụng (read-only).
 - ✅ Migration backfill 1-1 giữ nguyên dữ liệu thật. Backup: `backup_truoc_ctdt_*.sql`.
 
+### 2026-06-15 — Bài học ↔ CTĐT trở lại N:N
+- ✅ **Đảo quan hệ về N:N**: 1 bài thuộc nhiều CTĐT, 1 CTĐT nhiều bài — dùng lại bảng nối `dt_chuong_trinh_mon_hoc` (thứ tự `thu_tu` + `bat_buoc` theo từng cặp). Cột `dt_mon_hoc.chuong_trinh_id`/`thu_tu` KHÔNG còn dùng (giữ để rollback). SQL backfill: `docs/sql_baihoc_ctdt_nhieu_nhieu.sql`.
+- ✅ `DT_MonHoc_BUS::insert/update` nhận thêm `array $chuongTrinhIds` → `syncChuongTrinh()` thêm/gỡ cặp. `getByChuongTrinh/getChuaGanCombo/assignToChuongTrinh/unassign/move` chuyển sang gọi `DT_ChuongTrinhMonHoc_DAL` (id thao tác là id bảng nối). `getChuongTrinhIds()` để preset multi-select.
+- ✅ Màn **Bài học**: form chọn CTĐT đổi từ select đơn → **multi-select** `chuong_trinh_ids[]`; bỏ cột TT/ô Thứ tự; cột Chương trình hiện "N CTĐT". `getById` trả thêm `chuong_trinh_ids`.
+- ✅ Màn **CTĐT** tab Bài học + `getOverview`/`getMonHocByLop`/subquery `so_mon_hoc`/`getStats.co_mon` đọc qua bảng nối.
+
 ### 2026-06-13 — Bài học thuộc 1 CTĐT (1:N) + thứ tự
 - ✅ **Đổi quan hệ bài học↔CTĐT từ N:N → 1:N**: thêm `dt_mon_hoc.chuong_trinh_id` (FK → `dt_chuong_trinh`, nullable). Backfill từ `dt_chuong_trinh_mon_hoc` (mỗi bài ≤1 CTĐT nên không mất dữ liệu). Bảng nối `dt_chuong_trinh_mon_hoc` còn lại nhưng code KHÔNG dùng nữa (giữ để rollback).
 - ✅ **Thêm cột `thu_tu`** cho `dt_mon_hoc` và `dt_chuong_trinh`. Mọi combo + `getPaged` sort theo `thu_tu ASC, id ASC`. Bài insert với thu_tu=0 + có CTĐT → tự xếp cuối (`getMaxThuTuByChuongTrinh + 1`).

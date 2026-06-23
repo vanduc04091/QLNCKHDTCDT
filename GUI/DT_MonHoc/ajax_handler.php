@@ -43,7 +43,9 @@ try {
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
             $e = DT_MonHoc_BUS::getById(Helper::postInt('id'));
             if (!$e) ResponseHelper::error('Không tìm thấy');
-            ResponseHelper::success('OK', $e);
+            $data = (array)$e;
+            $data['chuong_trinh_ids'] = DT_MonHoc_BUS::getChuongTrinhIds(Helper::postInt('id'));
+            ResponseHelper::success('OK', $data);
             break;
 
         case 'insert':
@@ -55,11 +57,10 @@ try {
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
             $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
-            $e->thu_tu = Helper::postInt('thu_tu', 0);
-            $e->chuong_trinh_id = Helper::postInt('chuong_trinh_id') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_tao = $u;
-            $res = DT_MonHoc_BUS::insert($e);
+            $ctIds = isset($_POST['chuong_trinh_ids']) && is_array($_POST['chuong_trinh_ids']) ? $_POST['chuong_trinh_ids'] : [];
+            $res = DT_MonHoc_BUS::insert($e, $ctIds);
             $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
             break;
 
@@ -73,11 +74,10 @@ try {
             $e->so_tiet_ly_thuyet = Helper::postInt('so_tiet_ly_thuyet', 0);
             $e->so_tiet_thuc_hanh = Helper::postInt('so_tiet_thuc_hanh', 0);
             $e->so_tin_chi = (float)Helper::postStr('so_tin_chi', '0');
-            $e->thu_tu = Helper::postInt('thu_tu', 0);
-            $e->chuong_trinh_id = Helper::postInt('chuong_trinh_id') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_cap_nhat = $u;
-            $res = DT_MonHoc_BUS::update($e);
+            $ctIds = isset($_POST['chuong_trinh_ids']) && is_array($_POST['chuong_trinh_ids']) ? $_POST['chuong_trinh_ids'] : [];
+            $res = DT_MonHoc_BUS::update($e, $ctIds);
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
             break;
 
@@ -96,6 +96,13 @@ try {
         case 'delete':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XOA);
             $res = DT_MonHoc_BUS::delete(Helper::postInt('id'));
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        // Gắn nhanh 1 CTĐT vào 1 bài (nút + CTĐT ở bảng)
+        case 'assignCt':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
+            $res = DT_MonHoc_BUS::assignToChuongTrinh(Helper::postInt('mon_hoc_id'), Helper::postInt('chuong_trinh_id'), $u);
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
             break;
 

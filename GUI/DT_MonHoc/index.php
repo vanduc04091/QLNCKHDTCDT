@@ -97,14 +97,9 @@ require __DIR__ . '/../layouts/header.php';
             <thead>
                 <tr>
                     <th style="width:50px" class="text-center">#</th>
-                    <th style="width:60px" class="text-center">TT</th>
                     <th style="width:120px">Mã bài</th>
                     <th>Tên bài học</th>
-                    <th>Chương trình</th>
-                    <th class="text-center" style="width:80px">LT</th>
-                    <th class="text-center" style="width:80px">TH</th>
-                    <th class="text-center" style="width:80px">Tổng</th>
-                    <th class="text-center" style="width:70px">TC</th>
+                    <th>Chương trình đào tạo</th>
                     <th class="text-center" style="width:120px">Trạng thái</th>
                     <th style="width:130px" class="text-right">Hành động</th>
                 </tr>
@@ -161,25 +156,20 @@ require __DIR__ . '/../layouts/header.php';
                         <div class="form-error" id="f_tst_help" style="display:block;color:var(--gray-500)">Tự tính từ lý thuyết + thực hành</div>
                     </div>
                 </div>
-                <div class="form-row-3">
-                    <div class="form-group">
-                        <label for="f_stc">Số tín chỉ</label>
-                        <input type="number" step="0.5" name="so_tin_chi" id="f_stc" class="form-control" value="0" min="0" inputmode="decimal">
+                <div class="form-group" style="max-width:240px">
+                    <label for="f_stc">Số tín chỉ</label>
+                    <input type="number" step="0.5" name="so_tin_chi" id="f_stc" class="form-control" value="0" min="0" inputmode="decimal">
+                </div>
+                <div class="form-group">
+                    <label>Thuộc chương trình đào tạo <small class="text-muted">(gõ để tìm, 1 bài có thể thuộc nhiều CTĐT)</small></label>
+                    <div class="ct-picker" id="ctPicker">
+                        <div class="ct-picker-chips" id="ctChips"></div>
+                        <div class="ct-picker-input-wrap">
+                            <input type="text" id="ctSearch" class="ct-picker-input" placeholder="Gõ mã hoặc tên chương trình..." autocomplete="off">
+                            <div class="ct-suggest" id="ctSuggest"></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="f_thu_tu">Thứ tự</label>
-                        <input type="number" name="thu_tu" id="f_thu_tu" class="form-control" value="0" min="0" inputmode="numeric">
-                        <div class="form-error" style="display:block;color:var(--gray-500)">Để 0 sẽ tự xếp cuối chương trình</div>
-                    </div>
-                    <div class="form-group">
-                        <label for="f_chuong_trinh">Thuộc chương trình đào tạo</label>
-                        <select name="chuong_trinh_id" id="f_chuong_trinh" class="form-select">
-                            <option value="">-- Không thuộc chương trình --</option>
-                            <?php foreach ($ctCombo as $ct): ?>
-                                <option value="<?= $ct['id'] ?>"><?= Helper::h($ct['ma_chuong_trinh'] . ' - ' . $ct['ten_chuong_trinh']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <div class="form-error" style="display:block;color:var(--gray-500)">Gõ vào ô trên rồi chọn chương trình từ danh sách gợi ý. Bấm × để bỏ.</div>
                 </div>
                 <div class="form-group">
                     <label for="f_mo_ta">Mô tả</label>
@@ -193,6 +183,26 @@ require __DIR__ . '/../layouts/header.php';
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal: thêm nhanh 1 CTĐT cho 1 bài (nút + CTĐT ở bảng) -->
+<div class="modal-backdrop" id="modalAddCt">
+    <div class="modal" style="max-width:460px">
+        <div class="modal-header">
+            <h3>Thêm chương trình cho bài học</h3>
+            <button type="button" class="close" onclick="$('#modalAddCt').removeClass('open')">&times;</button>
+        </div>
+        <div class="modal-body" style="min-height:420px;display:flex;flex-direction:column">
+            <div class="text-muted" style="font-size:13px;margin-bottom:10px">Bài: <strong id="addCtBaiTen"></strong></div>
+            <input type="hidden" id="addCtBaiId">
+            <label style="font-size:13px;font-weight:500;margin-bottom:6px">Chọn chương trình đào tạo</label>
+            <input type="text" id="addCtSearch" class="form-control" placeholder="Gõ mã hoặc tên chương trình..." autocomplete="off">
+            <div class="ct-suggest-static" id="addCtSuggest"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="$('#modalAddCt').removeClass('open')">Đóng</button>
+        </div>
     </div>
 </div>
 
@@ -230,6 +240,44 @@ require __DIR__ . '/../layouts/header.php';
 <style>
     .btn-link-chip { border:0; cursor:pointer; }
     .btn-link-chip:hover { filter: brightness(0.95); }
+
+    /* Cột Chương trình ở bảng bài học */
+    .mh-ct-cell { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+    .mh-ct-tag { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11.5px; font-weight:600;
+                 background:var(--primary-light,#dbeafe); color:var(--primary-dark,#1e40af); border:1px solid #bfdbfe; }
+    .mh-ct-tag-main { background:var(--gray-100,#f1f5f9); color:var(--gray-700,#334155); border-color:var(--gray-200,#e2e8f0); font-weight:500; }
+    .mh-ct-more { font-size:11px; color:var(--gray-500); font-weight:600; }
+    .mh-ct-add { border:1px dashed var(--gray-300); background:#fff; color:var(--gray-600); cursor:pointer;
+                 font-size:11px; padding:1px 8px; border-radius:10px; }
+    .mh-ct-add:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* CTĐT picker: chip + suggest */
+    .ct-picker { border:1px solid var(--gray-300); border-radius:8px; padding:6px; background:#fff; }
+    .ct-picker:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+    .ct-picker-chips { display:flex; flex-wrap:wrap; gap:6px; }
+    .ct-picker-chips:not(:empty) { margin-bottom:6px; }
+    .ct-chip { display:inline-flex; align-items:center; gap:6px; background:var(--primary-light,#dbeafe);
+               color:var(--primary-dark,#1e40af); border:1px solid #bfdbfe; border-radius:14px;
+               padding:3px 6px 3px 10px; font-size:12.5px; font-weight:500; }
+    .ct-chip-x { border:0; background:rgba(0,0,0,.08); color:inherit; width:18px; height:18px; border-radius:50%;
+                 cursor:pointer; line-height:1; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .ct-chip-x:hover { background:#ef4444; color:#fff; }
+    .ct-picker-input-wrap { position:relative; }
+    .ct-picker-input { width:100%; border:0; outline:none; padding:6px 4px; font-size:14px; background:transparent; }
+    .ct-suggest { position:absolute; left:0; right:0; top:100%; margin-top:4px; z-index:30;
+                  background:#fff; border:1px solid var(--gray-200); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12);
+                  max-height:240px; overflow-y:auto; display:none; }
+    .ct-suggest.open { display:block; }
+    .ct-suggest-item { padding:8px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--gray-100); }
+    .ct-suggest-item:last-child { border-bottom:0; }
+    .ct-suggest-item:hover { background:var(--primary-light,#eff6ff); }
+    .ct-suggest-empty { padding:10px 12px; font-size:12.5px; color:var(--gray-500); }
+    /* List tĩnh trong modal "+ CTĐT" (cao, luôn hiện) */
+    .ct-suggest-static { margin-top:8px; flex:1; min-height:300px; overflow-y:auto;
+                         border:1px solid var(--gray-200); border-radius:8px; }
+    .ct-suggest-static .ct-suggest-item { padding:9px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--gray-100); }
+    .ct-suggest-static .ct-suggest-item:last-child { border-bottom:0; }
+    .ct-suggest-static .ct-suggest-item:hover { background:var(--primary-light,#eff6ff); }
     .mh-khoa-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--gray-200); border-radius:8px; background:#fff; }
     .mh-khoa-row:hover { border-color: var(--primary); }
     .mh-khoa-info { flex:1; min-width:0; }
@@ -245,6 +293,10 @@ var URL = APP_BASE + 'GUI/DT_MonHoc/ajax_handler.php';
 var CAN_EDIT = <?= $canEdit ? 'true' : 'false' ?>;
 var CAN_DEL = <?= $canDel ? 'true' : 'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, trangThai: -1, chuongTrinhId: 0 };
+
+// Danh sách CTĐT cho picker gợi ý
+var CT_LIST = <?= json_encode(array_map(function($c){ return ['id'=>(int)$c['id'],'ma'=>$c['ma_chuong_trinh'],'ten'=>$c['ten_chuong_trinh']]; }, $ctCombo), JSON_UNESCAPED_UNICODE) ?>;
+var ctSelected = []; // [{id,ma,ten}] đang chọn trong form
 
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '14')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '14')) ?>';
@@ -281,7 +333,7 @@ function renderRows(rows) {
     var $tb = $('#tbody').empty();
     if (!rows.length) {
         $tb.append(
-            '<tr><td colspan="11">' +
+            '<tr><td colspan="6">' +
                 '<div class="empty-state-pro">' +
                     '<div class="empty-icon">' + ICON_EMPTY + '</div>' +
                     '<h4>Chưa có bài học nào</h4>' +
@@ -298,9 +350,25 @@ function renderRows(rows) {
         var tt = r.trang_thai == 1
             ? '<span class="chip chip-success"><span class="dot"></span>Hoạt động</span>'
             : '<span class="chip chip-muted"><span class="dot"></span>Khóa</span>';
-        var ctTxt = r.ten_chuong_trinh
-            ? '<span class="chip chip-primary" title="' + APP.escape(r.ma_chuong_trinh || '') + '">' + APP.escape(r.ten_chuong_trinh) + '</span>'
-            : '<span class="text-muted" style="font-size:12px">—</span>';
+        var dsCt = (r.ds_chuong_trinh || '').split('||').filter(Boolean).map(function (s) {
+            var p = s.split('::'); return { ma: p[0] || '', ten: p[1] || '' };
+        });
+        var ctTxt = '<div class="mh-ct-cell">';
+        if (dsCt.length) {
+            // CTĐT đầu tiên: hiện rõ mã + tên; các CTĐT sau: chỉ mã
+            ctTxt += '<span class="mh-ct-tag mh-ct-tag-main" title="' + APP.escape(dsCt[0].ten) + '">' +
+                     APP.escape(dsCt[0].ma) + ' - ' + APP.escape(dsCt[0].ten) + '</span>';
+            dsCt.slice(1, 6).forEach(function (c) {
+                ctTxt += '<span class="mh-ct-tag" title="' + APP.escape(c.ma + ' - ' + c.ten) + '">' + APP.escape(c.ma) + '</span>';
+            });
+            if (dsCt.length > 6) ctTxt += '<span class="mh-ct-more">+' + (dsCt.length - 6) + '</span>';
+        } else {
+            ctTxt += '<span class="text-muted" style="font-size:12px">Chưa gắn</span>';
+        }
+        if (CAN_EDIT && state.daXoa == 0) {
+            ctTxt += '<button class="mh-ct-add" title="Thêm chương trình cho bài này" onclick="openAddCt(' + r.id + ',\'' + APP.escape(r.ten_mon_hoc).replace(/'/g, "\\\'") + '\')">+ CTĐT</button>';
+        }
+        ctTxt += '</div>';
         var actions = '';
         if (state.daXoa == 0) {
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" aria-label="Sửa bài học" onclick="openEdit(' + r.id + ')">' + ICON_EDIT + '</button>';
@@ -312,16 +380,11 @@ function renderRows(rows) {
         $tb.append(
             '<tr>' +
                 '<td class="text-center text-muted">' + stt + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums;font-weight:600">' + (r.thu_tu || 0) + '</td>' +
                 '<td><strong style="color:var(--gray-900)">' + APP.escape(r.ma_mon_hoc) + '</strong></td>' +
                 '<td>' + APP.escape(r.ten_mon_hoc) +
                     (r.mo_ta ? '<div class="text-muted" style="font-size:12px;margin-top:2px">' + APP.escape((r.mo_ta || '').substring(0, 80)) + (r.mo_ta.length > 80 ? '…' : '') + '</div>' : '') +
                 '</td>' +
                 '<td>' + ctTxt + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums">' + (r.so_tiet_ly_thuyet || 0) + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums">' + (r.so_tiet_thuc_hanh || 0) + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums;font-weight:600">' + (r.tong_so_tiet || 0) + '</td>' +
-                '<td class="text-center" style="font-variant-numeric:tabular-nums">' + (r.so_tin_chi || 0) + '</td>' +
                 '<td class="text-center">' + tt + '</td>' +
                 '<td><div class="actions">' + actions + '</div></td>' +
             '</tr>'
@@ -373,6 +436,7 @@ $('#f_slt, #f_sth').on('input', recalcTongTiet);
 function openCreate() {
     $('#modalTitle').text('Thêm bài học');
     $('#formMain')[0].reset(); $('#f_id').val(''); $('#f_tst').val(0);
+    setCtSelected([]);
     $('#modalForm').addClass('open');
     setTimeout(function () { $('#f_ma').trigger('focus'); }, 50);
 }
@@ -388,8 +452,8 @@ function openEdit(id) {
         $('#f_slt').val(e.so_tiet_ly_thuyet || 0);
         $('#f_sth').val(e.so_tiet_thuc_hanh || 0);
         $('#f_stc').val(e.so_tin_chi || 0);
-        $('#f_thu_tu').val(e.thu_tu || 0);
-        $('#f_chuong_trinh').val(e.chuong_trinh_id || '');
+        var ids = (res.data.chuong_trinh_ids || []).map(Number);
+        setCtSelected(CT_LIST.filter(function (c) { return ids.indexOf(c.id) >= 0; }));
         $('#f_mo_ta').val(e.mo_ta || '');
         $('#f_trang_thai').val(e.trang_thai);
         recalcTongTiet();
@@ -398,7 +462,47 @@ function openEdit(id) {
     });
 }
 
-function closeModal() { $('#modalForm').removeClass('open'); }
+function closeModal() { $('#modalForm').removeClass('open'); $('#ctSuggest').removeClass('open').empty(); }
+
+// ===== CTĐT picker (chip + suggest) =====
+function setCtSelected(arr) { ctSelected = arr.slice(); renderCtChips(); }
+function renderCtChips() {
+    var $c = $('#ctChips').empty();
+    ctSelected.forEach(function (c) {
+        $c.append('<span class="ct-chip">' + APP.escape(c.ma) + ' - ' + APP.escape(c.ten) +
+            '<button type="button" class="ct-chip-x" data-id="' + c.id + '">&times;</button></span>');
+    });
+}
+$('#ctChips').on('click', '.ct-chip-x', function () {
+    var id = parseInt($(this).data('id'), 10);
+    ctSelected = ctSelected.filter(function (c) { return c.id !== id; });
+    renderCtChips();
+});
+$('#ctSearch').on('input focus', function () {
+    var q = ($(this).val() || '').toLowerCase().trim();
+    var chosen = ctSelected.map(function (c) { return c.id; });
+    var matches = CT_LIST.filter(function (c) {
+        if (chosen.indexOf(c.id) >= 0) return false;
+        if (!q) return true;
+        return (c.ma + ' ' + c.ten).toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 12);
+    var $s = $('#ctSuggest').empty();
+    if (!matches.length) { $s.html('<div class="ct-suggest-empty">Không có chương trình phù hợp</div>').addClass('open'); return; }
+    matches.forEach(function (c) {
+        $s.append('<div class="ct-suggest-item" data-id="' + c.id + '"><strong>' + APP.escape(c.ma) + '</strong> - ' + APP.escape(c.ten) + '</div>');
+    });
+    $s.addClass('open');
+});
+$('#ctSuggest').on('mousedown', '.ct-suggest-item', function (e) {
+    e.preventDefault();
+    var id = parseInt($(this).data('id'), 10);
+    var c = CT_LIST.filter(function (x) { return x.id === id; })[0];
+    if (c) { ctSelected.push(c); renderCtChips(); }
+    $('#ctSearch').val('').trigger('input').focus();
+});
+$(document).on('click', function (e) {
+    if (!$(e.target).closest('#ctPicker').length) $('#ctSuggest').removeClass('open');
+});
 
 // ESC to close modal
 $(document).on('keydown', function (e) {
@@ -410,6 +514,7 @@ $('#formMain').on('submit', function (e) {
     var $btn = $('#btnSave').prop('disabled', true);
     var data = $(this).serializeArray();
     data.push({name: 'action', value: $('#f_id').val() ? 'update' : 'insert'});
+    ctSelected.forEach(function (c) { data.push({name: 'chuong_trinh_ids[]', value: c.id}); });
     APP.ajax(URL, data).done(function (res) {
         $btn.prop('disabled', false);
         if (res.success) { APP.toast(res.message, 'success'); closeModal(); load(); loadStats(); }
@@ -436,6 +541,39 @@ function deleteItem(id) {
         });
     }, {yesText: 'Xóa vĩnh viễn'});
 }
+
+// ===== Thêm nhanh 1 CTĐT cho 1 bài (nút + CTĐT ở bảng) =====
+var addCtRow = { baiId: 0 };
+function openAddCt(baiId, baiTen) {
+    addCtRow.baiId = baiId;
+    $('#addCtBaiId').val(baiId);
+    $('#addCtBaiTen').text(baiTen);
+    $('#addCtSearch').val('');
+    $('#modalAddCt').addClass('open');
+    renderAddCtSuggest('');
+    setTimeout(function () { $('#addCtSearch').focus(); }, 80);
+}
+function renderAddCtSuggest(q) {
+    q = (q || '').toLowerCase().trim();
+    var matches = CT_LIST.filter(function (c) {
+        if (!q) return true;
+        return (c.ma + ' ' + c.ten).toLowerCase().indexOf(q) >= 0;
+    });
+    var $s = $('#addCtSuggest').empty();
+    if (!matches.length) { $s.html('<div class="ct-suggest-empty">Không có chương trình phù hợp</div>'); return; }
+    matches.forEach(function (c) {
+        $s.append('<div class="ct-suggest-item" data-id="' + c.id + '"><strong>' + APP.escape(c.ma) + '</strong> - ' + APP.escape(c.ten) + '</div>');
+    });
+}
+$('#addCtSearch').on('input', function () { renderAddCtSuggest($(this).val()); });
+$('#addCtSuggest').on('mousedown', '.ct-suggest-item', function (e) {
+    e.preventDefault();
+    var ctId = parseInt($(this).data('id'), 10);
+    APP.ajax(URL, {action: 'assignCt', mon_hoc_id: addCtRow.baiId, chuong_trinh_id: ctId}).done(function (res) {
+        if (res.success) { APP.toast(res.message, 'success'); $('#modalAddCt').removeClass('open'); load(); loadStats(); }
+        else APP.toast(res.message, 'error');
+    });
+});
 
 // ====== Drawer: khóa học gắn với môn này ======
 var drwState = { monHocId: 0, monHocTen: '', khoaCombo: null };

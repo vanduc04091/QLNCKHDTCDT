@@ -172,13 +172,14 @@ class DT_HocVienLop_BUS
         if ($khctIds) {
             $in = implode(',', array_map('intval', $khctIds));
             $stmt = $pdo->query(
-                "SELECT DISTINCT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.thu_tu, mh.tong_so_tiet, mh.so_tin_chi,
+                "SELECT DISTINCT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, km.thu_tu, mh.tong_so_tiet, mh.so_tin_chi,
                         ct.ma_chuong_trinh, ct.ten_chuong_trinh
                  FROM DT_KHOA_HOC_CHUONG_TRINH khct
                  INNER JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
-                 INNER JOIN DT_MON_HOC mh ON mh.chuong_trinh_id = ct.id AND mh.da_xoa=0
+                 INNER JOIN DT_CHUONG_TRINH_MON_HOC km ON km.chuong_trinh_id = ct.id AND km.da_xoa=0
+                 INNER JOIN DT_MON_HOC mh ON mh.id = km.mon_hoc_id AND mh.da_xoa=0
                  WHERE khct.id IN ({$in})
-                 ORDER BY ct.thu_tu, mh.thu_tu, mh.id"
+                 ORDER BY ct.thu_tu, km.thu_tu, mh.id"
             );
             $monHoc = $stmt->fetchAll();
         }

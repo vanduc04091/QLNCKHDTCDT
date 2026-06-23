@@ -14,7 +14,7 @@ class DT_ChuongTrinh_DAL
                           WHERE k2.chuong_trinh_id = ct.id AND hvl.da_xoa = 0) AS so_hoc_vien,
                        (SELECT COUNT(*) FROM DT_KHOA_HOC_CHUONG_TRINH khct
                           WHERE khct.chuong_trinh_id = ct.id AND khct.da_xoa = 0) AS so_khoa_hoc,
-                       (SELECT COUNT(*) FROM DT_MON_HOC mhc
+                       (SELECT COUNT(*) FROM DT_CHUONG_TRINH_MON_HOC mhc
                           WHERE mhc.chuong_trinh_id = ct.id AND mhc.da_xoa = 0) AS so_mon_hoc,
                        u1.tai_khoan AS tai_khoan_nguoi_tao,
                        u2.tai_khoan AS tai_khoan_nguoi_cap_nhat
@@ -136,7 +136,7 @@ class DT_ChuongTrinh_DAL
         $sql = "SELECT
                   COUNT(*) AS total,
                   SUM(CASE WHEN EXISTS (SELECT 1 FROM DT_KHOA_HOC_CHUONG_TRINH k WHERE k.chuong_trinh_id=ct.id AND k.da_xoa=0) THEN 1 ELSE 0 END) AS co_khoa,
-                  SUM(CASE WHEN EXISTS (SELECT 1 FROM DT_MON_HOC m WHERE m.chuong_trinh_id=ct.id AND m.da_xoa=0) THEN 1 ELSE 0 END) AS co_mon
+                  SUM(CASE WHEN EXISTS (SELECT 1 FROM DT_CHUONG_TRINH_MON_HOC m WHERE m.chuong_trinh_id=ct.id AND m.da_xoa=0) THEN 1 ELSE 0 END) AS co_mon
                 FROM DT_CHUONG_TRINH ct WHERE ct.da_xoa=0";
         return Database::getConnection()->query($sql)->fetch() ?: ['total'=>0,'co_khoa'=>0,'co_mon'=>0];
     }

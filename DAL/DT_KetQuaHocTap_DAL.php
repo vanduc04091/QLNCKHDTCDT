@@ -50,14 +50,15 @@ class DT_KetQuaHocTap_DAL
         return $stmt->fetchAll();
     }
 
-    /** Bài học của chương trình (theo ngữ cảnh khct → CTĐT → dt_mon_hoc.chuong_trinh_id) */
+    /** Bài học của chương trình (qua bảng nối N:N dt_chuong_trinh_mon_hoc) */
     public static function getMonHocByLop(int $khctId): array
     {
         $sql = "SELECT mh.id, mh.ma_mon_hoc, mh.ten_mon_hoc, mh.so_tin_chi
                 FROM DT_KHOA_HOC_CHUONG_TRINH khct
-                INNER JOIN DT_MON_HOC mh ON mh.chuong_trinh_id = khct.chuong_trinh_id AND mh.da_xoa=0
+                INNER JOIN DT_CHUONG_TRINH_MON_HOC km ON km.chuong_trinh_id = khct.chuong_trinh_id AND km.da_xoa=0
+                INNER JOIN DT_MON_HOC mh ON mh.id = km.mon_hoc_id AND mh.da_xoa=0
                 WHERE khct.id=:khct AND khct.da_xoa=0
-                ORDER BY mh.thu_tu ASC, mh.id ASC";
+                ORDER BY km.thu_tu ASC, mh.id ASC";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([':khct' => $khctId]);
         return $stmt->fetchAll();
