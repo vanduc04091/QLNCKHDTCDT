@@ -2,12 +2,12 @@
 /**
  * cron_nckh_nhac_viec.php - Gửi mail cho các nhắc việc NCKH đến hạn chưa gửi.
  *
- * Cấu hình chạy:
- *   - Linux cron: */15 * * * * /usr/bin/php /var/www/html/QLNCDTCDT/cron_nckh_nhac_viec.php
- *   - Windows Task Scheduler: chạy mỗi 15-30 phút
- *   - Hoặc gọi qua URL bằng webhook: php-cli khuyến nghị (URL chỉ cho phép từ IP nội bộ).
+ * Cau hinh chay:
+ *   - Linux cron: moi 15 phut goi /usr/bin/php <duong-dan>/cron_nckh_nhac_viec.php
+ *   - Windows Task Scheduler: chay moi 15-30 phut
+ *   - Hoac goi qua URL bang webhook: php-cli khuyen nghi (URL chi cho phep tu IP noi bo).
  *
- * Lệnh ngoài cron sẽ thoát ngay nếu MAIL_ENABLED=0 trong DM_CAU_HINH.
+ * Lenh ngoai cron se thoat ngay neu MAIL_ENABLED=0 trong DM_CAU_HINH.
  */
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/BUS/NCKH_NhacViec_BUS.php';

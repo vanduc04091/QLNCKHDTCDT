@@ -146,7 +146,7 @@ class DT_ChungChi_DAL
             $where .= " AND cc.khoa_hoc_chuong_trinh_id=:lop ";
             $params[':lop'] = (int)$opts['lop_hoc_id'];
         }
-        if ($opts['trang_thai'] !== null && $opts['trang_thai'] !== '') {
+        if (isset($opts['trang_thai']) && $opts['trang_thai'] !== '' && $opts['trang_thai'] !== null) {
             $where .= " AND cc.trang_thai=:tt ";
             $params[':tt'] = (int)$opts['trang_thai'];
         }
