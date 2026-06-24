@@ -18,7 +18,8 @@ function _canSee($moduleKey) {
 $menu = [
     ['group' => 'Tổng quan', 'key' => 'tong-quan', 'icon' => 'dashboard', 'items' => [
         ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],    
-        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],        
+        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],
+        ['key' => 'DT_BaoCao', 'icon' => 'clipboard-list', 'label' => 'Báo cáo đào tạo', 'url' => $base . 'GUI/BaoCao/index.php', 'module' => 'DT_BaoCao'],
     ]],
     ['group' => 'Nghiên cứu khoa học', 'key' => 'nckh', 'icon' => 'star', 'items' => [
         ['key' => 'NCKH_DotDangKy',   'icon' => 'calendar',      'label' => 'Đợt đăng ký',        'url' => $base . 'GUI/NCKH_DotDangKy/index.php',   'module' => 'NCKH_DotDangKy'],

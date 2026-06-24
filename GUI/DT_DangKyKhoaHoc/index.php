@@ -79,6 +79,7 @@ $publicTraCuuUrl = AppConfig::baseUrl('GUI/public/tra_cuu.php');
                 <option value="0">Đang dùng</option>
                 <option value="1">Thùng rác</option>
             </select>
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
         </div>
     </div>
 
@@ -236,6 +237,7 @@ var ICON_DOWNLOAD = '<?= addslashes(IconHelper::svg('download', '13')) ?>';
 
 var state = { page:1, pageSize:<?= AppConfig::DEFAULT_PAGE_SIZE ?>, daXoa:0,
               search:'', trangThai:'', khoaId:0, currentId:0, currentRecord:null };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,khoa_hoc_id:state.khoaId||0,trang_thai:state.trangThai||''}); window.location=APP_BASE+'GUI/DT_DangKyKhoaHoc/export.php?'+p.toString(); }
 
 var TT_LABEL = {0:'Chờ duyệt', 1:'Đã duyệt', 2:'Từ chối'};
 var TT_BADGE = {0:'badge-warning', 1:'badge-success', 2:'badge-danger'};

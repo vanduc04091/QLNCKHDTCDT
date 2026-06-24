@@ -75,6 +75,7 @@ require __DIR__ . '/../layouts/header.php';
             <option value="1">Thùng rác</option>
         </select>
         <div class="cc-toolbar-spacer"></div>
+        <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
         <?php if ($canAdd): ?>
             <button type="button" class="btn btn-primary" onclick="openCreate()">
                 <?= IconHelper::svg('plus', '14') ?>
@@ -252,6 +253,7 @@ var ICON_CC_THUMB  = '<?= addslashes(IconHelper::svg('academic-cap', '56')) ?>';
 
 var state = { page:1, pageSize:<?= AppConfig::DEFAULT_PAGE_SIZE ?>, daXoa:0,
               search:'', loai:'', hocVienId:0, lopId:0, trangThai:'' };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,lop_hoc_id:state.lopId||0,loai:state.loai||'',trang_thai:state.trangThai||''}); window.location=APP_BASE+'GUI/DT_ChungChi/export.php?'+p.toString(); }
 
 var TT_LABELS = {0:'Nháp', 1:'Đã cấp', 2:'Thu hồi'};
 var TT_CLS    = {0:'tt-nhap', 1:'tt-dacap', 2:'tt-thuhoi'};

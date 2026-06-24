@@ -70,6 +70,7 @@ require __DIR__ . '/../layouts/header.php';
         </div>
         <div class="right">
             <?php if ($canAdd): ?>
+                <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm chương trình</button>
             <?php endif; ?>
         </div>
@@ -291,6 +292,7 @@ require __DIR__ . '/../layouts/header.php';
 var URL = APP_BASE + 'GUI/DT_ChuongTrinh/ajax_handler.php';
 var CAN_ADD = <?= $canAdd?'true':'false' ?>, CAN_EDIT = <?= $canEdit?'true':'false' ?>, CAN_DEL = <?= $canDel?'true':'false' ?>;
 var state = { page:1, pageSize:20, search:'', khoaId:0, doiTuongId:0, daXoa:0 };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,khoa_hoc_id:state.khoaId||0,doi_tuong_id:state.doiTuongId||0}); window.location=APP_BASE+'GUI/DT_ChuongTrinh/export.php?'+p.toString(); }
 var currentCT = null;
 
 var ICON_DETAIL = '<?= addslashes(IconHelper::svg('eye', '15')) ?>';

@@ -57,6 +57,7 @@ require __DIR__ . '/../layouts/header.php';
             <input type="text" id="search" class="form-control" placeholder="Tìm mã, tiêu đề..." style="max-width:280px">
         </div>
         <div class="lh-toolbar-right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">
                     <?= IconHelper::svg('plus', '16') ?>
@@ -256,6 +257,7 @@ var ICON_UNLOCK = '<?= addslashes(IconHelper::svg('unlock', '14')) ?>';
 var ICON_EMPTY = '<?= addslashes(IconHelper::svg('search', '40')) ?>';
 var ICON_DOWNLOAD_SM = '<?= addslashes(IconHelper::svg('download', '13')) ?>';
 var state = { page:1, pageSize:20, daXoa:0, search:'', filter:{lop:0, loai:0, tt:''} };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,lop_hoc_id:state.filter.lop||0,loai_bkt:state.filter.loai||0,trang_thai:state.filter.tt||''}); window.location=APP_BASE+'GUI/DT_BaiKiemTra/export.php?'+p.toString(); }
 var LOAI_TXT = {1:'Thường xuyên', 2:'Giữa kỳ', 3:'Cuối kỳ', 4:'Ôn tập'};
 var TT_TXT = {0:'Nháp', 1:'Đang dùng', 2:'Lưu trữ'};
 

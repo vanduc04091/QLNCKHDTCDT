@@ -85,6 +85,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()" aria-label="Thêm bài học mới">
                     <?= IconHelper::svg('plus', '16') ?> Thêm bài học
@@ -293,6 +294,7 @@ var URL = APP_BASE + 'GUI/DT_MonHoc/ajax_handler.php';
 var CAN_EDIT = <?= $canEdit ? 'true' : 'false' ?>;
 var CAN_DEL = <?= $canDel ? 'true' : 'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, trangThai: -1, chuongTrinhId: 0 };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,trang_thai:(state.trangThai==-1?'':state.trangThai),chuong_trinh_id:state.chuongTrinhId||0}); window.location=APP_BASE+'GUI/DT_MonHoc/export.php?'+p.toString(); }
 
 // Danh sách CTĐT cho picker gợi ý
 var CT_LIST = <?= json_encode(array_map(function($c){ return ['id'=>(int)$c['id'],'ma'=>$c['ma_chuong_trinh'],'ten'=>$c['ten_chuong_trinh']]; }, $ctCombo), JSON_UNESCAPED_UNICODE) ?>;

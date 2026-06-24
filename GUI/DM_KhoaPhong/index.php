@@ -41,6 +41,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm khoa/phòng</button>
             <?php endif; ?>
@@ -148,6 +149,7 @@ var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var LOAI_MAP = <?= json_encode($loaiList) ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, loai: '' };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,loai_don_vi:state.loai||''}); window.location=APP_BASE+'GUI/DM_KhoaPhong/export.php?'+p.toString(); }
 
 function load() {
     APP.showLoading('#tableWrap');

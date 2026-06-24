@@ -40,6 +40,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm nhân viên</button>
             <?php endif; ?>
@@ -164,6 +165,7 @@ var URL = APP_BASE + 'GUI/DM_NhanVien/ajax_handler.php';
 var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, khoaId: 0 };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,khoa_phong_id:state.khoaId||0}); window.location=APP_BASE+'GUI/DM_NhanVien/export.php?'+p.toString(); }
 
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '18')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '18')) ?>';

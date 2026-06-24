@@ -392,28 +392,8 @@ $('#btnRecalc').on('click', function(){
 });
 
 $('#btnExport').on('click', function(){
-    if (!state.lopId) { APP.toast('Chưa chọn lớp','warning'); return; }
-    // Export đơn giản: tạo CSV từ bảng
-    var rows = [];
-    rows.push(['STT','Mã HV','Họ tên','TX','GK','CK','Điểm tổng kết','Xếp loại']);
-
-    Object.values(state.grouped).forEach(function(g, i){
-        var s = g.scores['0'] || g.scores[null];
-        rows.push([
-            i+1, g.ma_hv||'', g.ho_ten||'',
-            (s && s.dtx!=null ? parseFloat(s.dtx).toFixed(1) : ''),
-            (s && s.dgk!=null ? parseFloat(s.dgk).toFixed(1) : ''),
-            (s && s.dck!=null ? parseFloat(s.dck).toFixed(1) : ''),
-            (s && s.dtk!=null ? parseFloat(s.dtk).toFixed(1) : ''),
-            (s && s.xl ? s.xl : '')
-        ]);
-    });
-    var csv = rows.map(function(r){ return r.map(function(c){ c=String(c||''); return c.indexOf(',')>=0||c.indexOf('"')>=0||c.indexOf('\n')>=0?'"'+c.replace(/"/g,'""')+'"':c; }).join(','); }).join('\n');
-    var blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
-    var a = document.createElement('a');
-    a.href = window.URL.createObjectURL(blob);
-    a.download = 'bang-diem-lop-'+state.lopId+'.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    if (!state.lopId) { APP.toast('Chọn chương trình đào tạo trước','warning'); return; }
+    window.location = APP_BASE + 'GUI/DT_KetQuaHocTap/export.php?lop_hoc_id=' + state.lopId;
 });
 </script>
 

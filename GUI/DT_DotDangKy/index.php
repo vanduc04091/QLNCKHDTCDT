@@ -51,6 +51,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm đợt</button>
             <?php endif; ?>
@@ -208,6 +209,7 @@ var ICON_EYE = <?= json_encode(IconHelper::svg('eye', 18, 'icon', 'currentColor'
 var HV_NAMES = { Submit: 'Đăng ký khóa học', Review: 'Duyệt đăng ký' };
 var HV_BADGE = { Submit: 'bp-submit', Review: 'bp-review' };
 var state = { page: 1, pageSize: 20, kw: '', nam: 0, tt: '' };
+function exportExcel(){ var p=new URLSearchParams({search:state.kw||'',nam:state.nam||0}); window.location=APP_BASE+'GUI/DT_DotDangKy/export.php?'+p.toString(); }
 var currentDot = null;
 
 function load() {

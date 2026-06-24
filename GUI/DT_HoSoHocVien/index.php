@@ -69,6 +69,7 @@ require __DIR__ . '/../layouts/header.php';
                     <option value="0">Đang dùng</option>
                     <option value="1">Thùng rác</option>
                 </select>
+                <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
                 <?php if ($canAdd): ?>
                     <button type="button" class="btn btn-primary" onclick="openCreate()">
                         <?= IconHelper::svg('plus', '14') ?>
@@ -229,6 +230,7 @@ var state = {
     countByHV: {},           // map hoc_vien_id -> số hồ sơ
     rowsAll: []              // hồ sơ hiện tại (theo filter)
 };
+function exportExcel(){ var p=new URLSearchParams({search:state.keywordHS||'',hoc_vien_id:state.selectedHV||0,loai_ho_so:state.loai||'',da_xoa:state.daXoa||0}); window.location=APP_BASE+'GUI/DT_HoSoHocVien/export.php?'+p.toString(); }
 
 // ============ Stats ============
 function loadStats(){

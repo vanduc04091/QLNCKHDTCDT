@@ -88,6 +88,7 @@ require __DIR__ . '/../layouts/header.php';
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><path d="M9 14l2 2 4-4"/></svg>
                     Tạo hàng loạt
                 </button>
+                <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Thêm buổi học
@@ -430,6 +431,7 @@ var state = {
     events: [],                    // Cache buổi học trong kỳ
 };
 var nvLoaded = false, monLoaded = false;
+function exportExcel(){ var p=new URLSearchParams({search:state.filter.search||'',lop_hoc_id:state.filter.lop_hoc_id||0,giang_vien_id:state.filter.giang_vien_id||0,trang_thai:state.filter.trang_thai||''}); window.location=APP_BASE+'GUI/DT_LichHoc/export.php?'+p.toString(); }
 var WD_VI = ['CN','T2','T3','T4','T5','T6','T7'];
 var MONTH_VI = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 

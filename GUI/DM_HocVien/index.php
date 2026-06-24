@@ -94,6 +94,9 @@ require __DIR__ . '/../layouts/header.php';
                     <?= IconHelper::svg('list', '16') ?>
                 </button>
             </div>
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất danh sách ra Excel">
+                <?= IconHelper::svg('download', '16') ?> Xuất Excel
+            </button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm học viên</button>
             <?php endif; ?>
@@ -405,6 +408,14 @@ var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var CAN_ADD = <?= $canAdd?'true':'false' ?>;
 var state = { page: 1, pageSize: 20, search: '', daXoa: 0, doiTuongId: 0, laNhanVien: '', view: 'table' };
+
+function exportExcel() {
+    var p = new URLSearchParams({
+        search: state.search || '', da_xoa: state.daXoa || 0,
+        doi_tuong_id: state.doiTuongId || 0, la_nhan_vien: state.laNhanVien || ''
+    });
+    window.location = APP_BASE + 'GUI/DM_HocVien/export.php?' + p.toString();
+}
 
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '16')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '16')) ?>';

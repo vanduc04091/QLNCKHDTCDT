@@ -68,6 +68,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm giảng viên</button>
             <?php endif; ?>
@@ -223,6 +224,7 @@ var AVATAR_URL = <?= json_encode($avatarUrl) ?>;
 var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var state = { page:1, pageSize:20, search:'', loaiGv:0, trangThai:'', daXoa:0 };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,loai_gv:state.loaiGv||0,trang_thai:state.trangThai||''}); window.location=APP_BASE+'GUI/DM_GiangVien/export.php?'+p.toString(); }
 var nvLoaded = false;
 var LOAI_TXT = {1:'Cơ hữu',2:'Thỉnh giảng',3:'Khách mời'};
 

@@ -63,6 +63,7 @@ require __DIR__ . '/../layouts/header.php';
             </select>
         </div>
         <div class="lh-toolbar-right">
+            <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">
                     <?= IconHelper::svg('plus', '16') ?>
@@ -302,6 +303,7 @@ var CAN_DEL = <?= $canDel?'true':'false' ?>;
 
 var state = { page:1, pageSize:24, daXoa:0, search:'', sortBy:'newest',
               filter:{loai:0, kh:0, lop:0, mon:0, batBuoc:0, congKhai:0} };
+function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xoa:state.daXoa||0,lop_hoc_id:state.filter.lop||0,mon_hoc_id:state.filter.mon||0,loai_tai_lieu:state.filter.loai||''}); window.location=APP_BASE+'GUI/DT_TaiLieu/export.php?'+p.toString(); }
 var monLoaded = false;
 
 var LOAI_TXT = {1:'Giáo trình', 2:'Bài giảng', 3:'Tham khảo', 4:'Đề thi/Bài tập', 5:'Video', 6:'Khác'};

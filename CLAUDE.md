@@ -290,6 +290,11 @@ Xem chi tiết: `docs/de_xuat_phan_mem.md`.
 
 ## 12. Changelog quan trọng (cho người maintain sau)
 
+### 2026-06-24 — Export Excel + Báo cáo
+- ✅ **`ExcelHelper`** (`PUBLIC/Common/ExcelHelper.php`, nạp ở bootstrap): xuất `.xlsx` OOXML tự viết bằng `ZipArchive` (không cần thư viện). API: `ExcelHelper::downloadOne($file,$sheet,$headers,$rows)` hoặc `download($file,$sheets[])` (mỗi sheet có `name/title/headers/rows`). Header in đậm nền xám, hỗ trợ tiếng Việt (inlineStr), số → kiểu number.
+- ✅ **Export danh sách**: mỗi module 1 file `GUI/<Module>/export.php` (GET, check `requireLogin` + quyền XEM, đọc filter qua query string trùng tham số màn list, gọi `getPaged(1,100000,...)`). Nút "Xuất Excel" gọi `window.location=export.php?<filter>` (KHÔNG qua APP.ajax vì là tải file). Đã thêm cho 18 module: HV, Khóa, CTĐT, Bài học, Lịch học, Chứng chỉ, Tài liệu, Bài kiểm tra, Đăng ký, Hồ sơ HV, Kết quả học tập, Đợt đăng ký, Nhân viên, Khoa/Phòng, Giảng viên, Đối tượng HV, Loại hình ĐT, Hình thức học. (Điểm danh/Phân công GV không phải list phẳng → nằm trong Báo cáo.)
+- ✅ **Trang Báo cáo** (`GUI/BaoCao/`, module key `DT_BaoCao`, form id 44, menu nhóm Tổng quan): `BUS/DT_BaoCao_BUS` 3 báo cáo — `theoKhoaCtdt($kh,$from,$to)` (số HV/đạt/điểm TB/chứng chỉ mỗi khóa+CTĐT, lọc theo `khct.ngay_bat_dau`), `dsHocVienKetQua($khct,$from,$to)` (bảng điểm + chuyên cần, lọc `hvl.ngay_ghi_danh`), `thongKeTong($from,$to)` (chỉ tiêu thời gian lọc theo khoảng, danh mục giữ tổng tồn). Tab dùng CSS `.bc-tab`, toolbar `.bc-toolbar` có ô từ/đến ngày. Xuất Excel qua `GUI/BaoCao/export.php?loai=khoa|hv|tong&from=&to=`.
+
 ### 2026-06-12 — Chuyển "Lớp học" → "Chương trình đào tạo" (CTĐT)
 - ✅ Bảng `dt_lop_hoc` → `dt_chuong_trinh` (`ma_lop`/`ten_lop` → `ma_chuong_trinh`/`ten_chuong_trinh`; thêm `thoi_luong`, `khoa_phong_id`; bỏ `khoa_hoc_id`). Class/file/GUI `DT_LopHoc*` → `DT_ChuongTrinh*`. MODULE_KEY `DT_LopHoc` → `DT_ChuongTrinh`.
 - ✅ Khóa học ↔ CTĐT là **N:N** qua bảng mới `dt_khoa_hoc_chuong_trinh` (`id` = "ngữ cảnh học vụ"). Bridge: `DT_KhoaHocChuongTrinh_DAL/BUS` (`getCombo()` label "Khóa — CTĐT").
