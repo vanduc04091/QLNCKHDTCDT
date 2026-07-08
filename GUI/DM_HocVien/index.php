@@ -437,7 +437,41 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
+<!-- Modal In phiếu -->
+<div class="modal-backdrop" id="modalPrint">
+    <div class="modal" style="max-width:620px">
+        <div class="modal-header">
+            <h3>In phiếu — <span id="prtHvTen"></span></h3>
+            <button type="button" class="close" onclick="$('#modalPrint').removeClass('open')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" id="prtGhiDanhWrap" style="display:none">
+                <label>Chọn chương trình đào tạo (để điền thời gian / địa điểm thực hành)</label>
+                <select id="prtGhiDanh" class="form-select">
+                    <option value="0">— Không gắn chương trình (để trống phần thực hành) —</option>
+                </select>
+            </div>
+            <div class="prt-label">Chọn mẫu phiếu cần in:</div>
+            <div id="prtList" class="prt-list"><div class="hv-pane-loading">Đang tải danh sách mẫu...</div></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="$('#modalPrint').removeClass('open')">Đóng</button>
+        </div>
+    </div>
+</div>
+
 <style>
+    .prt-label { font-size:12.5px; color:var(--gray-600); font-weight:600; margin:6px 0 8px; }
+    .prt-list { display:flex; flex-direction:column; gap:8px; }
+    .prt-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--gray-200);
+        border-radius:8px; background:#fff; cursor:pointer; transition:.12s; }
+    .prt-item:hover { border-color:var(--primary); background:#f0fdf4; }
+    .prt-item .prt-ic { flex:0 0 auto; color:var(--primary); }
+    .prt-item .prt-body { flex:1; min-width:0; }
+    .prt-item .prt-name { font-weight:600; color:var(--gray-800); font-size:13.5px; }
+    .prt-item .prt-desc { font-size:11.5px; color:var(--gray-500); margin-top:2px; }
+    .prt-empty { padding:20px; text-align:center; color:var(--gray-500); font-size:13px; }
+
     .imp-note { background:#f8fafc; border:1px solid var(--gray-200); border-radius:8px; padding:12px 14px; font-size:12.5px; color:var(--gray-700); }
     .imp-note ul { margin:8px 0 0; padding-left:18px; }
     .imp-note li { margin:3px 0; }
@@ -555,6 +589,7 @@ var ICON_GRID = '<?= addslashes(IconHelper::svg('grid', '16')) ?>';
 var ICON_LIST = '<?= addslashes(IconHelper::svg('list', '16')) ?>';
 var ICON_UPLOAD = '<?= addslashes(IconHelper::svg('upload', '14')) ?>';
 var ICON_GRAD = '<?= addslashes(IconHelper::svg('graduation-cap', '14')) ?>';
+var ICON_PRINT = '<?= addslashes(IconHelper::svg('printer', '14')) ?>';
 var ICON_PLUS = '<?= addslashes(IconHelper::svg('plus', '14')) ?>';
 var ICON_TRASH_SM = '<?= addslashes(IconHelper::svg('trash', '13')) ?>';
 
@@ -636,6 +671,7 @@ function renderCards(rows) {
         var actions = '';
         if (state.daXoa == 0) {
             actions += '<button class="btn btn-sm" title="Chương trình đã ghi danh" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
+            actions += '<button class="btn btn-sm" title="In phiếu" onclick="openPrint(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\')">' + ICON_PRINT + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">' + ICON_EDIT + '</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">' + ICON_TRASH + '</button>';
         } else {
@@ -678,6 +714,7 @@ function renderRows(rows) {
         var actions = '';
         if (state.daXoa == 0) {
             actions += '<button class="btn btn-sm" title="Chương trình đào tạo" onclick="openLopDrawer(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\', \'' + APP.escape(r.ma_hv || '') + '\')">' + ICON_GRAD + '</button>';
+            actions += '<button class="btn btn-sm" title="In phiếu" onclick="openPrint(' + r.id + ', \'' + APP.escape(r.ho_ten).replace(/'/g, "\\\'") + '\')">' + ICON_PRINT + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">Sửa</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">Xóa</button>';
         } else {
@@ -1226,6 +1263,55 @@ function openImport() {
     $('#impResult').hide().empty();
     $('#btnImport').prop('disabled', false).html(ICON_UPLOAD + ' Bắt đầu import');
     $('#modalImport').addClass('open');
+}
+
+// ===== In phiếu =====
+var prtCtx = { hvId: 0 };
+function openPrint(hvId, hoTen) {
+    prtCtx.hvId = hvId;
+    $('#prtHvTen').text(hoTen || '');
+    $('#prtGhiDanhWrap').hide();
+    $('#prtGhiDanh').empty().append('<option value="0">— Không gắn chương trình (để trống phần thực hành) —</option>');
+    $('#prtList').html('<div class="hv-pane-loading">Đang tải danh sách mẫu...</div>');
+    $('#modalPrint').addClass('open');
+
+    APP.ajax(URL, { action: 'getPhieuInfo', hoc_vien_id: hvId }).done(function (res) {
+        if (!res.success) { APP.toast(res.message, 'error'); return; }
+        var d = res.data || {};
+        // Ghi danh -> combo chọn CTĐT (nếu có)
+        var gd = d.ghi_danh || [];
+        if (gd.length) {
+            gd.forEach(function (g) {
+                var label = (g.ma_khoa_hoc || '') + ' | ' + (g.ma_chuong_trinh || '') + ' - ' + (g.ten_chuong_trinh || '');
+                $('#prtGhiDanh').append('<option value="' + g.khoa_hoc_chuong_trinh_id + '">' + APP.escape(label) + '</option>');
+            });
+            // Mặc định chọn ghi danh đầu tiên
+            $('#prtGhiDanh').val(gd[0].khoa_hoc_chuong_trinh_id);
+            $('#prtGhiDanhWrap').show();
+        }
+        // Danh sách mẫu
+        var tpls = d.templates || [];
+        if (!tpls.length) {
+            $('#prtList').html('<div class="prt-empty">Chưa có mẫu phiếu nào trong thư mục <code>mps/</code>.</div>');
+            return;
+        }
+        var h = '';
+        tpls.forEach(function (t) {
+            h += '<div class="prt-item" onclick="doPrint(\'' + APP.escape(t.key) + '\')">'
+               + '<span class="prt-ic">' + ICON_PRINT + '</span>'
+               + '<div class="prt-body"><div class="prt-name">' + APP.escape(t.ten) + '</div>'
+               + (t.mo_ta ? '<div class="prt-desc">' + APP.escape(t.mo_ta) + '</div>' : '')
+               + '</div></div>';
+        });
+        $('#prtList').html(h);
+    });
+}
+
+function doPrint(mauKey) {
+    var khct = parseInt($('#prtGhiDanh').val(), 10) || 0;
+    var url = APP_BASE + 'GUI/DM_HocVien/print_phieu.php?mau=' + encodeURIComponent(mauKey)
+            + '&hoc_vien_id=' + prtCtx.hvId + '&khct_id=' + khct;
+    window.open(url, '_blank');
 }
 
 $('#btnImport').on('click', function () {

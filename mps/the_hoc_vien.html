@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Thẻ học viên - {{ho_ten}}</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; }
+
+  .wrap { display: flex; flex-direction: column; gap: 8mm; align-items: center; }
+
+  /* Thẻ: khổ ngang ~ 86 x 54 mm (chuẩn thẻ CR80 phóng to nhẹ cho dễ đọc) */
+  .card {
+    width: 90mm; height: 56mm;
+    border-radius: 4mm; overflow: hidden;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    display: flex; flex-direction: column;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  }
+
+  /* Dải tiêu đề */
+  .card-head {
+    background: linear-gradient(135deg, #16a34a 0%, #0f766e 100%);
+    color: #fff; padding: 3mm 4mm 2.4mm;
+    display: flex; align-items: center; gap: 3mm;
+    border-bottom: 2px solid #ec4899;
+  }
+  .card-head .logo {
+    width: 8mm; height: 8mm; border-radius: 50%;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 9pt; flex: 0 0 auto;
+  }
+  .card-head .org { line-height: 1.15; }
+  .card-head .org .l1 { font-size: 7pt; text-transform: uppercase; opacity: .92; letter-spacing: .02em; }
+  .card-head .org .l2 { font-size: 9.5pt; font-weight: 800; text-transform: uppercase; }
+
+  /* Thân thẻ */
+  .card-body { flex: 1; display: flex; gap: 4mm; padding: 3mm 4mm; }
+  .photo {
+    width: 22mm; height: 28mm; flex: 0 0 auto;
+    border: 1px solid #cbd5e1; border-radius: 2mm; overflow: hidden;
+    background: #f1f5f9; display: flex; align-items: center; justify-content: center;
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; }
+  .thv-noimg { font-size: 15pt; font-weight: 800; color: #16a34a; }
+
+  .info { flex: 1; min-width: 0; }
+  .info .name {
+    font-size: 12pt; font-weight: 800; color: #0f172a;
+    text-transform: uppercase; line-height: 1.15; margin-bottom: 1mm;
+  }
+  .info .role {
+    display: inline-block; font-size: 7.5pt; font-weight: 700; color: #be185d;
+    background: #fce7f3; border-radius: 10px; padding: 0.4mm 2.4mm; margin-bottom: 1.6mm;
+  }
+  .info .fld { font-size: 8.5pt; line-height: 1.55; }
+  .info .fld .lbl { color: #64748b; display: inline-block; min-width: 20mm; }
+  .info .fld .val { color: #1e293b; font-weight: 600; }
+
+  /* Chân thẻ */
+  .card-foot {
+    background: #f8fafc; border-top: 1px solid #e2e8f0;
+    padding: 1.6mm 4mm; display: flex; justify-content: space-between; align-items: center;
+    font-size: 7pt; color: #64748b;
+  }
+  .card-foot .code { font-family: "Courier New", monospace; font-weight: 700; color: #16a34a; letter-spacing: .04em; }
+
+  .cut-hint { font-size: 8pt; color: #94a3b8; text-align: center; }
+
+  @media screen {
+    body { background: #e5e7eb; padding: 20px; }
+    .wrap { padding: 6mm; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- MẶT TRƯỚC -->
+  <div class="card">
+    <div class="card-head">
+      <div class="logo">BV</div>
+      <div class="org">
+        <div class="l1">Bệnh viện Hữu nghị Đa khoa Nghệ An</div>
+        <div class="l2">Thẻ học viên</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="photo">{{avatar_html}}</div>
+      <div class="info">
+        <div class="name">{{ho_ten}}</div>
+        <div class="role">{{doi_tuong}}</div>
+        <div class="fld"><span class="lbl">Ngày sinh:</span> <span class="val">{{ngay_sinh}}</span></div>
+        <div class="fld"><span class="lbl">Giới tính:</span> <span class="val">{{gioi_tinh}}</span></div>
+        <div class="fld"><span class="lbl">Số CCCD:</span> <span class="val">{{cccd}}</span></div>
+        <div class="fld"><span class="lbl">Đơn vị:</span> <span class="val">{{don_vi_cong_tac}}</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <span>Mã HV: <span class="code">{{ma_hv}}</span></span>
+      <span>Ngày cấp: {{ngay}}/{{thang}}/{{nam}}</span>
+    </div>
+  </div>
+
+  <div class="cut-hint">— cắt theo viền thẻ —</div>
+
+</div>
+</body>
+</html>

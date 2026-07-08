@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../BUS/DT_KhoaHocChuongTrinh_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_KhoaHoc_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_HoSoHocVien_BUS.php';
 require_once __DIR__ . '/../../BUS/DT_ChungChi_BUS.php';
+require_once __DIR__ . '/../../BUS/DT_PhieuIn_BUS.php';
 
 Helper::requireAjaxCsrf();
 
@@ -196,6 +197,15 @@ try {
                 $u
             );
             $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'getPhieuInfo':
+            // Danh sách mẫu phiếu + các ghi danh của HV (để chọn khi in)
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            ResponseHelper::success('OK', [
+                'templates' => DT_PhieuIn_BUS::getTemplates(),
+                'ghi_danh'  => DT_HocVienLop_BUS::getByHocVien(Helper::postInt('hoc_vien_id')),
+            ]);
             break;
 
         case 'getOverview':

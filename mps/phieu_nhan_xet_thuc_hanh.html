@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Phiếu nhận xét quá trình thực hành KBCB</title>
+<style>
+  @page { size: A4; margin: 20mm 22mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Times New Roman", Times, serif; font-size: 14pt; line-height: 1.5;
+         color: #000; margin: 0; padding: 0; }
+  .sheet { width: 100%; }
+  .row-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .org { width: 42%; text-align: center; }
+  .org .l1, .org .l2 { border-bottom: 0; }
+  .org .placeholder { font-style: italic; }
+  .nation { width: 55%; text-align: center; }
+  .nation .country { font-weight: bold; text-transform: uppercase; font-size: 14pt; }
+  .nation .motto { font-weight: bold; font-size: 13pt; }
+  .nation .line { display: inline-block; width: 60%; border-bottom: 1px solid #000; margin: 2px 0 8px; }
+  .so { margin-top: 6px; }
+  .place-date { text-align: center; font-style: italic; margin-top: 10px; }
+  h1.title { text-align: center; font-size: 15pt; font-weight: bold; text-transform: uppercase;
+             margin: 22px 0 18px; line-height: 1.35; }
+  .sec { font-weight: bold; margin: 12px 0 4px; }
+  .fld { margin: 4px 0; }
+  .fill { }
+  .note { font-style: italic; }
+  .sign { margin-top: 36px; text-align: center; float: right; width: 45%; }
+  .sign .role { font-weight: bold; text-transform: uppercase; }
+  .sign .hint { font-style: italic; font-size: 12.5pt; }
+  .clear { clear: both; }
+  .footnotes { margin-top: 60px; border-top: 1px solid #000; padding-top: 6px;
+               font-size: 10.5pt; line-height: 1.35; }
+  .footnotes div { margin: 1px 0; }
+  @media screen {
+    body { background: #eee; padding: 20px; }
+    .sheet { background: #fff; max-width: 210mm; min-height: 297mm; margin: 0 auto;
+             padding: 20mm 22mm; box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="row-top">
+    <div class="org">
+      <div class="l1 placeholder">{{co_quan_chu_quan}}</div>
+      <div class="l2 placeholder">{{co_so_kbcb}}</div>
+      <div class="so">Số: {{so_phieu}}/PNXTH</div>
+    </div>
+    <div class="nation">
+      <div class="country">Cộng hòa xã hội chủ nghĩa Việt Nam</div>
+      <div class="motto">Độc lập - Tự do - Hạnh phúc</div>
+      <div class="line"></div>
+      <div class="place-date">{{dia_danh}}, ngày {{ngay}} tháng {{thang}} năm {{nam}}</div>
+    </div>
+  </div>
+
+  <h1 class="title">Phiếu nhận xét quá trình thực hành khám bệnh, chữa bệnh</h1>
+
+  <div class="sec">1. Người hướng dẫn thực hành:</div>
+  <div class="fld">- Họ và tên: {{nguoi_huong_dan}}</div>
+  <div class="fld">- Số chứng chỉ hành nghề KBCB: {{cchn_nguoi_huong_dan}}</div>
+  <div class="fld">- Phạm vi hoạt động chuyên môn: {{pham_vi_hd_nguoi_huong_dan}}</div>
+  <div class="fld">- Khoa, đơn vị làm việc: {{khoa_nguoi_huong_dan}}</div>
+
+  <div class="sec">2. Người thực hành:</div>
+  <div class="fld">- Họ và tên: {{ho_ten}}&nbsp;&nbsp;&nbsp;Ngày tháng năm sinh: {{ngay_sinh}}</div>
+  <div class="fld">- Số CMND/ Thẻ căn cước: {{cccd}}</div>
+  <div class="fld">- Thời gian thực hành: <span class="note">(Từ {{ngay_bat_dau}} đến {{ngay_ket_thuc}})</span></div>
+  <div class="fld">- Chuyên khoa đăng ký thực hành: {{chuyen_khoa}}</div>
+  <div class="fld">- Địa điểm thực hành <span class="note">(ghi tên khoa thực hành)</span>: {{dia_diem}}</div>
+
+  <div class="sec">3. Kết quả thực hành:</div>
+  <div class="fld">- Năng lực thực hành chuyên khoa: {{nang_luc}}</div>
+  <div class="fld">- Ý thức, tổ chức kỷ luật trong thời gian thực hành: {{y_thuc}}</div>
+
+  <div class="sign">
+    <div class="role">Người hướng dẫn</div>
+    <div class="hint">(Ký ghi rõ họ, tên)</div>
+  </div>
+  <div class="clear"></div>
+
+  <div class="footnotes">
+    <div>[1] Tên cơ quan chủ quản của cơ sở khám bệnh, chữa bệnh.</div>
+    <div>[2] Tên cơ sở khám bệnh, chữa bệnh.</div>
+    <div>[3] Địa danh.</div>
+  </div>
+</div>
+</body>
+</html>
