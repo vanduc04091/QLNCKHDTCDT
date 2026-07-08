@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../DAL/DM_HocVien_DAL.php';
 require_once __DIR__ . '/../DAL/DM_NhanVien_DAL.php';
 require_once __DIR__ . '/../DAL/DM_NhatKyHeThong_DAL.php';
+require_once __DIR__ . '/../DAL/DM_DoiTuongHocVien_DAL.php';
+require_once __DIR__ . '/../DAL/DT_KhoaHocChuongTrinh_DAL.php';
+require_once __DIR__ . '/../DAL/DT_HocVienLop_DAL.php';
 
 class DM_HocVien_BUS
 {
@@ -103,9 +106,9 @@ class DM_HocVien_BUS
         return DM_HocVien_DAL::getById($id);
     }
 
-    public static function getPaged(int $page, int $pageSize, string $search = '', int $daXoa = 0, int $doiTuongId = 0, int $laNhanVien = -1): array
+    public static function getPaged(int $page, int $pageSize, string $search = '', int $daXoa = 0, int $doiTuongId = 0, int $laNhanVien = -1, string $tuNgay = '', string $denNgay = ''): array
     {
-        return DM_HocVien_DAL::getPaged($page, $pageSize, $search, $daXoa, $doiTuongId, $laNhanVien);
+        return DM_HocVien_DAL::getPaged($page, $pageSize, $search, $daXoa, $doiTuongId, $laNhanVien, $tuNgay, $denNgay);
     }
 
     public static function getStats(): array
@@ -120,6 +123,215 @@ class DM_HocVien_BUS
 
     public static function findByCccd(string $cccd): array { return DM_HocVien_DAL::findByCccd($cccd); }
     public static function findByDienThoai(string $sdt): array { return DM_HocVien_DAL::findByDienThoai($sdt); }
+
+    /**
+     * Import học viên từ file Excel theo mẫu "Danh sách nhập thông tin học viên".
+     * Cột (0-based): 0 TT, 1 Họ tên, 2 Trạng thái, 3 Ngày sinh, 4 Giới tính,
+     * 5 Trình độ CM, 6 Đối tượng, 7 Điện thoại, 8 Email, 9 CCCD, 10 Ngày cấp,
+     * 11 Nơi cấp, 12 Đơn vị, 13 Địa chỉ, 14 Trường ĐT, 15 Năm TN,
+     * 16 Khóa học, 17 CTĐT, 18 Ngày BĐ, 19 Ngày KT, 20 Địa điểm.
+     *
+     * Trả về: ['success'=>bool, 'message'=>str, 'data'=>[
+     *    'created'=>int, 'skipped'=>int, 'enrolled'=>int,
+     *    'rows'=>[ ['stt','ho_ten','status'=>'created|skipped|error','enroll'=>'ok|none|notfound','message'] ] ]]
+     */
+    public static function importExcel(string $filePath, int $userId): array
+    {
+        try {
+            $rows = ExcelHelper::readRows($filePath);
+        } catch (Throwable $ex) {
+            return ['success' => false, 'message' => 'Không đọc được file: ' . $ex->getMessage()];
+        }
+        if (count($rows) < 3) {
+            return ['success' => false, 'message' => 'File không có dữ liệu học viên (kiểm tra đúng mẫu).'];
+        }
+
+        // Bỏ 2 dòng đầu (tiêu đề lớn + header). Nhận diện header động để linh hoạt.
+        $startIdx = 0;
+        foreach ($rows as $i => $r) {
+            $joined = mb_strtolower(implode('|', $r));
+            if (strpos($joined, 'họ và tên') !== false || strpos($joined, 'ho va ten') !== false) {
+                $startIdx = $i + 1;
+                break;
+            }
+        }
+        if ($startIdx === 0) $startIdx = 2; // fallback: mẫu chuẩn
+
+        // Lookup maps
+        $doiTuongMap = [];
+        foreach (DM_DoiTuongHocVien_DAL::getCombo() as $d) {
+            $doiTuongMap[self::norm($d['ten_doi_tuong'])] = (int)$d['id'];
+            $doiTuongMap[self::norm($d['ma_doi_tuong'])] = (int)$d['id'];
+        }
+        $khctMap = []; // mã khóa|mã ctđt => khct.id
+        foreach (DT_KhoaHocChuongTrinh_DAL::getCombo() as $k) {
+            $key = self::norm($k['ma_khoa_hoc']) . '|' . self::norm($k['ma_chuong_trinh']);
+            $khctMap[$key] = (int)$k['id'];
+        }
+
+        $created = 0; $skipped = 0; $enrolled = 0; $report = [];
+        $db = Database::getConnection();
+
+        for ($i = $startIdx; $i < count($rows); $i++) {
+            $r = $rows[$i];
+            $get = fn($idx) => isset($r[$idx]) ? trim((string)$r[$idx]) : '';
+
+            $hoTen = $get(1);
+            if ($hoTen === '') continue; // bỏ dòng trống
+            $stt = $get(0) ?: (string)($i - $startIdx + 1);
+
+            $cccd = $get(9);
+            $sdt  = $get(7);
+
+            // Trùng?
+            $dup = DM_HocVien_DAL::findDuplicate($cccd, $sdt);
+            if ($dup) {
+                $by = ($cccd !== '' && $dup['cccd'] === $cccd) ? 'CCCD' : 'SĐT';
+                $skipped++;
+                $report[] = ['stt' => $stt, 'ho_ten' => $hoTen, 'status' => 'skipped', 'enroll' => 'none',
+                    'message' => "Đã tồn tại (trùng {$by}): {$dup['ho_ten']} — {$dup['ma_hv']}"];
+                continue;
+            }
+
+            $e = new DM_HocVien_PUBLIC();
+            $e->ho_ten             = $hoTen;
+            $e->ngay_sinh          = self::parseDate($get(3));
+            $e->gioi_tinh          = self::normGioiTinh($get(4));
+            $e->trinh_do_chuyen_mon = $get(5) ?: null;
+            $e->doi_tuong_id       = $doiTuongMap[self::norm($get(6))] ?? null;
+            $e->dien_thoai         = $sdt ?: null;
+            $e->email              = $get(8) ?: null;
+            $e->cccd               = $cccd ?: null;
+            $e->cccd_ngay_cap      = self::parseDate($get(10));
+            $e->cccd_noi_cap       = $get(11) ?: null;
+            $e->don_vi_cong_tac    = $get(12) ?: null;
+            $e->dia_chi            = $get(13) ?: null;
+            $e->truong_dao_tao     = $get(14) ?: null;
+            $e->nam_tot_nghiep     = ctype_digit($get(15)) ? (int)$get(15) : null;
+            $e->trang_thai         = self::normTrangThai($get(2));
+            $e->la_nhan_vien       = 0;
+            $e->nguoi_tao          = $userId;
+            $e->ma_hv              = 'HV' . date('ymd') . str_pad((string)($i), 3, '0', STR_PAD_LEFT) . substr((string)microtime(true), -3);
+
+            // Email/SĐT không hợp lệ -> vẫn nhập nhưng bỏ giá trị sai (tránh chặn cả dòng)
+            if ($e->email && !Helper::isEmail($e->email)) $e->email = null;
+
+            // Ghi danh: tìm cặp (Khóa, CTĐT) theo mã
+            $maKhoa = self::extractCode($get(16));
+            $maCt   = self::extractCode($get(17));
+            $khctId = 0;
+            if ($maKhoa !== '' && $maCt !== '') {
+                $khctId = $khctMap[self::norm($maKhoa) . '|' . self::norm($maCt)] ?? 0;
+            }
+            $enrollState = 'none';
+
+            try {
+                $db->beginTransaction();
+                $hvId = DM_HocVien_DAL::insert($e);
+
+                if ($maKhoa !== '' || $maCt !== '') {
+                    // Có yêu cầu ghi danh
+                    if ($khctId > 0) {
+                        if (!DT_HocVienLop_DAL::checkExists($khctId, $hvId)) {
+                            $hvl = new DT_HocVienLop_PUBLIC();
+                            $hvl->khoa_hoc_chuong_trinh_id = $khctId;
+                            $hvl->hoc_vien_id  = $hvId;
+                            $hvl->ngay_ghi_danh = date('Y-m-d');
+                            $hvl->ngay_bat_dau  = self::parseDate($get(18));
+                            $hvl->ngay_ket_thuc = self::parseDate($get(19));
+                            $hvl->trang_thai    = 1;
+                            $hvl->nguoi_tao     = $userId;
+                            DT_HocVienLop_DAL::insert($hvl);
+                            $enrolled++;
+                            $enrollState = 'ok';
+                        } else {
+                            $enrollState = 'ok';
+                        }
+                    } else {
+                        $enrollState = 'notfound';
+                    }
+                }
+                $db->commit();
+            } catch (Throwable $ex) {
+                if ($db->inTransaction()) $db->rollBack();
+                $report[] = ['stt' => $stt, 'ho_ten' => $hoTen, 'status' => 'error', 'enroll' => 'none',
+                    'message' => 'Lỗi lưu: ' . $ex->getMessage()];
+                continue;
+            }
+
+            $created++;
+            $msg = '';
+            if ($enrollState === 'notfound') {
+                $msg = 'Chưa ghi danh: không tìm thấy khóa/CTĐT "' . trim($get(16) . ' / ' . $get(17), ' /') . '"';
+            } elseif ($enrollState === 'ok') {
+                $msg = 'Đã tạo & ghi danh';
+            } else {
+                $msg = 'Đã tạo';
+            }
+            $report[] = ['stt' => $stt, 'ho_ten' => $hoTen, 'status' => 'created', 'enroll' => $enrollState, 'message' => $msg];
+        }
+
+        MemcachedHelper::deleteByPrefix('dm_hoc_vien:');
+        DM_NhatKyHeThong_DAL::log($userId, Constants::MODULE_HE_THONG,
+            "Import HV: tạo {$created}, bỏ qua {$skipped}, ghi danh {$enrolled}", 'DM_HOC_VIEN', 0);
+
+        return ['success' => true,
+            'message' => "Hoàn tất: tạo {$created}, bỏ qua {$skipped}, ghi danh {$enrolled}.",
+            'data' => ['created' => $created, 'skipped' => $skipped, 'enrolled' => $enrolled, 'rows' => $report]];
+    }
+
+    /** Chuẩn hóa chuỗi để so khớp: bỏ khoảng trắng thừa + lowercase (giữ dấu). */
+    private static function norm(?string $s): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', (string)$s)));
+    }
+
+    /** Lấy phần mã đứng trước " - " trong "MÃ - Tên...". */
+    private static function extractCode(string $s): string
+    {
+        $s = trim($s);
+        if ($s === '') return '';
+        // Tách theo " - " (dấu gạch có khoảng trắng 2 bên) hoặc ký tự gạch đầu tiên
+        if (preg_match('/^(.*?)\s+[-–]\s+/u', $s, $m)) return trim($m[1]);
+        return $s;
+    }
+
+    /** Parse ngày d/m/Y hoặc Y-m-d -> 'Y-m-d' (null nếu rỗng/không hợp lệ). */
+    private static function parseDate(string $s): ?string
+    {
+        $s = trim($s);
+        if ($s === '') return null;
+        if (preg_match('#^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$#', $s, $m)) {
+            $d = (int)$m[1]; $mo = (int)$m[2]; $y = (int)$m[3];
+            if (checkdate($mo, $d, $y)) return sprintf('%04d-%02d-%02d', $y, $mo, $d);
+            return null;
+        }
+        if (preg_match('#^(\d{4})-(\d{1,2})-(\d{1,2})$#', $s, $m)) {
+            if (checkdate((int)$m[2], (int)$m[3], (int)$m[1])) return sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]);
+        }
+        return null;
+    }
+
+    /** "Nam"/"Nữ"/"M"/"F" -> 'Nam'/'Nữ' (null nếu không rõ). */
+    private static function normGioiTinh(string $s): ?string
+    {
+        $s = self::norm($s);
+        if ($s === '') return null;
+        if (in_array($s, ['nam', 'm', 'male'], true)) return 'Nam';
+        if (in_array($s, ['nữ', 'nu', 'f', 'female'], true)) return 'Nữ';
+        return null;
+    }
+
+    /** Trạng thái text -> 1 (hoạt động) / 0 (ngừng). Mặc định 1. */
+    private static function normTrangThai(string $s): int
+    {
+        $s = self::norm($s);
+        if ($s === '') return 1;
+        if (strpos($s, 'ngừng') !== false || strpos($s, 'ngung') !== false
+            || strpos($s, 'khóa') !== false || strpos($s, 'khoa') !== false
+            || $s === '0') return 0;
+        return 1;
+    }
 
     /**
      * Upload avatar, return filename stored in DB (relative).

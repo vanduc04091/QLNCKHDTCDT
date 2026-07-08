@@ -8,6 +8,7 @@ class DM_HocVien_DTO extends DM_HocVien_PUBLIC
     public ?string $ma_nv = null;
     public ?string $ten_khoa_phong = null;
     public ?string $ten_benh_vien = null;
+    public ?int $so_ghi_danh = null;
     public ?string $tai_khoan_nguoi_tao = null;
     public ?string $tai_khoan_nguoi_cap_nhat = null;
 }

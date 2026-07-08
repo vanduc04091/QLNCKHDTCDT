@@ -25,7 +25,9 @@ try {
             $daXoa = Helper::postInt('da_xoa', 0);
             $dtId = Helper::postInt('doi_tuong_id', 0);
             $lnv = isset($_POST['la_nhan_vien']) && $_POST['la_nhan_vien'] !== '' ? Helper::postInt('la_nhan_vien', -1) : -1;
-            $res = DM_HocVien_BUS::getPaged($page, $size, $search, $daXoa, $dtId, $lnv);
+            $tuNgay = Helper::postStr('tu_ngay');
+            $denNgay = Helper::postStr('den_ngay');
+            $res = DM_HocVien_BUS::getPaged($page, $size, $search, $daXoa, $dtId, $lnv, $tuNgay, $denNgay);
             ResponseHelper::paged($res['data'], $page, $size, $res['totalRecords']);
             break;
 
@@ -61,10 +63,15 @@ try {
             $e->ho_ten = Helper::postStr('ho_ten');
             $e->ngay_sinh = Helper::postStr('ngay_sinh') ?: null;
             $e->gioi_tinh = Helper::postStr('gioi_tinh') ?: null;
+            $e->trinh_do_chuyen_mon = Helper::postStr('trinh_do_chuyen_mon') ?: null;
             $e->dien_thoai = Helper::postStr('dien_thoai') ?: null;
             $e->email = Helper::postStr('email') ?: null;
             $e->cccd = Helper::postStr('cccd') ?: null;
+            $e->cccd_ngay_cap = Helper::postStr('cccd_ngay_cap') ?: null;
+            $e->cccd_noi_cap = Helper::postStr('cccd_noi_cap') ?: null;
             $e->dia_chi = Helper::postStr('dia_chi') ?: null;
+            $e->truong_dao_tao = Helper::postStr('truong_dao_tao') ?: null;
+            $e->nam_tot_nghiep = Helper::postInt('nam_tot_nghiep') ?: null;
             $e->don_vi_cong_tac = Helper::postStr('don_vi_cong_tac') ?: null;
             $e->chuc_vu = Helper::postStr('chuc_vu') ?: null;
             $e->doi_tuong_id = Helper::postInt('doi_tuong_id') ?: null;
@@ -102,6 +109,18 @@ try {
                 $e->avatar = $avatarFilename;
                 $res = DM_HocVien_BUS::insert($e);
             }
+            $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
+            break;
+
+        case 'import':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_THEM);
+            if (empty($_FILES['file']['name']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                ResponseHelper::error('Chưa chọn file hoặc upload lỗi');
+            }
+            $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'xlsx') ResponseHelper::error('Chỉ hỗ trợ file .xlsx');
+            if ($_FILES['file']['size'] > 5 * 1024 * 1024) ResponseHelper::error('File quá lớn (tối đa 5MB)');
+            $res = DM_HocVien_BUS::importExcel($_FILES['file']['tmp_name'], $u);
             $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
             break;
 

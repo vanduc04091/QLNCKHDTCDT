@@ -66,6 +66,7 @@ class DT_HocVienLop_BUS
     public static function getById(int $id): ?DT_HocVienLop_DTO { return DT_HocVienLop_DAL::getById($id); }
     public static function getByKhct(int $khctId, string $q = ''): array { return DT_HocVienLop_DAL::getByKhct($khctId, $q); }
     public static function getByHocVien(int $hocVienId): array { return DT_HocVienLop_DAL::getByHocVien($hocVienId); }
+    public static function getEnrollmentsForExport(array $hocVienIds): array { return DT_HocVienLop_DAL::getEnrollmentsForExport($hocVienIds); }
 
     /** Tổng hợp dữ liệu xem nhanh của 1 học viên cho drawer admin/portal. */
     public static function getOverview(int $hocVienId): array

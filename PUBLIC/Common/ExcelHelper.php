@@ -193,4 +193,127 @@ class ExcelHelper
         $name = trim(mb_substr($name, 0, 31, 'UTF-8'));
         return $name !== '' ? $name : ('Sheet' . $idx);
     }
+
+    // ================= ĐỌC .xlsx =================
+
+    /**
+     * Đọc sheet đầu tiên của file .xlsx thành mảng các dòng.
+     * Mỗi dòng là mảng theo chỉ số cột (A=0, B=1, ...); ô trống = ''.
+     * Ngày dạng số serial của Excel được tự chuyển sang 'd/m/Y'.
+     *
+     * @return array<int, array<int,string>> Danh sách dòng theo thứ tự trong file.
+     * @throws RuntimeException nếu không mở được file.
+     */
+    public static function readRows(string $path): array
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            throw new RuntimeException('Không mở được file Excel (.xlsx).');
+        }
+
+        // Shared strings
+        $shared = [];
+        $ss = $zip->getFromName('xl/sharedStrings.xml');
+        if ($ss !== false) {
+            if (preg_match_all('/<si\b[^>]*>(.*?)<\/si>/s', $ss, $m)) {
+                foreach ($m[1] as $siXml) {
+                    // Gộp mọi <t> trong 1 <si> (chuỗi có định dạng rich-text tách nhiều <t>)
+                    $txt = '';
+                    if (preg_match_all('/<t[^>]*>(.*?)<\/t>/s', $siXml, $tm)) {
+                        foreach ($tm[1] as $t) $txt .= $t;
+                    }
+                    $shared[] = html_entity_decode($txt, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                }
+            }
+        }
+
+        // Sheet đầu tiên (theo workbook.xml.rels — đơn giản: lấy sheet1.xml)
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if ($sheetXml === false) {
+            // fallback: tìm file worksheet bất kỳ
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+                if (preg_match('#^xl/worksheets/sheet\d+\.xml$#', $name)) {
+                    $sheetXml = $zip->getFromName($name);
+                    break;
+                }
+            }
+        }
+        $zip->close();
+        if ($sheetXml === false || $sheetXml === null) return [];
+
+        $result = [];
+        if (!preg_match_all('/<row\b[^>]*>(.*?)<\/row>|<row\b[^>]*\/>/s', $sheetXml, $rows, PREG_SET_ORDER)) {
+            return [];
+        }
+        foreach ($rows as $r) {
+            $inner = $r[1] ?? '';
+            $line = [];
+            // Ô tự đóng (<c .../>) phải khớp TRƯỚC ô có nội dung để không nuốt ô kế tiếp.
+            if ($inner !== '' && preg_match_all('/<c\b([^>]*?)\/>|<c\b([^>]*)>(.*?)<\/c>/s', $inner, $cells, PREG_SET_ORDER)) {
+                foreach ($cells as $c) {
+                    $selfClose = ($c[1] !== '');
+                    $attr = $selfClose ? $c[1] : ($c[2] ?? '');
+                    $body = $selfClose ? '' : ($c[3] ?? '');
+                    if (!preg_match('/r="([A-Z]+)\d+"/', $attr, $rm)) continue;
+                    $colIdx = self::colIndex($rm[1]);
+                    $type = preg_match('/t="([^"]+)"/', $attr, $tm) ? $tm[1] : '';
+
+                    $val = '';
+                    if ($type === 's') { // shared string
+                        if (preg_match('/<v>(.*?)<\/v>/s', $body, $vm)) {
+                            $val = $shared[(int)$vm[1]] ?? '';
+                        }
+                    } elseif ($type === 'inlineStr') {
+                        if (preg_match_all('/<t[^>]*>(.*?)<\/t>/s', $body, $tm2)) {
+                            $val = html_entity_decode(implode('', $tm2[1]), ENT_QUOTES | ENT_XML1, 'UTF-8');
+                        }
+                    } elseif ($type === 'str') { // công thức trả chuỗi
+                        if (preg_match('/<v>(.*?)<\/v>/s', $body, $vm)) {
+                            $val = html_entity_decode($vm[1], ENT_QUOTES | ENT_XML1, 'UTF-8');
+                        }
+                    } else { // số / ngày serial
+                        if (preg_match('/<v>(.*?)<\/v>/s', $body, $vm)) {
+                            $raw = $vm[1];
+                            // Nếu là số nguyên trong khoảng ngày Excel hợp lý → coi là ngày serial
+                            if (is_numeric($raw) && strpos($attr, 's=') !== false
+                                && (float)$raw > 20000 && (float)$raw < 80000 && floor((float)$raw) == (float)$raw) {
+                                $val = self::excelSerialToDate((int)$raw);
+                            } else {
+                                $val = (string)$raw;
+                            }
+                        }
+                    }
+                    $line[$colIdx] = trim($val);
+                }
+            }
+            // Chuẩn hóa: fill cột trống thành '' đến cột lớn nhất
+            if ($line) {
+                $max = max(array_keys($line));
+                for ($i = 0; $i <= $max; $i++) if (!isset($line[$i])) $line[$i] = '';
+                ksort($line);
+            }
+            $result[] = array_values($line);
+        }
+        return $result;
+    }
+
+    /** A->0, B->1, ..., Z->25, AA->26 */
+    private static function colIndex(string $letters): int
+    {
+        $n = 0;
+        $len = strlen($letters);
+        for ($i = 0; $i < $len; $i++) {
+            $n = $n * 26 + (ord($letters[$i]) - 64);
+        }
+        return $n - 1;
+    }
+
+    /** Đổi số serial ngày Excel (base 1900) sang chuỗi d/m/Y. */
+    private static function excelSerialToDate(int $serial): string
+    {
+        // Excel epoch 1899-12-30 (bù lỗi năm nhuận 1900)
+        $ts = ($serial - 25569) * 86400;
+        return gmdate('d/m/Y', $ts);
+    }
 }

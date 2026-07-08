@@ -84,6 +84,13 @@ require __DIR__ . '/../layouts/header.php';
                 <option value="0">Đang hoạt động</option>
                 <option value="1">Thùng rác</option>
             </select>
+            <div class="hv-date-filter" title="Lọc theo ngày tạo học viên">
+                <span class="hv-date-lbl">Ngày tạo:</span>
+                <input type="date" id="filterTuNgay" class="form-control" style="width:150px" title="Từ ngày">
+                <span class="hv-date-sep">→</span>
+                <input type="date" id="filterDenNgay" class="form-control" style="width:150px" title="Đến ngày">
+                <button type="button" class="btn btn-sm" id="btnClearNgay" title="Xóa lọc ngày" style="display:none">&times;</button>
+            </div>
         </div>
         <div class="right">
             <div class="hv-view-toggle" role="tablist">
@@ -98,6 +105,9 @@ require __DIR__ . '/../layouts/header.php';
                 <?= IconHelper::svg('download', '16') ?> Xuất Excel
             </button>
             <?php if ($canAdd): ?>
+                <button type="button" class="btn" onclick="openImport()" title="Nhập học viên từ file Excel">
+                    <?= IconHelper::svg('upload', '16') ?> Import Excel
+                </button>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm học viên</button>
             <?php endif; ?>
         </div>
@@ -223,6 +233,10 @@ require __DIR__ . '/../layouts/header.php';
 
                 <div class="form-row">
                     <div class="form-group">
+                        <label>Trình độ chuyên môn</label>
+                        <input type="text" name="trinh_do_chuyen_mon" id="f_trinh_do_chuyen_mon" class="form-control" maxlength="150" placeholder="VD: Bác sĩ y khoa, Cử nhân điều dưỡng...">
+                    </div>
+                    <div class="form-group">
                         <label>Điện thoại</label>
                         <input type="text" name="dien_thoai" id="f_dien_thoai" class="form-control" maxlength="20">
                     </div>
@@ -232,10 +246,18 @@ require __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row-3">
                     <div class="form-group">
                         <label>CCCD</label>
                         <input type="text" name="cccd" id="f_cccd" class="form-control" pattern="\d{9,12}" maxlength="12" placeholder="9-12 chữ số">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày cấp CCCD</label>
+                        <input type="date" name="cccd_ngay_cap" id="f_cccd_ngay_cap" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Nơi cấp CCCD</label>
+                        <input type="text" name="cccd_noi_cap" id="f_cccd_noi_cap" class="form-control" maxlength="200" placeholder="VD: Bộ Công an">
                     </div>
                 </div>
 
@@ -251,8 +273,19 @@ require __DIR__ . '/../layouts/header.php';
                 </div>
 
                 <div class="form-group">
-                    <label>Địa chỉ</label>
+                    <label>Địa chỉ thường trú</label>
                     <input type="text" name="dia_chi" id="f_dia_chi" class="form-control" maxlength="250">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Trường đào tạo</label>
+                        <input type="text" name="truong_dao_tao" id="f_truong_dao_tao" class="form-control" maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label>Năm tốt nghiệp</label>
+                        <input type="number" name="nam_tot_nghiep" id="f_nam_tot_nghiep" class="form-control" min="1950" max="2100" placeholder="VD: 2026">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -280,7 +313,8 @@ require __DIR__ . '/../layouts/header.php';
         </div>
         <div class="drawer-body" style="padding:0">
             <div class="hvtab-bar" id="hvtabBar">
-                <button type="button" class="hvtab active" data-tab="lop">Chương trình đào tạo</button>
+                <button type="button" class="hvtab active" data-tab="info">Thông tin</button>
+                <button type="button" class="hvtab" data-tab="lop">Chương trình đào tạo</button>
                 <button type="button" class="hvtab" data-tab="mon">Bài học</button>
                 <button type="button" class="hvtab" data-tab="lich">Lịch học</button>
                 <button type="button" class="hvtab" data-tab="dd">Điểm danh</button>
@@ -290,8 +324,13 @@ require __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="hvtab-content">
+                <!-- Thông tin cá nhân (chỉ xem) -->
+                <div class="hvtab-pane active" data-pane="info">
+                    <div id="paneInfo" class="hv-pane-loading">Đang tải...</div>
+                </div>
+
                 <!-- Chương trình đào tạo (form ghi danh) -->
-                <div class="hvtab-pane active" data-pane="lop">
+                <div class="hvtab-pane" data-pane="lop">
                     <div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--gray-200)">
                         <div style="font-weight:600;margin-bottom:8px;font-size:13.5px">Ghi danh vào chương trình đào tạo</div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -366,6 +405,59 @@ require __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
+<!-- Modal Import Excel -->
+<div class="modal-backdrop" id="modalImport">
+    <div class="modal" style="max-width:640px">
+        <div class="modal-header">
+            <h3>Import học viên từ Excel</h3>
+            <button type="button" class="close" onclick="$('#modalImport').removeClass('open')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="imp-note">
+                <div>File phải theo đúng <strong>mẫu danh sách nhập thông tin học viên</strong> (.xlsx).
+                    <a href="<?= Helper::h(AppConfig::APP_URL) ?>/GUI/DM_HocVien/tai_mau_import.php" class="imp-link">Tải file mẫu</a>.
+                </div>
+                <ul>
+                    <li>Học viên trùng <strong>CCCD</strong> hoặc <strong>SĐT</strong> sẽ bị bỏ qua.</li>
+                    <li>Cột <strong>Khóa học</strong> / <strong>Chương trình đào tạo</strong> dùng để ghi danh. Nếu không tìm thấy cặp tương ứng, học viên vẫn được tạo nhưng <span class="imp-hl">chưa ghi danh</span> (hiện màu vàng trong bảng để bổ sung sau).</li>
+                </ul>
+            </div>
+            <div class="form-group" style="margin-top:12px">
+                <label>Chọn file Excel (.xlsx)</label>
+                <input type="file" id="impFile" class="form-control" accept=".xlsx">
+            </div>
+            <div id="impResult" style="display:none"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" onclick="$('#modalImport').removeClass('open')">Đóng</button>
+            <button type="button" class="btn btn-primary" id="btnImport">
+                <?= IconHelper::svg('upload', '16') ?> Bắt đầu import
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .imp-note { background:#f8fafc; border:1px solid var(--gray-200); border-radius:8px; padding:12px 14px; font-size:12.5px; color:var(--gray-700); }
+    .imp-note ul { margin:8px 0 0; padding-left:18px; }
+    .imp-note li { margin:3px 0; }
+    .imp-hl { color:#92400e; font-weight:600; }
+    .imp-link { color:var(--primary); font-weight:600; text-decoration:underline; }
+    .imp-sum { display:flex; gap:10px; margin:12px 0 8px; flex-wrap:wrap; }
+    .imp-chip { padding:6px 12px; border-radius:8px; font-weight:600; font-size:12.5px; }
+    .imp-chip.ok { background:#dcfce7; color:#166534; }
+    .imp-chip.skip { background:#e2e8f0; color:#475569; }
+    .imp-chip.enr { background:#dbeafe; color:#1e40af; }
+    .imp-chip.err { background:#fee2e2; color:#991b1b; }
+    .imp-tbl { width:100%; border-collapse:collapse; font-size:12px; }
+    .imp-tbl th, .imp-tbl td { padding:6px 8px; border-bottom:1px solid var(--gray-100); text-align:left; }
+    .imp-tbl th { background:#f1f5f9; font-weight:600; position:sticky; top:0; }
+    .imp-tbl tr.r-warn td { background:#fefce8; }
+    .imp-tbl tr.r-skip td { background:#f8fafc; color:var(--gray-500); }
+    .imp-tbl tr.r-err td { background:#fef2f2; }
+    .imp-scroll { max-height:280px; overflow:auto; border:1px solid var(--gray-200); border-radius:8px; }
+</style>
+
 <style>
     .hv-lop-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--gray-200); border-radius:8px; background:#fff; }
     .hv-lop-row:hover { border-color: var(--primary); }
@@ -385,6 +477,16 @@ require __DIR__ . '/../layouts/header.php';
     .hvtab:hover { color: var(--gray-700); }
     .hvtab.active { color: var(--primary); border-bottom-color: var(--primary); }
     .hvtab-content { padding: 16px; }
+
+    /* Thông tin cá nhân (chỉ xem) */
+    .hv-info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--gray-200);
+        border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; }
+    .hv-info-item { background:#fff; padding:8px 12px; display:flex; flex-direction:column; gap:2px; }
+    .hv-info-lbl { font-size:11px; color:var(--gray-500); text-transform:uppercase; letter-spacing:.02em; }
+    .hv-info-val { font-size:13px; color:var(--gray-800); font-weight:500; word-break:break-word; }
+    .hv-info-note { margin-top:12px; padding:10px 12px; background:#f8fafc; border:1px solid var(--gray-200);
+        border-radius:8px; font-size:12.5px; color:var(--gray-700); }
+    @media (max-width:560px){ .hv-info-grid { grid-template-columns:1fr; } }
     .hvtab-pane { display:none; }
     .hvtab-pane.active { display:block; }
     .hv-pane-loading { padding: 30px 16px; text-align:center; color:#000; font-size:13px; }
@@ -399,6 +501,23 @@ require __DIR__ . '/../layouts/header.php';
     .hv-tbl th { text-align:left; padding:7px 8px; background:var(--gray-50); font-weight:600; font-size:12px; color:var(--gray-600); text-transform:uppercase; letter-spacing:.3px; }
     .hv-tbl td { padding:8px; border-bottom:1px solid var(--gray-100); }
     .hv-tbl tr:hover td { background:#fafbfc; }
+
+    /* Bộ lọc ngày tạo */
+    .hv-date-filter { display:inline-flex; align-items:center; gap:6px; padding:2px 8px;
+        border:1px solid var(--gray-200); border-radius:8px; background:#fff; }
+    .hv-date-lbl { font-size:12px; color:var(--gray-500); white-space:nowrap; }
+    .hv-date-sep { color:var(--gray-400); }
+    .hv-date-filter .form-control { padding:5px 8px; }
+
+    /* Học viên chưa ghi danh CTĐT nào -> vàng nhạt */
+    .hv-tbl tr.hv-chua-ghidanh td { background:#fefce8; }
+    .hv-tbl tr.hv-chua-ghidanh:hover td { background:#fef9c3; }
+    .hv-warn-tag { display:inline-block; font-size:10.5px; font-weight:600; color:#92400e;
+        background:#fef3c7; border-radius:9px; padding:1px 8px; margin-left:4px; white-space:nowrap; }
+    .hv-card.hv-chua-ghidanh { background:#fefce8; border-color:#fde68a; }
+    .hv-warn-line { display:flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+        color:#92400e; margin-top:6px; }
+    .hv-warn-line svg { flex:0 0 auto; }
 </style>
 
 <script>
@@ -407,16 +526,19 @@ var UPLOAD_URL = <?= json_encode($uploadUrl) ?>;
 var CAN_EDIT = <?= $canEdit?'true':'false' ?>;
 var CAN_DEL = <?= $canDel?'true':'false' ?>;
 var CAN_ADD = <?= $canAdd?'true':'false' ?>;
-var state = { page: 1, pageSize: 20, search: '', daXoa: 0, doiTuongId: 0, laNhanVien: '', view: 'table' };
+var state = { page: 1, pageSize: 20, search: '', daXoa: 0, doiTuongId: 0, laNhanVien: '', tuNgay: '', denNgay: '', view: 'table' };
 
 function exportExcel() {
     var p = new URLSearchParams({
         search: state.search || '', da_xoa: state.daXoa || 0,
-        doi_tuong_id: state.doiTuongId || 0, la_nhan_vien: state.laNhanVien || ''
+        doi_tuong_id: state.doiTuongId || 0, la_nhan_vien: state.laNhanVien || '',
+        tu_ngay: state.tuNgay || '', den_ngay: state.denNgay || ''
     });
     window.location = APP_BASE + 'GUI/DM_HocVien/export.php?' + p.toString();
 }
 
+var ICON_UPLOAD = '<?= addslashes(IconHelper::svg('upload', '16')) ?>';
+var ICON_ALERT = '<?= addslashes(IconHelper::svg('alert-triangle', '13')) ?>';
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '16')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '16')) ?>';
 var ICON_RESTORE = '<?= addslashes(IconHelper::svg('refresh', '16')) ?>';
@@ -453,7 +575,8 @@ function load() {
         page: state.page, pageSize: state.pageSize,
         search: state.search, da_xoa: state.daXoa,
         doi_tuong_id: state.doiTuongId,
-        la_nhan_vien: state.laNhanVien
+        la_nhan_vien: state.laNhanVien,
+        tu_ngay: state.tuNgay, den_ngay: state.denNgay
     }).done(function (res) {
         APP.hideLoading('#viewWrap');
         if (!res.success) { APP.toast(res.message, 'error'); return; }
@@ -520,8 +643,10 @@ function renderCards(rows) {
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" onclick="deleteItem(' + r.id + ')">Xóa vĩnh viễn</button>';
         }
 
+        var chuaGd = (state.daXoa == 0 && Number(r.so_ghi_danh || 0) === 0);
+        var warnTag = chuaGd ? '<div class="hv-warn-line">' + ICON_ALERT + 'Chưa ghi danh chương trình nào</div>' : '';
         var html =
-            '<div class="hv-card">' +
+            '<div class="hv-card' + (chuaGd ? ' hv-chua-ghidanh' : '') + '">' +
                 '<div class="hv-card-head">' + avatarHtml(r, 60) +
                     '<div class="hv-card-ident">' +
                         '<div class="hv-card-name">' + statusDot + APP.escape(r.ho_ten) + '</div>' +
@@ -531,7 +656,7 @@ function renderCards(rows) {
                 '</div>' +
                 '<div class="hv-card-body">' +
                     '<div class="hv-meta-line hv-meta-strong">' + ICON_BUILDING + APP.escape(donVi) + '</div>' +
-                    contact +
+                    contact + warnTag +
                 '</div>' +
                 '<div class="hv-card-actions">' + actions + '</div>' +
             '</div>';
@@ -560,11 +685,14 @@ function renderRows(rows) {
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" onclick="deleteItem(' + r.id + ')">Xóa</button>';
         }
         var donVi = r.la_nhan_vien == 1 ? (r.ten_khoa_phong || '-') : (r.don_vi_cong_tac || '-');
+        var chuaGd = (state.daXoa == 0 && Number(r.so_ghi_danh || 0) === 0);
+        var rowCls = chuaGd ? ' class="hv-chua-ghidanh"' : '';
+        var warnTag = chuaGd ? ' <span class="hv-warn-tag" title="Chưa ghi danh chương trình đào tạo nào">chưa ghi danh</span>' : '';
         $tb.append(
-            '<tr>' +
+            '<tr' + rowCls + '>' +
                 '<td>' + avatarHtml(r, 36) + '</td>' +
                 '<td><strong>' + APP.escape(r.ma_hv) + '</strong></td>' +
-                '<td>' + APP.escape(r.ho_ten) + nvBadge + '</td>' +
+                '<td>' + APP.escape(r.ho_ten) + nvBadge + warnTag + '</td>' +
                 '<td>' + APP.escape(r.ten_doi_tuong || '-') + '</td>' +
                 '<td>' + APP.escape(donVi) + '</td>' +
                 '<td>' + APP.escape(r.dien_thoai || '-') + '</td>' +
@@ -593,6 +721,20 @@ $('#search').on('input', APP.debounce(function () { state.search = $(this).val()
 $('#filterDoiTuong').on('change', function () { state.doiTuongId = parseInt(this.value, 10) || 0; state.page = 1; load(); });
 $('#filterLoai').on('change', function () { state.laNhanVien = this.value; state.page = 1; load(); });
 $('#filterDaXoa').on('change', function () { state.daXoa = parseInt(this.value, 10) || 0; state.page = 1; load(); });
+
+function applyDateFilter() {
+    var tu = $('#filterTuNgay').val(), den = $('#filterDenNgay').val();
+    if (tu && den && tu > den) { APP.toast('"Từ ngày" phải trước "đến ngày"', 'warning'); return; }
+    state.tuNgay = tu; state.denNgay = den; state.page = 1;
+    $('#btnClearNgay').toggle(!!(tu || den));
+    load();
+}
+$('#filterTuNgay, #filterDenNgay').on('change', applyDateFilter);
+$('#btnClearNgay').on('click', function () {
+    $('#filterTuNgay').val(''); $('#filterDenNgay').val('');
+    state.tuNgay = ''; state.denNgay = ''; state.page = 1;
+    $(this).hide(); load();
+});
 
 // View toggle
 $('.hv-view-btn').on('click', function () {
@@ -635,10 +777,15 @@ function openEdit(id) {
         $('#f_ho_ten').val(e.ho_ten);
         $('#f_ngay_sinh').val(e.ngay_sinh || '');
         $('#f_gioi_tinh').val(e.gioi_tinh || '');
+        $('#f_trinh_do_chuyen_mon').val(e.trinh_do_chuyen_mon || '');
         $('#f_dien_thoai').val(e.dien_thoai || '');
         $('#f_email').val(e.email || '');
         $('#f_cccd').val(e.cccd || '');
+        $('#f_cccd_ngay_cap').val(e.cccd_ngay_cap || '');
+        $('#f_cccd_noi_cap').val(e.cccd_noi_cap || '');
         $('#f_dia_chi').val(e.dia_chi || '');
+        $('#f_truong_dao_tao').val(e.truong_dao_tao || '');
+        $('#f_nam_tot_nghiep').val(e.nam_tot_nghiep || '');
         $('#f_don_vi_cong_tac').val(e.don_vi_cong_tac || '');
         $('#f_chuc_vu').val(e.chuc_vu || '');
         $('#f_doi_tuong_id').val(e.doi_tuong_id || '');
@@ -741,12 +888,13 @@ function openLopDrawer(hvId, hoTen, maHv) {
     $('#lopDrwEmpty').hide();
     $('#lopDrwNgay').val(new Date().toISOString().substring(0, 10));
 
-    // Reset tabs về Lớp học
+    // Reset tabs về Thông tin
     $('.hvtab').removeClass('active');
-    $('.hvtab[data-tab="lop"]').addClass('active');
+    $('.hvtab[data-tab="info"]').addClass('active');
     $('.hvtab-pane').removeClass('active');
-    $('.hvtab-pane[data-pane="lop"]').addClass('active');
-    $('.hvtab-content .hv-pane-loading').text('Chọn tab để tải...');
+    $('.hvtab-pane[data-pane="info"]').addClass('active');
+    $('#paneInfo').removeClass().addClass('hv-pane-loading').text('Đang tải...');
+    $('.hvtab-content .hv-pane-loading').not('#paneInfo').text('Chọn tab để tải...');
 
     // Reset 2 combo ghi danh
     $('#lopDrwKhoa').val('');
@@ -755,6 +903,8 @@ function openLopDrawer(hvId, hoTen, maHv) {
     $('#drawerLop').addClass('open').find('.drawer').addClass('open');
     loadLopCuaHv();
     ensureKhoaCombo();
+    // Tải thông tin cá nhân ngay (dùng overview.hoc_vien)
+    loadOverview(function () { renderInfo2(lopDrw.overview && lopDrw.overview.hoc_vien); });
 }
 
 // Tab switching: lazy load overview lần đầu, sau đó chỉ render pane
@@ -772,6 +922,40 @@ $(document).on('click', '.hvtab', function () {
     }
 });
 
+function renderInfo2(hv) {
+    if (!hv) { $('#paneInfo').removeClass().addClass('hv-empty').text('Không có dữ liệu học viên.'); return; }
+    var gtMap = { 'M': 'Nam', 'F': 'Nữ' };
+    var gt = gtMap[hv.gioi_tinh] || hv.gioi_tinh || '';
+    function row(label, val) {
+        return '<div class="hv-info-item"><span class="hv-info-lbl">' + label + '</span>'
+            + '<span class="hv-info-val">' + (val ? APP.escape(String(val)) : '—') + '</span></div>';
+    }
+    var donVi = hv.la_nhan_vien == 1 ? (hv.ten_khoa_phong || hv.ten_benh_vien || '') : (hv.don_vi_cong_tac || '');
+    var h = '<div class="hv-info-grid">'
+        + row('Mã học viên', hv.ma_hv)
+        + row('Họ tên', hv.ho_ten)
+        + row('Ngày sinh', APP.formatDate ? APP.formatDate(hv.ngay_sinh) : hv.ngay_sinh)
+        + row('Giới tính', gt)
+        + row('Trình độ chuyên môn', hv.trinh_do_chuyen_mon)
+        + row('Đối tượng', hv.ten_doi_tuong)
+        + row('Điện thoại', hv.dien_thoai)
+        + row('Email', hv.email)
+        + row('CCCD', hv.cccd)
+        + row('Ngày cấp CCCD', APP.formatDate ? APP.formatDate(hv.cccd_ngay_cap) : hv.cccd_ngay_cap)
+        + row('Nơi cấp CCCD', hv.cccd_noi_cap)
+        + row('Đơn vị công tác', donVi)
+        + row('Chức vụ', hv.chuc_vu)
+        + row('Địa chỉ thường trú', hv.dia_chi)
+        + row('Trường đào tạo', hv.truong_dao_tao)
+        + row('Năm tốt nghiệp', hv.nam_tot_nghiep)
+        + row('Là nhân viên', hv.la_nhan_vien == 1 ? 'Có' : 'Không')
+        + row('Trạng thái', hv.trang_thai == 1 ? 'Hoạt động' : 'Ngừng')
+        + '</div>';
+    if (hv.ghi_chu) h += '<div class="hv-info-note"><strong>Ghi chú:</strong> ' + APP.escape(hv.ghi_chu) + '</div>';
+    if (CAN_EDIT) h += '<div style="margin-top:14px"><button class="btn btn-sm btn-primary" onclick="closeLopDrawer(); openEdit(' + hv.id + ')">Sửa thông tin</button></div>';
+    $('#paneInfo').removeClass().html(h);
+}
+
 function loadOverview(cb) {
     APP.ajax(URL, { action: 'getOverview', hoc_vien_id: lopDrw.hocVienId }).done(function (res) {
         if (!res.success) { APP.toast(res.message, 'error'); return; }
@@ -783,7 +967,8 @@ function loadOverview(cb) {
 
 function renderPane(tab) {
     var ov = lopDrw.overview || {};
-    if (tab === 'mon') renderMon(ov.mon_hoc || []);
+    if (tab === 'info') renderInfo2(ov.hoc_vien);
+    else if (tab === 'mon') renderMon(ov.mon_hoc || []);
     else if (tab === 'lich') renderLich(ov.lich_hoc || []);
     else if (tab === 'dd')   renderDD(ov.diem_danh_stats || {}, ov.diem_danh_detail || []);
     else if (tab === 'diem') renderDiem(ov.ket_qua || []);
@@ -1034,6 +1219,68 @@ $('#btnLuuNgay').on('click', function () {
         else APP.toast(res.message, 'error');
     });
 });
+
+// ===== Import Excel =====
+function openImport() {
+    $('#impFile').val('');
+    $('#impResult').hide().empty();
+    $('#btnImport').prop('disabled', false).html(ICON_UPLOAD + ' Bắt đầu import');
+    $('#modalImport').addClass('open');
+}
+
+$('#btnImport').on('click', function () {
+    var f = $('#impFile')[0].files[0];
+    if (!f) { APP.toast('Chưa chọn file', 'error'); return; }
+    if (!/\.xlsx$/i.test(f.name)) { APP.toast('Chỉ hỗ trợ file .xlsx', 'error'); return; }
+
+    var fd = new FormData();
+    fd.append('action', 'import');
+    fd.append('file', f);
+    if (window.CSRF_TOKEN) fd.append('_csrf_token', window.CSRF_TOKEN);
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('Đang xử lý...');
+
+    $.ajax({
+        url: URL, type: 'POST', data: fd, processData: false, contentType: false,
+        dataType: 'json',
+        headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {}
+    }).done(function (res) {
+        if (!res || !res.success) {
+            APP.toast((res && res.message) || 'Import thất bại', 'error');
+            $btn.prop('disabled', false).html(ICON_UPLOAD + ' Bắt đầu import');
+            return;
+        }
+        renderImportResult(res.data);
+        APP.toast(res.message, 'success');
+        $btn.prop('disabled', false).html(ICON_UPLOAD + ' Bắt đầu import');
+        load(); loadStats();
+    }).fail(function () {
+        APP.toast('Lỗi kết nối khi import', 'error');
+        $btn.prop('disabled', false).html(ICON_UPLOAD + ' Bắt đầu import');
+    });
+});
+
+function renderImportResult(d) {
+    if (!d) return;
+    var h = '<div class="imp-sum">'
+        + '<span class="imp-chip ok">Tạo mới: ' + d.created + '</span>'
+        + '<span class="imp-chip enr">Đã ghi danh: ' + d.enrolled + '</span>'
+        + '<span class="imp-chip skip">Bỏ qua (trùng): ' + d.skipped + '</span>';
+    var errCount = (d.rows || []).filter(function (r) { return r.status === 'error'; }).length;
+    if (errCount) h += '<span class="imp-chip err">Lỗi: ' + errCount + '</span>';
+    h += '</div>';
+
+    h += '<div class="imp-scroll"><table class="imp-tbl"><thead><tr>'
+        + '<th style="width:44px">STT</th><th>Họ tên</th><th>Kết quả</th></tr></thead><tbody>';
+    (d.rows || []).forEach(function (r) {
+        var cls = r.status === 'skipped' ? 'r-skip' : (r.status === 'error' ? 'r-err' : (r.enroll === 'notfound' ? 'r-warn' : ''));
+        h += '<tr class="' + cls + '"><td>' + APP.escape(r.stt) + '</td><td>'
+            + APP.escape(r.ho_ten) + '</td><td>' + APP.escape(r.message) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    $('#impResult').html(h).show();
+}
 
 load();
 loadStats();

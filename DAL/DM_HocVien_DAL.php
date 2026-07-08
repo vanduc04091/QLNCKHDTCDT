@@ -11,6 +11,8 @@ class DM_HocVien_DAL
                        nv.ma_nv,
                        kp.ten_khoa AS ten_khoa_phong,
                        bv.ten_benh_vien,
+                       (SELECT COUNT(*) FROM DT_HOC_VIEN_LOP hvl
+                          WHERE hvl.hoc_vien_id = hv.id AND hvl.da_xoa = 0) AS so_ghi_danh,
                        u1.tai_khoan AS tai_khoan_nguoi_tao,
                        u2.tai_khoan AS tai_khoan_nguoi_cap_nhat
                 FROM DM_HOC_VIEN hv
@@ -25,17 +27,21 @@ class DM_HocVien_DAL
     public static function insert(DM_HocVien_PUBLIC $e): int
     {
         $sql = "INSERT INTO DM_HOC_VIEN
-                (ma_hv, ho_ten, ngay_sinh, gioi_tinh, dien_thoai, email, cccd, dia_chi,
+                (ma_hv, ho_ten, ngay_sinh, gioi_tinh, trinh_do_chuyen_mon, dien_thoai, email,
+                 cccd, cccd_ngay_cap, cccd_noi_cap, dia_chi, truong_dao_tao, nam_tot_nghiep,
                  don_vi_cong_tac, chuc_vu, doi_tuong_id, la_nhan_vien, nhan_vien_id, avatar, ghi_chu,
                  trang_thai, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat, da_xoa)
-                VALUES (:ma, :ht, :ns, :gt, :dt, :em, :cccd, :dc,
+                VALUES (:ma, :ht, :ns, :gt, :tdcm, :dt, :em,
+                        :cccd, :ccngc, :ccnc, :dc, :truong, :namtn,
                         :dv, :cv, :dti, :lnv, :nvi, :av, :gc,
                         :tt, NOW(), NOW(), :u1, :u2, 0)";
         $stmt = Database::getConnection()->prepare($sql);
         $stmt->execute([
             ':ma' => $e->ma_hv, ':ht' => $e->ho_ten,
-            ':ns' => $e->ngay_sinh ?: null, ':gt' => $e->gioi_tinh,
-            ':dt' => $e->dien_thoai, ':em' => $e->email, ':cccd' => $e->cccd ?: null, ':dc' => $e->dia_chi,
+            ':ns' => $e->ngay_sinh ?: null, ':gt' => $e->gioi_tinh, ':tdcm' => $e->trinh_do_chuyen_mon,
+            ':dt' => $e->dien_thoai, ':em' => $e->email,
+            ':cccd' => $e->cccd ?: null, ':ccngc' => $e->cccd_ngay_cap ?: null, ':ccnc' => $e->cccd_noi_cap,
+            ':dc' => $e->dia_chi, ':truong' => $e->truong_dao_tao, ':namtn' => $e->nam_tot_nghiep ?: null,
             ':dv' => $e->don_vi_cong_tac, ':cv' => $e->chuc_vu,
             ':dti' => $e->doi_tuong_id, ':lnv' => $e->la_nhan_vien, ':nvi' => $e->nhan_vien_id,
             ':av' => $e->avatar, ':gc' => $e->ghi_chu,
@@ -51,8 +57,9 @@ class DM_HocVien_DAL
         if ($e->avatar !== null) $avatarClause = ', avatar=:av';
 
         $sql = "UPDATE DM_HOC_VIEN SET
-                ma_hv=:ma, ho_ten=:ht, ngay_sinh=:ns, gioi_tinh=:gt,
-                dien_thoai=:dt, email=:em, cccd=:cccd, dia_chi=:dc,
+                ma_hv=:ma, ho_ten=:ht, ngay_sinh=:ns, gioi_tinh=:gt, trinh_do_chuyen_mon=:tdcm,
+                dien_thoai=:dt, email=:em, cccd=:cccd, cccd_ngay_cap=:ccngc, cccd_noi_cap=:ccnc,
+                dia_chi=:dc, truong_dao_tao=:truong, nam_tot_nghiep=:namtn,
                 don_vi_cong_tac=:dv, chuc_vu=:cv,
                 doi_tuong_id=:dti, la_nhan_vien=:lnv, nhan_vien_id=:nvi,
                 ghi_chu=:gc, trang_thai=:tt, ngay_cap_nhat=NOW(), nguoi_cap_nhat=:u
@@ -61,8 +68,10 @@ class DM_HocVien_DAL
         $stmt = Database::getConnection()->prepare($sql);
         $params = [
             ':ma' => $e->ma_hv, ':ht' => $e->ho_ten,
-            ':ns' => $e->ngay_sinh ?: null, ':gt' => $e->gioi_tinh,
-            ':dt' => $e->dien_thoai, ':em' => $e->email, ':cccd' => $e->cccd ?: null, ':dc' => $e->dia_chi,
+            ':ns' => $e->ngay_sinh ?: null, ':gt' => $e->gioi_tinh, ':tdcm' => $e->trinh_do_chuyen_mon,
+            ':dt' => $e->dien_thoai, ':em' => $e->email,
+            ':cccd' => $e->cccd ?: null, ':ccngc' => $e->cccd_ngay_cap ?: null, ':ccnc' => $e->cccd_noi_cap,
+            ':dc' => $e->dia_chi, ':truong' => $e->truong_dao_tao, ':namtn' => $e->nam_tot_nghiep ?: null,
             ':dv' => $e->don_vi_cong_tac, ':cv' => $e->chuc_vu,
             ':dti' => $e->doi_tuong_id, ':lnv' => $e->la_nhan_vien, ':nvi' => $e->nhan_vien_id,
             ':gc' => $e->ghi_chu, ':tt' => $e->trang_thai,
@@ -124,7 +133,7 @@ class DM_HocVien_DAL
         return $row ? Database::hydrate($row, 'DM_HocVien_DTO') : null;
     }
 
-    public static function getPaged(int $page, int $pageSize, string $search = '', int $daXoa = 0, int $doiTuongId = 0, int $laNhanVien = -1): array
+    public static function getPaged(int $page, int $pageSize, string $search = '', int $daXoa = 0, int $doiTuongId = 0, int $laNhanVien = -1, string $tuNgay = '', string $denNgay = ''): array
     {
         [$page, $pageSize, $offset] = PaginationHelper::normalize($page, $pageSize);
         $where = " WHERE hv.da_xoa=:dx ";
@@ -140,6 +149,15 @@ class DM_HocVien_DAL
         if ($laNhanVien === 0 || $laNhanVien === 1) {
             $where .= " AND hv.la_nhan_vien=:lnv ";
             $params[':lnv'] = $laNhanVien;
+        }
+        // Lọc theo ngày tạo (theo phần ngày, bao gồm cả 2 mốc)
+        if ($tuNgay !== '') {
+            $where .= " AND hv.ngay_tao >= :tuNgay ";
+            $params[':tuNgay'] = $tuNgay . ' 00:00:00';
+        }
+        if ($denNgay !== '') {
+            $where .= " AND hv.ngay_tao <= :denNgay ";
+            $params[':denNgay'] = $denNgay . ' 23:59:59';
         }
 
         $countSql = "SELECT COUNT(*) FROM DM_HOC_VIEN hv" . $where;

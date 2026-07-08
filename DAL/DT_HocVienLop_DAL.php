@@ -114,6 +114,36 @@ class DT_HocVienLop_DAL
         return $stmt->fetchAll();
     }
 
+    /**
+     * Lấy toàn bộ ghi danh (khóa/CTĐT/ngày/địa điểm) của nhiều học viên — phục vụ export.
+     * Trả về mảng: hoc_vien_id => [ [ma_khoa_hoc, ten_khoa_hoc, ma_chuong_trinh, ten_chuong_trinh,
+     *                                ngay_bat_dau, ngay_ket_thuc, dia_diem], ... ].
+     */
+    public static function getEnrollmentsForExport(array $hocVienIds): array
+    {
+        $hocVienIds = array_values(array_unique(array_filter(array_map('intval', $hocVienIds))));
+        if (!$hocVienIds) return [];
+        $in = implode(',', $hocVienIds);
+        $sql = "SELECT hvl.hoc_vien_id,
+                       kh.ma_khoa_hoc, kh.ten_khoa_hoc,
+                       ct.ma_chuong_trinh, ct.ten_chuong_trinh,
+                       COALESCE(hvl.ngay_bat_dau, khct.ngay_bat_dau) AS ngay_bat_dau,
+                       COALESCE(hvl.ngay_ket_thuc, khct.ngay_ket_thuc) AS ngay_ket_thuc,
+                       khct.dia_diem
+                FROM DT_HOC_VIEN_LOP hvl
+                INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id AND khct.da_xoa=0
+                LEFT JOIN DT_CHUONG_TRINH ct ON ct.id = khct.chuong_trinh_id
+                LEFT JOIN DT_KHOA_HOC kh ON kh.id = khct.khoa_hoc_id
+                WHERE hvl.hoc_vien_id IN ($in) AND hvl.da_xoa=0
+                ORDER BY hvl.hoc_vien_id, hvl.id";
+        $stmt = Database::getConnection()->query($sql);
+        $map = [];
+        foreach ($stmt->fetchAll() as $r) {
+            $map[(int)$r['hoc_vien_id']][] = $r;
+        }
+        return $map;
+    }
+
     public static function getByKhct(int $khctId, string $search = ''): array
     {
         $sql = self::selectSql() . " WHERE hvl.khoa_hoc_chuong_trinh_id=:khct AND hvl.da_xoa=0";

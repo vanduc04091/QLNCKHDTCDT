@@ -290,6 +290,14 @@ Xem chi tiết: `docs/de_xuat_phan_mem.md`.
 
 ## 12. Changelog quan trọng (cho người maintain sau)
 
+### 2026-07-08 — Import học viên từ Excel
+- ✅ **`ExcelHelper::readRows($path)`** — đọc sheet1 của `.xlsx` bằng `ZipArchive` (sharedStrings + inlineStr + số/ngày serial). Trả mảng dòng theo chỉ số cột (A=0…). Lưu ý: ô tự đóng `<c .../>` phải khớp TRƯỚC ô có nội dung trong regex, nếu không sẽ nuốt ô kế tiếp (đã fix).
+- ✅ **`DM_HocVien_BUS::importExcel($path,$userId)`** — import theo mẫu `docs/Mẫu danh sách nhập thông tin học viên.xlsx` (21 cột). Match đối tượng theo tên/mã, match cặp (Khóa, CTĐT) qua mã trước `" - "` → `khct.id` rồi ghi danh vào `dt_hoc_vien_lop` kèm ngày BĐ/KT. HV trùng CCCD/SĐT → bỏ qua. Không tìm thấy cặp khóa/CTĐT → vẫn tạo HV, `enroll=notfound` (bảng kết quả tô vàng). Mỗi dòng bọc transaction riêng.
+- ✅ **Cột mới `dm_hoc_vien`**: `trinh_do_chuyen_mon`, `cccd_ngay_cap`, `cccd_noi_cap`, `truong_dao_tao`, `nam_tot_nghiep` (SQL tự chạy: `docs/sql_them_cot_import_hoc_vien.sql`). DTO/DAL insert/update đã cập nhật.
+- ✅ **GUI**: nút "Import Excel" + modal (chọn file, bảng kết quả tô màu theo trạng thái), action `import` ở ajax_handler (upload multipart, whitelist `.xlsx` ≤5MB), `GUI/DM_HocVien/tai_mau_import.php` tải file mẫu.
+- ✅ **Form/View/Export cột mới**: form thêm/sửa + tab "Thông tin" (chỉ xem) trong drawer HV hiển thị đủ 5 cột mới. **Export HV xuất theo đúng cấu trúc file mẫu** (21 cột, mỗi ghi danh 1 dòng — 1 HV nhiều CTĐT lặp nhiều dòng, HV chưa ghi danh để trống phần học vụ; Khóa/CTĐT dạng `MÃ - Tên` để import lại được). Lấy ghi danh gộp 1 truy vấn: `DT_HocVienLop_DAL::getEnrollmentsForExport($ids)`.
+- ✅ **Danh sách HV**: subquery `so_ghi_danh` → HV chưa ghi danh CTĐT nào tô **vàng nhạt** + tag "chưa ghi danh" (cả table & card view, không áp dụng thùng rác).
+
 ### 2026-06-24 — Export Excel + Báo cáo
 - ✅ **`ExcelHelper`** (`PUBLIC/Common/ExcelHelper.php`, nạp ở bootstrap): xuất `.xlsx` OOXML tự viết bằng `ZipArchive` (không cần thư viện). API: `ExcelHelper::downloadOne($file,$sheet,$headers,$rows)` hoặc `download($file,$sheets[])` (mỗi sheet có `name/title/headers/rows`). Header in đậm nền xám, hỗ trợ tiếng Việt (inlineStr), số → kiểu number.
 - ✅ **Export danh sách**: mỗi module 1 file `GUI/<Module>/export.php` (GET, check `requireLogin` + quyền XEM, đọc filter qua query string trùng tham số màn list, gọi `getPaged(1,100000,...)`). Nút "Xuất Excel" gọi `window.location=export.php?<filter>` (KHÔNG qua APP.ajax vì là tải file). Đã thêm cho 18 module: HV, Khóa, CTĐT, Bài học, Lịch học, Chứng chỉ, Tài liệu, Bài kiểm tra, Đăng ký, Hồ sơ HV, Kết quả học tập, Đợt đăng ký, Nhân viên, Khoa/Phòng, Giảng viên, Đối tượng HV, Loại hình ĐT, Hình thức học. (Điểm danh/Phân công GV không phải list phẳng → nằm trong Báo cáo.)
