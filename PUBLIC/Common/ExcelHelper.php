@@ -170,7 +170,13 @@ class ExcelHelper
         foreach ($rows as $r) {
             $c = 0;
             foreach ($r as $v) {
-                $len = mb_strlen((string)$v, 'UTF-8');
+                // Ô nhiều dòng: đo theo dòng DÀI NHẤT, không đo cả chuỗi
+                $s = (string)$v;
+                $len = 0;
+                foreach (explode("\n", $s) as $line) {
+                    $l = mb_strlen($line, 'UTF-8');
+                    if ($l > $len) $len = $l;
+                }
                 if (!isset($w[$c]) || $len + 2 > $w[$c]) $w[$c] = $len + 2;
                 $c++;
             }
@@ -264,14 +270,17 @@ class ExcelHelper
         $viewsXml = $paneXml ? '<sheetViews>' . $paneXml . '</sheetViews>' : '';
         $mergeXml = $merges ? '<mergeCells count="' . count($merges) . '"><mergeCell ref="' . implode('"/><mergeCell ref="', $merges) . '"/></mergeCells>' : '';
 
+        // LƯU Ý: thứ tự phần tử theo schema CT_Worksheet là bắt buộc:
+        // sheetViews -> sheetFormatPr -> cols -> sheetData -> autoFilter -> mergeCells
+        // (sai thứ tự => Excel báo "repaired/discarded")
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             . $viewsXml
             . '<sheetFormatPr defaultRowHeight="16"/>'
             . $colsXml
             . '<sheetData>' . $rowsXml . '</sheetData>'
-            . $mergeXml
             . $filterXml
+            . $mergeXml
             . '</worksheet>';
     }
 

@@ -6,7 +6,7 @@ Helper::requireLogin();
 if (!PhanQuyenHelper::hasQuyen('DT_DotDangKy', PhanQuyenHelper::QUYEN_XEM)) { http_response_code(403); echo 'Không có quyền'; exit; }
 
 $opts = ['search' => Helper::get('search', ''), 'nam' => (int)Helper::get('nam', 0)];
-$res = DT_DotDangKy_BUS::getPaged(1, 100000, $opts);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_DotDangKy_BUS::getPaged($__p, $__s, $opts))];
 $ttLbl = [1 => 'Đang mở', 0 => 'Đóng'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 

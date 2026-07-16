@@ -38,6 +38,24 @@ class DM_CauHinh_BUS
                     ],
                 ],
             ],
+            'cme' => [
+                'label' => 'Đào tạo y khoa liên tục (CME)',
+                'desc'  => 'Ngưỡng giờ tín chỉ tối thiểu để nhân viên được coi là ĐẠT. Dùng ở Sổ theo dõi, Tổng quan và Báo cáo CME.',
+                'fields' => [
+                    'CME_NGUONG_GIO' => [
+                        'label' => 'Ngưỡng giờ tín chỉ / chu kỳ',
+                        'type'  => 'number',
+                        'placeholder' => '24',
+                        'help' => 'Số giờ tín chỉ tối thiểu phải tích lũy trong 1 chu kỳ. Mặc định: 24 giờ.',
+                    ],
+                    'CME_CHU_KY_NAM' => [
+                        'label' => 'Số năm mỗi chu kỳ',
+                        'type'  => 'number',
+                        'placeholder' => '1',
+                        'help' => 'Chu kỳ tính ngưỡng (năm). Mặc định 1 năm — khi xem năm N, hệ thống cộng giờ từ năm (N - chu kỳ + 1) đến N.',
+                    ],
+                ],
+            ],
             'smtp' => [
                 'label' => 'Cấu hình SMTP gửi mail',
                 'desc'  => 'Bật MAIL_ENABLED để gửi mail thật. Khi tắt, mail được ghi vào assets/uploads/maillog.txt để debug.',

@@ -11,7 +11,7 @@ $opts = [
     'loai_bkt'   => (int)Helper::get('loai_bkt', 0),
     'trang_thai' => ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1,
 ];
-$res = DT_BaiKiemTra_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_BaiKiemTra_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $loaiLbl = [1 => 'Thường xuyên', 2 => 'Giữa kỳ', 3 => 'Cuối kỳ', 4 => 'Ôn tập'];
 $ttLbl = [1 => 'Hiển thị', 0 => 'Ẩn'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';

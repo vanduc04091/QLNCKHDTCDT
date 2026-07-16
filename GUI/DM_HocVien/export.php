@@ -16,7 +16,7 @@ $lnv    = ($v = Helper::get('la_nhan_vien', '')) !== '' ? (int)$v : -1;
 $tuNgay = Helper::get('tu_ngay', '');
 $denNgay = Helper::get('den_ngay', '');
 
-$res = DM_HocVien_BUS::getPaged(1, 100000, $search, $daXoa, $dtId, $lnv, $tuNgay, $denNgay);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DM_HocVien_BUS::getPaged($__p, $__s, $search, $daXoa, $dtId, $lnv, $tuNgay, $denNgay))];
 $hocViens = $res['data'];
 
 // Ghi danh (khóa/CTĐT/ngày/địa điểm) của tất cả HV — gộp 1 truy vấn

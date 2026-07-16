@@ -55,7 +55,7 @@ require __DIR__ . '/../layouts/header.php';
                     <th style="width:110px" class="text-center">Số lượng</th>
                     <th style="width:90px" class="text-right">Giờ TC</th>
                     <th style="width:60px" class="text-center">Năm</th>
-                    <th style="width:110px" class="text-right">Hành động</th>
+                    <th style="width:170px" class="text-right">Hành động</th>
                 </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -68,7 +68,7 @@ require __DIR__ . '/../layouts/header.php';
 <div class="modal-backdrop" id="modalForm">
     <div class="modal" style="max-width:660px">
         <div class="modal-header"><h3 id="modalTitle">Ghi nhận hoạt động CME</h3><button type="button" class="close" onclick="closeModal()">&times;</button></div>
-        <form id="formMain">
+        <form id="formMain" enctype="multipart/form-data">
             <div class="modal-body">
                 <input type="hidden" name="id" id="f_id">
                 <div class="form-row">
@@ -108,9 +108,62 @@ require __DIR__ . '/../layouts/header.php';
                     <div class="form-group"><label>Đến ngày</label><input type="date" name="ngay_ket_thuc" id="f_nkt" class="form-control"></div>
                 </div>
                 <div class="form-group"><label>Ghi chú</label><textarea name="ghi_chu" id="f_gc" class="form-control" rows="2" maxlength="500"></textarea></div>
+
+                <div class="form-group">
+                    <label>Minh chứng (chứng chỉ PDF / ảnh)</label>
+                    <input type="hidden" name="remove_minh_chung" id="f_remove_mc" value="0">
+                    <div id="mcCurrent" class="mc-current" style="display:none">
+                        <span class="mc-ic"><?= IconHelper::svg('file-text','16') ?></span>
+                        <a href="#" target="_blank" id="mcLink" class="mc-name"></a>
+                        <span class="mc-size" id="mcSize"></span>
+                        <button type="button" class="mc-x" onclick="removeMinhChung()" title="Gỡ file">&times;</button>
+                    </div>
+                    <input type="file" name="minh_chung_file" id="f_mc" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="text-muted" style="font-size:11.5px;margin-top:4px">Chấp nhận PDF, JPG, PNG — tối đa 10MB.</div>
+                </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn" onclick="closeModal()">Hủy</button><button type="submit" class="btn btn-primary">Lưu ghi nhận</button></div>
         </form>
+    </div>
+</div>
+
+<!-- Drawer: Chi tiết bản ghi CME -->
+<div class="drawer-backdrop" id="drawerCt">
+    <div class="drawer" style="max-width:600px">
+        <div class="drawer-header">
+            <div><h3 style="margin:0">Chi tiết ghi nhận CME</h3>
+                <div id="ctSub" class="text-muted" style="font-size:12.5px;margin-top:2px"></div></div>
+            <button type="button" class="close" onclick="$('#drawerCt').removeClass('open').find('.drawer').removeClass('open')">&times;</button>
+        </div>
+        <div class="drawer-body" id="ctBody"><div class="hv-pane-loading">Đang tải...</div></div>
+    </div>
+</div>
+
+<!-- Modal đính kèm nhanh minh chứng -->
+<div class="modal-backdrop" id="modalMc">
+    <div class="modal" style="max-width:520px">
+        <div class="modal-header"><h3>Minh chứng</h3>
+            <button type="button" class="close" onclick="$('#modalMc').removeClass('open')">&times;</button></div>
+        <div class="modal-body">
+            <div id="mcInfo" class="text-muted" style="font-size:12.5px;margin-bottom:10px"></div>
+            <div id="mcHas" class="mc-current" style="display:none">
+                <span class="mc-ic"><?= IconHelper::svg('file-text','16') ?></span>
+                <a href="#" target="_blank" id="mcHasLink" class="mc-name"></a>
+                <span class="mc-size" id="mcHasSize"></span>
+            </div>
+            <div class="form-group" style="margin-top:8px">
+                <label id="mcPickLabel">Chọn file minh chứng</label>
+                <input type="file" id="mcFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                <div class="text-muted" style="font-size:11.5px;margin-top:4px">PDF, JPG, PNG — tối đa 10MB.</div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between">
+            <button type="button" class="btn btn-danger btn-sm" id="btnMcGo" style="display:none">Gỡ minh chứng</button>
+            <div style="margin-left:auto;display:flex;gap:8px">
+                <button type="button" class="btn" onclick="$('#modalMc').removeClass('open')">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btnMcSave">Lưu</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -156,6 +209,42 @@ require __DIR__ . '/../layouts/header.php';
     .nv-sug-item .nm { font-weight:600; color:var(--gray-800); }
     .nv-sug-item .meta { font-size:11.5px; color:var(--gray-500); margin-top:1px; }
     .nv-sug-empty { padding:12px; text-align:center; color:var(--gray-500); font-size:12.5px; }
+    /* Minh chứng */
+    .mc-current { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #b6e2c6;
+        background:#e7f5ec; border-radius:8px; margin-bottom:6px; }
+    .mc-current .mc-ic { color:#0f7a38; display:inline-flex; flex:0 0 auto; }
+    .mc-name { color:#0f7a38; font-weight:600; font-size:13px; text-decoration:underline; flex:1;
+        overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mc-size { font-size:11.5px; color:var(--gray-500); flex:0 0 auto; }
+    .mc-x { border:none; background:none; color:#0f7a38; font-size:18px; line-height:1; cursor:pointer; padding:0 2px; }
+    .mc-x:hover { color:#b91c1c; }
+    .cme-mc-link { color:var(--primary); display:inline-flex; }
+    .cme-mc-link:hover { opacity:.7; }
+    /* Nút đính kèm ở cột Hành động: nổi bật khi ĐÃ có minh chứng */
+    .btn-mc-has { background:#e7f5ec !important; border-color:#b6e2c6 !important; color:#0f7a38 !important; }
+    .btn-mc-has:hover { background:#d6efe0 !important; }
+    /* Drawer chi tiết bản ghi */
+    .ct-hero { padding:16px 18px; border-radius:12px; background:linear-gradient(135deg,#16a34a,#0f766e);
+        color:#fff; margin-bottom:16px; }
+    .ct-hero .big { font-size:30px; font-weight:800; font-family:ui-monospace,Menlo,monospace; line-height:1; }
+    .ct-hero .big .unit { font-size:14px; font-weight:600; font-family:inherit; opacity:.9; }
+    .ct-hero .who { font-size:13px; opacity:.95; margin-top:7px; }
+    .ct-sec { font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase;
+        letter-spacing:.04em; margin:18px 0 8px; }
+    .ct-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--gray-200);
+        border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; }
+    .ct-item { background:#fff; padding:9px 12px; display:flex; flex-direction:column; gap:2px; }
+    .ct-item.full { grid-column:1/-1; }
+    .ct-lbl { font-size:11px; color:var(--gray-500); text-transform:uppercase; letter-spacing:.02em; }
+    .ct-val { font-size:13px; color:var(--gray-800); font-weight:500; word-break:break-word; }
+    .ct-nomc { padding:12px; border:1px dashed var(--gray-300); border-radius:8px; color:var(--gray-500);
+        font-size:12.5px; text-align:center; }
+    .ct-nomc a { color:var(--primary); font-weight:600; }
+    .ct-note { padding:10px 12px; background:#f8fafc; border:1px solid var(--gray-200); border-radius:8px;
+        font-size:12.5px; color:var(--gray-700); white-space:pre-wrap; }
+    .ct-meta { margin-top:16px; padding-top:12px; border-top:1px solid var(--gray-200);
+        font-size:11.5px; color:var(--gray-500); line-height:1.6; }
+    @media (max-width:560px){ .ct-grid { grid-template-columns:1fr; } }
     /* Sổ theo dõi */
     .so-hero { padding:18px; background:linear-gradient(135deg,#16a34a,#0f766e); color:#fff; border-radius:12px; margin-bottom:16px; }
     .so-hero .big { font-size:34px; font-weight:800; font-family:ui-monospace,Menlo,monospace; line-height:1; }
@@ -179,6 +268,9 @@ var CAN_EDIT = <?= $canEdit?'true':'false' ?>, CAN_DEL = <?= $canDel?'true':'fal
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit','16')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash','16')) ?>';
 var ICON_RESTORE = '<?= addslashes(IconHelper::svg('refresh','16')) ?>';
+var ICON_FILE = '<?= addslashes(IconHelper::svg('file-text','15')) ?>';
+var ICON_CLIP = '<?= addslashes(IconHelper::svg('paperclip','16')) ?>';
+var ICON_VIEW = '<?= addslashes(IconHelper::svg('eye','16')) ?>';
 var NAM_NAY = <?= $namNay ?>;
 var state = { page:1, pageSize:20, search:'', nam:NAM_NAY, khoa:0, nhom:0, daXoa:0 };
 var loaiComboAll=[], nhomCombo=[];
@@ -213,15 +305,22 @@ function load(){
             stt++;
             var act='';
             if(state.daXoa==0){
+                act+='<button class="btn btn-sm" title="Xem chi tiết" onclick="openChiTiet('+r.id+')">'+ICON_VIEW+'</button>';
+                if(CAN_EDIT) act+='<button class="btn btn-sm'+(r.minh_chung?' btn-mc-has':'')+'" title="'
+                    +(r.minh_chung?'Minh chứng: '+APP.escape(r.minh_chung_goc||'')+' — bấm để đổi/gỡ':'Đính kèm minh chứng')
+                    +'" onclick="openMc('+r.id+')">'+ICON_CLIP+'</button>';
                 if(CAN_EDIT) act+='<button class="btn btn-sm" title="Sửa" onclick="openEdit('+r.id+')">'+ICON_EDIT+'</button>';
                 if(CAN_DEL)  act+='<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem('+r.id+')">'+ICON_TRASH+'</button>';
             } else if(CAN_EDIT){ act+='<button class="btn btn-sm btn-success" title="Khôi phục" onclick="restoreItem('+r.id+')">'+ICON_RESTORE+'</button>'; }
             var sl = fmtGio(r.so_luong) + (r.don_vi_tinh ? ' '+APP.escape(r.don_vi_tinh) : '');
+            var mc = r.minh_chung
+                ? ' <a class="cme-mc-link" href="'+APP_BASE+'GUI/DT_CME/tai_minh_chung.php?id='+r.id+'" target="_blank" title="Xem minh chứng: '+APP.escape(r.minh_chung_goc||'')+'" onclick="event.stopPropagation()">'+ICON_FILE+'</a>'
+                : '';
             $tb.append('<tr>'+
                 '<td class="text-center">'+stt+'</td>'+
                 '<td><span class="cme-nv-link" onclick="openSo('+r.nhan_vien_id+','+r.nam+')">'+APP.escape(r.ho_ten_nhan_vien||'')+'</span>'+
                     '<div class="text-muted" style="font-size:11px">'+APP.escape(r.ma_nv||'')+'</div></td>'+
-                '<td>'+APP.escape(r.ten_hoat_dong||'-')+'</td>'+
+                '<td>'+APP.escape(r.ten_hoat_dong||'-')+mc+'</td>'+
                 '<td>'+APP.escape(r.ten_loai||'-')+'</td>'+
                 '<td>'+APP.escape(r.vai_tro||'-')+'</td>'+
                 '<td class="text-center">'+sl+'</td>'+
@@ -251,6 +350,7 @@ function openCreate(){
     $('#formMain')[0].reset(); $('#f_id').val(''); $('#f_nam').val(state.nam||NAM_NAY);
     $('#f_gio_preview').val(''); $('#f_hint').text('Chọn loại hình thức để xem cách quy đổi.');
     clearNv(); $('#f_nhom').val('0'); fillLoaiSelect(0,'');
+    showMinhChung(null);
     $('#modalTitle').text('Ghi nhận hoạt động CME'); $('#modalForm').addClass('open');
 }
 function openEdit(id){
@@ -262,6 +362,7 @@ function openEdit(id){
         $('#f_id').val(e.id); $('#f_nam').val(e.nam); $('#f_hd').val(e.ten_hoat_dong||'');
         $('#f_vaitro').val(e.vai_tro||''); $('#f_sl').val(e.so_luong); $('#f_nbd').val(e.ngay_bat_dau||'');
         $('#f_nkt').val(e.ngay_ket_thuc||''); $('#f_gc').val(e.ghi_chu||'');
+        showMinhChung(e);
         tinhThu();
         $('#modalTitle').text('Sửa ghi nhận CME'); $('#modalForm').addClass('open');
     });
@@ -327,12 +428,162 @@ function tinhThu(){
 $('#formMain').on('submit', function(e){
     e.preventDefault();
     if(!$('#f_nv').val()){ APP.toast('Chưa chọn nhân viên','warning'); $('#nvSearch').show().focus(); return; }
-    var data=$(this).serializeArray(); data.push({name:'action',value:$('#f_id').val()?'update':'insert'});
-    APP.ajax(URL,data).done(function(res){
+    // Dùng FormData vì có file đính kèm
+    var fd = new FormData(this);
+    fd.append('action', $('#f_id').val() ? 'update' : 'insert');
+    var $btn = $(this).find('button[type=submit]').prop('disabled', true);
+    $.ajax({ url: URL, type:'POST', data: fd, processData:false, contentType:false, dataType:'json',
+        headers: window.CSRF_TOKEN ? {'X-CSRF-Token': window.CSRF_TOKEN} : {} })
+    .done(function(res){
+        $btn.prop('disabled', false);
         if(res.success){ APP.toast(res.message,'success'); closeModal(); load(); loadStats(); }
         else APP.toast(res.message,'error');
+    })
+    .fail(function(){ $btn.prop('disabled', false); APP.toast('Lỗi máy chủ','error'); });
+});
+
+// ===== Xem chi tiết bản ghi =====
+function openChiTiet(id){
+    $('#ctBody').html('<div class="hv-pane-loading">Đang tải...</div>');
+    $('#ctSub').text('');
+    $('#drawerCt').addClass('open').find('.drawer').addClass('open');
+    APP.ajax(URL, {action:'getById', id:id}).done(function(res){
+        if(!res.success){ $('#ctBody').html('<div class="empty-state">'+APP.escape(res.message)+'</div>'); return; }
+        var e = res.data;
+        $('#ctSub').text('Năm ' + e.nam + ' · ' + (e.ma_nv||''));
+
+        function row(lbl, val, full){
+            return '<div class="ct-item'+(full?' full':'')+'"><span class="ct-lbl">'+lbl+'</span>'
+                 + '<span class="ct-val">'+(val ? APP.escape(String(val)) : '—')+'</span></div>';
+        }
+        var kieuTxt = KIEU_LABEL[e.kieu_quy_doi] || e.kieu_quy_doi || '';
+        var h = '';
+        // Hero: giờ tín chỉ
+        h += '<div class="ct-hero"><div class="big">'+fmtGio(e.gio_tin_chi)+'<span class="unit"> giờ tín chỉ</span></div>'
+           + '<div class="who">'+APP.escape(e.ho_ten_nhan_vien||'')+(e.ten_khoa_phong?' · '+APP.escape(e.ten_khoa_phong):'')+'</div></div>';
+
+        h += '<div class="ct-sec">Hoạt động</div><div class="ct-grid">'
+           + row('Tên hoạt động', e.ten_hoat_dong, true)
+           + row('Nhóm hình thức', e.ten_nhom, true)
+           + row('Loại hình thức', e.ten_loai, true)
+           + row('Vai trò', e.vai_tro)
+           + row('Số lượng', fmtGio(e.so_luong) + (e.don_vi_tinh ? ' ' + e.don_vi_tinh : ''))
+           + row('Kiểu quy đổi', kieuTxt)
+           + row('Giờ tín chỉ', fmtGio(e.gio_tin_chi) + ' giờ')
+           + row('Năm kê khai', e.nam)
+           + row('Thời gian', (e.ngay_bat_dau ? APP.formatDate(e.ngay_bat_dau) : '') +
+                 (e.ngay_ket_thuc ? ' → ' + APP.formatDate(e.ngay_ket_thuc) : ''), true)
+           + '</div>';
+
+        h += '<div class="ct-sec">Nhân viên</div><div class="ct-grid">'
+           + row('Mã NV', e.ma_nv)
+           + row('Họ tên', e.ho_ten_nhan_vien)
+           + row('Khoa / Phòng', e.ten_khoa_phong, true)
+           + '</div>';
+
+        // Minh chứng
+        h += '<div class="ct-sec">Minh chứng</div>';
+        if (e.minh_chung) {
+            h += '<div class="mc-current"><span class="mc-ic">'+ICON_FILE+'</span>'
+               + '<a class="mc-name" target="_blank" href="'+APP_BASE+'GUI/DT_CME/tai_minh_chung.php?id='+e.id+'">'
+               + APP.escape(e.minh_chung_goc||e.minh_chung)+'</a>'
+               + '<span class="mc-size">'+(e.minh_chung_size?fmtSize(e.minh_chung_size):'')+'</span>'
+               + '<a class="btn btn-sm" style="flex:0 0 auto" target="_blank" href="'+APP_BASE+'GUI/DT_CME/tai_minh_chung.php?id='+e.id+'&tai=1">Tải về</a></div>';
+        } else {
+            h += '<div class="ct-nomc">Chưa có minh chứng đính kèm.'
+               + (CAN_EDIT ? ' <a href="#" onclick="closeCt(); openMc('+e.id+'); return false;">Đính kèm ngay</a>' : '')
+               + '</div>';
+        }
+
+        if (e.ghi_chu) h += '<div class="ct-sec">Ghi chú</div><div class="ct-note">'+APP.escape(e.ghi_chu)+'</div>';
+
+        // Footer info + hành động
+        h += '<div class="ct-meta">Tạo bởi '+APP.escape(e.tai_khoan_nguoi_tao||'—')
+           + (e.ngay_tao ? ' lúc '+APP.formatDateTime(e.ngay_tao) : '')
+           + (e.tai_khoan_nguoi_cap_nhat ? '<br>Cập nhật bởi '+APP.escape(e.tai_khoan_nguoi_cap_nhat)
+              + (e.ngay_cap_nhat ? ' lúc '+APP.formatDateTime(e.ngay_cap_nhat) : '') : '')
+           + '</div>';
+
+        var btns = '<button class="btn btn-sm" onclick="closeCt(); openSo('+e.nhan_vien_id+','+e.nam+')">Sổ theo dõi của NV</button>';
+        if (CAN_EDIT) btns += ' <button class="btn btn-sm btn-primary" onclick="closeCt(); openEdit('+e.id+')">Sửa</button>';
+        h += '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div>';
+
+        $('#ctBody').html(h);
+    });
+}
+function closeCt(){ $('#drawerCt').removeClass('open').find('.drawer').removeClass('open'); }
+
+// ===== Đính kèm nhanh minh chứng (từ cột Hành động) =====
+var mcCtx = { id: 0 };
+function openMc(id){
+    mcCtx.id = id;
+    $('#mcFile').val('');
+    $('#mcHas').hide(); $('#btnMcGo').hide();
+    $('#mcInfo').text('Đang tải...');
+    $('#modalMc').addClass('open');
+    APP.ajax(URL, {action:'getById', id:id}).done(function(res){
+        if(!res.success){ APP.toast(res.message,'error'); $('#modalMc').removeClass('open'); return; }
+        var e = res.data;
+        $('#mcInfo').html('<b>'+APP.escape(e.ho_ten_nhan_vien||'')+'</b> — '+APP.escape(e.ten_hoat_dong||e.ten_loai||'')
+                          +' · <span class="cme-gio">'+fmtGio(e.gio_tin_chi)+' giờ</span>');
+        if(e.minh_chung){
+            $('#mcHasLink').text(e.minh_chung_goc||e.minh_chung)
+                           .attr('href', APP_BASE+'GUI/DT_CME/tai_minh_chung.php?id='+e.id);
+            $('#mcHasSize').text(e.minh_chung_size ? fmtSize(e.minh_chung_size) : '');
+            $('#mcHas').show(); $('#btnMcGo').show();
+            $('#mcPickLabel').text('Chọn file khác để thay thế');
+        } else {
+            $('#mcPickLabel').text('Chọn file minh chứng');
+        }
+    });
+}
+$('#btnMcSave').on('click', function(){
+    var f = $('#mcFile')[0].files[0];
+    if(!f){ APP.toast('Chưa chọn file','warning'); return; }
+    var fd = new FormData();
+    fd.append('action','capNhatMinhChung'); fd.append('id', mcCtx.id); fd.append('minh_chung_file', f);
+    var $b=$(this).prop('disabled',true).text('Đang tải lên...');
+    $.ajax({url:URL, type:'POST', data:fd, processData:false, contentType:false, dataType:'json',
+        headers: window.CSRF_TOKEN ? {'X-CSRF-Token':window.CSRF_TOKEN} : {}})
+    .done(function(res){
+        $b.prop('disabled',false).text('Lưu');
+        if(res.success){ APP.toast(res.message,'success'); $('#modalMc').removeClass('open'); load(); }
+        else APP.toast(res.message,'error');
+    })
+    .fail(function(){ $b.prop('disabled',false).text('Lưu'); APP.toast('Lỗi máy chủ','error'); });
+});
+$('#btnMcGo').on('click', function(){
+    APP.confirm('Gỡ file minh chứng của bản ghi này?', function(){
+        APP.ajax(URL, {action:'capNhatMinhChung', id:mcCtx.id, go:1}).done(function(res){
+            if(res.success){ APP.toast(res.message,'success'); $('#modalMc').removeClass('open'); load(); }
+            else APP.toast(res.message,'error');
+        });
     });
 });
+
+// ===== Minh chứng =====
+function removeMinhChung(){
+    $('#f_remove_mc').val('1');
+    $('#mcCurrent').hide();
+    $('#f_mc').show().val('');
+}
+function fmtSize(b){
+    b = parseInt(b,10)||0;
+    if(b < 1024) return b+' B';
+    if(b < 1048576) return (b/1024).toFixed(1)+' KB';
+    return (b/1048576).toFixed(1)+' MB';
+}
+function showMinhChung(e){
+    $('#f_remove_mc').val('0'); $('#f_mc').val('');
+    if(e && e.minh_chung){
+        $('#mcLink').text(e.minh_chung_goc || e.minh_chung)
+                    .attr('href', APP_BASE + 'GUI/DT_CME/tai_minh_chung.php?id=' + e.id);
+        $('#mcSize').text(e.minh_chung_size ? fmtSize(e.minh_chung_size) : '');
+        $('#mcCurrent').show(); $('#f_mc').hide();
+    } else {
+        $('#mcCurrent').hide(); $('#f_mc').show();
+    }
+}
 function trashItem(id){ APP.confirm('Chuyển ghi nhận này vào thùng rác?', function(){ APP.ajax(URL,{action:'trash',id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),load(),loadStats()):APP.toast(res.message,'error'); }); }); }
 function restoreItem(id){ APP.ajax(URL,{action:'restore',id:id}).done(function(res){ res.success?(APP.toast(res.message,'success'),load(),loadStats()):APP.toast(res.message,'error'); }); }
 
@@ -357,7 +608,10 @@ function openSo(nvId, nam){
         h+='<div class="so-sec-title">Hoạt động chi tiết (năm '+d.nam+')</div>';
         if(!d.hoat_dong.length){ h+='<div class="text-muted" style="font-size:13px">Không có.</div>'; }
         d.hoat_dong.forEach(function(a){
-            h+='<div class="so-item"><div><b>'+APP.escape(a.ten_hoat_dong||a.ten_loai||'-')+'</b> — <span class="cme-gio">'+fmtGio(a.gio_tin_chi)+' giờ</span></div>'+
+            var mc = a.minh_chung
+                ? ' <a class="cme-mc-link" href="'+APP_BASE+'GUI/DT_CME/tai_minh_chung.php?id='+a.id+'" target="_blank" title="Xem minh chứng">'+ICON_FILE+'</a>'
+                : '';
+            h+='<div class="so-item"><div><b>'+APP.escape(a.ten_hoat_dong||a.ten_loai||'-')+'</b>'+mc+' — <span class="cme-gio">'+fmtGio(a.gio_tin_chi)+' giờ</span></div>'+
                '<div class="meta">'+APP.escape(a.ten_loai||'')+(a.vai_tro?(' · '+APP.escape(a.vai_tro)):'')+' · SL '+fmtGio(a.so_luong)+'</div></div>';
         });
         $('#soBody').html(h);

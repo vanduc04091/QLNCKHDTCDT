@@ -34,46 +34,69 @@ if ($loai === 'khoa') {
     ]]);
 }
 
-// mặc định: theo nhân viên — liệt kê CHI TIẾT từng bản ghi, gộp theo NV + dòng tổng mỗi NV + tổng cuối
+// mặc định: theo nhân viên — MỖI NV 1 DÒNG, chi tiết hoạt động gộp vào cột Ghi chú
 $ng = DT_Cme_BUS::getNguong();
 $data = DT_Cme_BUS::chiTietTheoNhanVien(['nam' => $nam, 'khoa_phong_id' => $khoa]);
-$headers = ['STT', 'Mã NV', 'Họ tên', 'Khoa / Phòng', 'Năm', 'Nhóm hình thức', 'Loại hình thức',
-            'Hoạt động', 'Vai trò', 'Số lượng', 'Giờ tín chỉ', 'Từ ngày', 'Đến ngày'];
+$headers = ['STT', 'Mã NV', 'Họ tên', 'Khoa / Phòng', 'Số hoạt động', 'Tổng giờ tín chỉ',
+            'Ngưỡng', 'Đạt?', 'Ghi chú (chi tiết hoạt động)'];
+
+// Gom bản ghi theo nhân viên
+$nvMap = [];
+foreach ($data as $r) {
+    $id = (int)$r['nhan_vien_id'];
+    if (!isset($nvMap[$id])) {
+        $nvMap[$id] = [
+            'ma_nv'   => $r['ma_nv'],
+            'ho_ten'  => $r['ho_ten'],
+            'khoa'    => $r['ten_khoa_phong'] ?? '',
+            'tong'    => 0.0,
+            'hoat_dong' => [],
+        ];
+    }
+    $gio = (float)$r['gio_tin_chi'];
+    $nvMap[$id]['tong'] += $gio;
+
+    // 1 dòng mô tả: "• Tên hoạt động [vai trò] — N giờ"
+    // Loại hình thức bỏ phần sau dấu "—" cho gọn (VD "Hội nghị, hội thảo — Chủ trì" -> "Hội nghị, hội thảo")
+    $mo = trim($r['ten_hoat_dong'] ?? '') ?: ($r['ten_loai'] ?? 'Hoạt động');
+    $loaiGon = trim(preg_split('/\s+[—-]\s+/u', (string)($r['ten_loai'] ?? ''))[0]);
+    $vt = trim((string)($r['vai_tro'] ?? ''));
+
+    $phu = [];
+    if ($loaiGon !== '') $phu[] = $loaiGon;
+    // chỉ thêm vai trò nếu chưa trùng với tên loại
+    if ($vt !== '' && mb_stripos($r['ten_loai'] ?? '', $vt, 0, 'UTF-8') === false) $phu[] = $vt;
+
+    $line = '• ' . $mo;
+    if ($phu) $line .= ' [' . implode(' · ', $phu) . ']';
+    $line .= ' — ' . $fmtN($gio) . ' giờ';
+    $nvMap[$id]['hoat_dong'][] = $line;
+}
 
 $rows = [];
 $stt = 0;
 $tongToan = 0.0;
-$curNv = null; $tongNv = 0.0; $tenNv = '';
-$flushNv = function () use (&$rows, &$tongNv, &$tenNv, &$curNv, $ng) {
-    if ($curNv === null) return;
-    $dat = ($tongNv >= $ng['gio']) ? 'Đạt' : 'Chưa đạt';
-    // Dòng tổng của NV
-    $rows[] = ['', '', 'TỔNG ' . $tenNv, '', '', '', '', '', '', '', round($tongNv, 2),
-               'Ngưỡng ' . $ng['gio'] . ' → ' . $dat, ''];
-};
-
-foreach ($data as $r) {
-    $nvId = (int)$r['nhan_vien_id'];
-    if ($curNv !== null && $nvId !== $curNv) { $flushNv(); $tongNv = 0.0; }
-    $curNv = $nvId; $tenNv = $r['ho_ten'];
+foreach ($nvMap as $nv) {
     $stt++;
-    $gio = (float)$r['gio_tin_chi'];
-    $tongNv += $gio; $tongToan += $gio;
+    $tongToan += $nv['tong'];
+    $dat = ($nv['tong'] >= $ng['gio']) ? 'Đạt' : 'Chưa đạt';
     $rows[] = [
-        $stt, $r['ma_nv'], $r['ho_ten'], $r['ten_khoa_phong'] ?? '', $r['nam'],
-        $r['ten_nhom'] ?? '', $r['ten_loai'] ?? '',
-        $r['ten_hoat_dong'] ?? '', $r['vai_tro'] ?? '',
-        $fmtN($r['so_luong']), $gio,
-        !empty($r['ngay_bat_dau']) ? date('d/m/Y', strtotime($r['ngay_bat_dau'])) : '',
-        !empty($r['ngay_ket_thuc']) ? date('d/m/Y', strtotime($r['ngay_ket_thuc'])) : '',
+        $stt,
+        $nv['ma_nv'],
+        $nv['ho_ten'],
+        $nv['khoa'],
+        count($nv['hoat_dong']),
+        round($nv['tong'], 2),
+        $ng['gio'],
+        $dat,
+        implode("\n", $nv['hoat_dong']),   // chi tiết trong 1 ô, xuống dòng
     ];
 }
-$flushNv(); // tổng NV cuối
 
 // Tổng toàn báo cáo
-$rows[] = ['', '', 'TỔNG CỘNG TOÀN BÁO CÁO', '', '', '', '', '', '', '', round($tongToan, 2), '', ''];
+$rows[] = ['', '', 'TỔNG CỘNG TOÀN BÁO CÁO', '', '', round($tongToan, 2), '', '', ''];
 
-ExcelHelper::download('bao-cao-cme-chi-tiet-theo-nhan-vien-' . $today . '.xlsx', [[
-    'name' => 'Chi tiết theo NV', 'title' => 'BÁO CÁO CME CHI TIẾT THEO NHÂN VIÊN' . $namTxt,
+ExcelHelper::download('bao-cao-cme-theo-nhan-vien-' . $today . '.xlsx', [[
+    'name' => 'Theo nhân viên', 'title' => 'BÁO CÁO CME THEO NHÂN VIÊN' . $namTxt,
     'headers' => $headers, 'rows' => $rows,
 ]]);

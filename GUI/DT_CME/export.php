@@ -18,7 +18,7 @@ $kieu = ['theo_tiet' => 'Theo tiết', 'co_dinh' => 'Cố định', 'theo_nam' =
 $fmt = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 
 $headers = ['STT', 'Mã NV', 'Họ tên', 'Khoa/Phòng', 'Năm', 'Nhóm hình thức', 'Loại hình thức',
-            'Hoạt động', 'Vai trò', 'Số lượng', 'Giờ tín chỉ', 'Từ ngày', 'Đến ngày', 'Ghi chú'];
+            'Hoạt động', 'Vai trò', 'Số lượng', 'Giờ tín chỉ', 'Từ ngày', 'Đến ngày', 'Minh chứng', 'Ghi chú'];
 $rows = [];
 $i = 0;
 foreach ($res['data'] as $r) {
@@ -37,6 +37,7 @@ foreach ($res['data'] as $r) {
         (float)($r['gio_tin_chi'] ?? 0),
         $fmt($r['ngay_bat_dau'] ?? ''),
         $fmt($r['ngay_ket_thuc'] ?? ''),
+        !empty($r['minh_chung']) ? ($r['minh_chung_goc'] ?: 'Có') : '',
         $r['ghi_chu'] ?? '',
     ];
 }

@@ -9,7 +9,7 @@ $search = Helper::get('search', '');
 $daXoa  = (int)Helper::get('da_xoa', 0);
 $loai   = Helper::get('loai_don_vi', '');
 
-$res = DM_KhoaPhong_BUS::getPaged(1, 100000, $search, $daXoa, $loai);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DM_KhoaPhong_BUS::getPaged($__p, $__s, $search, $daXoa, $loai))];
 $tt = [1 => 'Hoạt động', 0 => 'Ngừng'];
 
 $headers = ['STT', 'Mã', 'Tên khoa/phòng', 'Loại đơn vị', 'Trưởng khoa', 'Chuyên khoa', 'Số giường', 'Điện thoại', 'Số nhân viên', 'Trạng thái'];

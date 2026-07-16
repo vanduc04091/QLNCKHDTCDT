@@ -10,7 +10,7 @@ $opts = [
     'khoa_hoc_id' => (int)Helper::get('khoa_hoc_id', 0),
     'trang_thai'  => ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1,
 ];
-$res = DT_DangKyKhoaHoc_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_DangKyKhoaHoc_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $ttLbl = [0 => 'Chờ duyệt', 1 => 'Đã duyệt', 2 => 'Từ chối'];
 $gt = ['M' => 'Nam', 'F' => 'Nữ', 'Nam' => 'Nam', 'Nữ' => 'Nữ'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';

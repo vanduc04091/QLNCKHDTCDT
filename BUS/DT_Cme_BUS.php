@@ -19,8 +19,8 @@ class DT_Cme_BUS
     // Cấu hình ngưỡng (DM_CAU_HINH)
     const CFG_NGUONG_GIO  = 'CME_NGUONG_GIO';   // số giờ tín chỉ tối thiểu / chu kỳ
     const CFG_CHU_KY_NAM  = 'CME_CHU_KY_NAM';   // số năm 1 chu kỳ
-    const DEFAULT_NGUONG  = 48;
-    const DEFAULT_CHU_KY  = 2;
+    const DEFAULT_NGUONG  = 24;   // giờ tín chỉ tối thiểu / chu kỳ
+    const DEFAULT_CHU_KY  = 1;    // số năm mỗi chu kỳ
 
     // ================= QUY ĐỔI =================
 
@@ -130,6 +130,99 @@ class DT_Cme_BUS
     public static function loaiGetPaged(int $p, int $s, string $q = '', int $dx = 0, int $nhomId = 0): array { return DT_CmeLoai_DAL::getPaged($p, $s, $q, $dx, $nhomId); }
     public static function loaiGetCombo(int $nhomId = 0): array { return DT_CmeLoai_DAL::getCombo($nhomId); }
 
+    // ================= MINH CHỨNG (file đính kèm) =================
+
+    const MC_MAX_SIZE = 10485760; // 10MB
+    const MC_ALLOWED  = ['pdf', 'jpg', 'jpeg', 'png'];
+
+    public static function minhChungDir(): string
+    {
+        return __DIR__ . '/../assets/uploads/cme/';
+    }
+
+    /**
+     * Upload file minh chứng (chứng chỉ). Trả ['success','data'=>['file_name','file_goc','file_size']].
+     */
+    public static function uploadMinhChung(array $file): array
+    {
+        if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'message' => 'Upload không thành công'];
+        }
+        if ($file['size'] <= 0) return ['success' => false, 'message' => 'File rỗng'];
+        if ($file['size'] > self::MC_MAX_SIZE) {
+            return ['success' => false, 'message' => 'File quá lớn (tối đa 10MB)'];
+        }
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, self::MC_ALLOWED, true)) {
+            return ['success' => false, 'message' => 'Chỉ nhận file: ' . implode(', ', self::MC_ALLOWED)];
+        }
+        // Nếu là ảnh -> kiểm tra thật sự là ảnh; nếu pdf -> kiểm tra magic bytes
+        if ($ext === 'pdf') {
+            $fh = @fopen($file['tmp_name'], 'rb');
+            $head = $fh ? fread($fh, 5) : '';
+            if ($fh) fclose($fh);
+            if (strpos((string)$head, '%PDF-') !== 0) {
+                return ['success' => false, 'message' => 'File không phải PDF hợp lệ'];
+            }
+        } else {
+            if (!@getimagesize($file['tmp_name'])) {
+                return ['success' => false, 'message' => 'File ảnh không hợp lệ'];
+            }
+        }
+
+        $dir = self::minhChungDir();
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        $newName = 'cme_' . date('Ymd_His') . '_' . bin2hex(random_bytes(5)) . '.' . $ext;
+        if (!@move_uploaded_file($file['tmp_name'], $dir . $newName)) {
+            return ['success' => false, 'message' => 'Không lưu được file lên server'];
+        }
+        return ['success' => true, 'data' => [
+            'file_name' => $newName,
+            'file_goc'  => $file['name'],
+            'file_size' => (int)$file['size'],
+        ]];
+    }
+
+    public static function xoaMinhChungFile(?string $fileName): void
+    {
+        if (!$fileName) return;
+        $p = self::minhChungDir() . basename($fileName);
+        if (is_file($p)) @unlink($p);
+    }
+
+    /**
+     * Chỉ cập nhật minh chứng của 1 bản ghi (đính kèm nhanh từ danh sách).
+     * Không đụng tới các trường nghiệp vụ khác / không tính lại giờ tín chỉ.
+     *
+     * @param array|null $file  $_FILES['...'] — có file = thay/thêm
+     * @param bool $go          true = gỡ file hiện tại
+     */
+    public static function capNhatMinhChung(int $id, ?array $file, bool $go, int $userId): array
+    {
+        $old = DT_CmeGhiNhan_DAL::getById($id);
+        if (!$old) return ['success' => false, 'message' => 'Không tìm thấy bản ghi'];
+
+        if ($file && !empty($file['name'])) {
+            $up = self::uploadMinhChung($file);
+            if (!$up['success']) return $up;
+            $ok = DT_CmeGhiNhan_DAL::updateMinhChung(
+                $id, $up['data']['file_name'], $up['data']['file_goc'], $up['data']['file_size'], $userId
+            );
+            if (!$ok) { self::xoaMinhChungFile($up['data']['file_name']); return ['success' => false, 'message' => 'Không lưu được vào CSDL']; }
+            if ($old->minh_chung) self::xoaMinhChungFile($old->minh_chung);  // xóa file cũ sau khi ghi DB thành công
+            return ['success' => true, 'message' => 'Đã đính kèm minh chứng'];
+        }
+
+        if ($go) {
+            if (!$old->minh_chung) return ['success' => false, 'message' => 'Bản ghi chưa có minh chứng'];
+            DT_CmeGhiNhan_DAL::updateMinhChung($id, null, null, null, $userId);
+            self::xoaMinhChungFile($old->minh_chung);
+            return ['success' => true, 'message' => 'Đã gỡ minh chứng'];
+        }
+
+        return ['success' => false, 'message' => 'Chưa chọn file'];
+    }
+
     // ================= GHI NHẬN =================
 
     private static function chuanBiGhiNhan(DT_CmeGhiNhan_PUBLIC $e): array
@@ -186,6 +279,42 @@ class DT_Cme_BUS
     public static function tongToanVienTheoNhom(int $nam = 0): array { return DT_CmeGhiNhan_DAL::tongToanVienTheoNhom($nam); }
     public static function tongTheoKhoaPhong(int $nam = 0): array { return DT_CmeGhiNhan_DAL::tongTheoKhoaPhong($nam); }
     public static function topNhanVien(int $limit = 10, int $nam = 0): array { return DT_CmeGhiNhan_DAL::topNhanVien($limit, $nam); }
+
+    /**
+     * Cảnh báo: danh sách nhân viên CHƯA ĐẠT ngưỡng giờ tín chỉ (theo cấu hình).
+     * Chu kỳ tính lùi từ $nam theo CME_CHU_KY_NAM.
+     *
+     * @param array $opts khoa_phong_id | search | trang_thai
+     * @param int   $page 0 = lấy tất cả (export), >0 = phân trang
+     */
+    public static function canhBaoChuaDat(int $nam, array $opts = [], int $page = 0, int $pageSize = 20): array
+    {
+        $ng    = self::getNguong();
+        $tuNam = $nam - $ng['chu_ky_nam'] + 1;
+
+        $res = DT_CmeGhiNhan_DAL::nhanVienChuaDat((float)$ng['gio'], $tuNam, $nam, $opts, $page, $pageSize);
+        $tk  = DT_CmeGhiNhan_DAL::thongKeCanhBao((float)$ng['gio'], $tuNam, $nam, (int)($opts['khoa_phong_id'] ?? 0));
+
+        // Bổ sung: còn thiếu bao nhiêu giờ + % hoàn thành
+        $ds = $res['data'];
+        foreach ($ds as &$r) {
+            $gio = (float)$r['tong_gio'];
+            $r['con_thieu'] = round(max(0, $ng['gio'] - $gio), 2);
+            $r['phan_tram'] = $ng['gio'] > 0 ? (int)floor(min(100, $gio / $ng['gio'] * 100)) : 0;
+        }
+        unset($r);
+
+        return [
+            'nam'          => $nam,
+            'tu_nam'       => $tuNam,
+            'den_nam'      => $nam,
+            'nguong'       => $ng,
+            'thong_ke'     => $tk,
+            'data'         => $ds,
+            'totalRecords' => $res['totalRecords'],
+            'totalPages'   => $res['totalPages'],
+        ];
+    }
 
     /** Dữ liệu tổng hợp cho trang Tổng quan CME. */
     public static function tongQuan(int $nam): array

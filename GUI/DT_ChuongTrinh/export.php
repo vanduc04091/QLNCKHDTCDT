@@ -10,7 +10,7 @@ $daXoa  = (int)Helper::get('da_xoa', 0);
 $kh = (int)Helper::get('khoa_hoc_id', 0);
 $dt = (int)Helper::get('doi_tuong_id', 0);
 
-$res = DT_ChuongTrinh_BUS::getPaged(1, 100000, $search, $daXoa, $kh, $dt);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_ChuongTrinh_BUS::getPaged($__p, $__s, $search, $daXoa, $kh, $dt))];
 
 $headers = ['STT', 'TT', 'Mã CTĐT', 'Tên chương trình', 'Thời lượng', 'Khoa phụ trách', 'Đối tượng', 'Số khóa', 'Số bài', 'Số HV'];
 $rows = []; $i = 0;

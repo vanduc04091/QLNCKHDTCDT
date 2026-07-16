@@ -92,7 +92,38 @@ require __DIR__ . '/../layouts/header.php';
     <style>
         .nv-section-title { font-size:13px; font-weight:700; color:var(--primary,#16a34a); margin:18px 0 10px;
             padding-top:12px; border-top:1px solid var(--gray-200); }
+        .nv-name-link { color:var(--primary,#16a34a); cursor:pointer; font-weight:600; }
+        .nv-name-link:hover { text-decoration:underline; }
+        .nv-khoa-raw { color:#92400e; background:#fef3c7; padding:1px 7px; border-radius:5px; font-size:12px; }
+        /* Drawer xem thông tin */
+        .nvv-hero { display:flex; gap:14px; align-items:center; padding:16px; border-radius:12px;
+            background:linear-gradient(135deg,#16a34a,#0f766e); color:#fff; margin-bottom:16px; }
+        .nvv-ava { width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.2);
+            border:1px solid rgba(255,255,255,.5); display:grid; place-items:center; font-weight:800; font-size:17px; flex:0 0 auto; }
+        .nvv-hero .nm { font-size:18px; font-weight:800; line-height:1.2; }
+        .nvv-hero .sub { font-size:12.5px; opacity:.92; margin-top:3px; }
+        .nvv-sec { font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase;
+            letter-spacing:.04em; margin:18px 0 8px; }
+        .nvv-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--gray-200);
+            border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; }
+        .nvv-item { background:#fff; padding:9px 12px; display:flex; flex-direction:column; gap:2px; }
+        .nvv-item.full { grid-column:1/-1; }
+        .nvv-lbl { font-size:11px; color:var(--gray-500); text-transform:uppercase; letter-spacing:.02em; }
+        .nvv-val { font-size:13px; color:var(--gray-800); font-weight:500; word-break:break-word; }
+        @media (max-width:560px){ .nvv-grid { grid-template-columns:1fr; } }
     </style>
+
+    <!-- Drawer: Xem thông tin nhân viên -->
+    <div class="drawer-backdrop" id="drawerView">
+        <div class="drawer" style="max-width:680px">
+            <div class="drawer-header">
+                <div><h3 style="margin:0">Thông tin nhân viên</h3>
+                    <div id="nvvSub" class="text-muted" style="font-size:12.5px;margin-top:2px"></div></div>
+                <button type="button" class="close" onclick="$('#drawerView').removeClass('open').find('.drawer').removeClass('open')">&times;</button>
+            </div>
+            <div class="drawer-body" id="nvvBody"><div class="hv-pane-loading">Đang tải...</div></div>
+        </div>
+    </div>
     <div class="table-wrap" id="tableWrap" style="position:relative;min-height:200px">
         <table class="table">
             <thead>
@@ -250,6 +281,7 @@ function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xo
 
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '18')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '18')) ?>';
+var ICON_VIEW = '<?= addslashes(IconHelper::svg('eye', '18')) ?>';
 var ICON_EMPTY = '<?= addslashes(IconHelper::svg('dashboard', '40')) ?>';
 var ICON_UPLOAD = '<?= addslashes(IconHelper::svg('upload', '16')) ?>';
 
@@ -325,6 +357,7 @@ function renderRows(rows) {
             : '<span class="badge badge-danger">Nghỉ việc</span>';
         var actions = '';
         if (state.daXoa == 0) {
+            actions += '<button class="btn btn-sm" title="Xem thông tin" onclick="openView(' + r.id + ')">' + ICON_VIEW + '</button>';
             if (CAN_EDIT) actions += '<button class="btn btn-sm" title="Sửa" onclick="openEdit(' + r.id + ')">' + ICON_EDIT + '</button>';
             if (CAN_DEL) actions += '<button class="btn btn-sm btn-danger" title="Xóa" onclick="trashItem(' + r.id + ')">' + ICON_TRASH + '</button>';
         } else {
@@ -335,9 +368,10 @@ function renderRows(rows) {
             '<tr>' +
                 '<td class="text-center">' + stt + '</td>' +
                 '<td><strong>' + APP.escape(r.ma_nv) + '</strong></td>' +
-                '<td>' + APP.escape(r.ho_ten) + '</td>' +
+                '<td><span class="nv-name-link" onclick="openView(' + r.id + ')" title="Xem thông tin">' + APP.escape(r.ho_ten) + '</span></td>' +
                 '<td>' + APP.escape(r.chuc_danh || '-') + '</td>' +
-                '<td>' + APP.escape(r.ten_khoa_phong || '-') + '</td>' +
+                '<td>' + (r.ten_khoa_phong ? APP.escape(r.ten_khoa_phong)
+                        : (r.khoa_phong_text ? '<span class="nv-khoa-raw" title="Chưa gán khoa trong danh mục">' + APP.escape(r.khoa_phong_text) + '</span>' : '-')) + '</td>' +
                 '<td>' + APP.escape(r.dien_thoai || '-') + '</td>' +
                 '<td>' + APP.escape(r.email || '-') + '</td>' +
                 '<td class="text-center">' + tt + '</td>' +
@@ -373,6 +407,69 @@ function openCreate() {
     $('#f_id').val('');
     $('#modalForm').addClass('open');
 }
+// ===== Xem thông tin đầy đủ =====
+function initials(name){
+    var p=(name||'').trim().split(/\s+/);
+    if(p.length===1) return (p[0]||'NV').substr(0,2).toUpperCase();
+    return (p[p.length-2].charAt(0)+p[p.length-1].charAt(0)).toUpperCase();
+}
+function openView(id) {
+    $('#nvvBody').html('<div class="hv-pane-loading">Đang tải...</div>');
+    $('#nvvSub').text('');
+    $('#drawerView').addClass('open').find('.drawer').addClass('open');
+    APP.ajax(URL, {action: 'getById', id: id}).done(function (res) {
+        if (!res.success) { $('#nvvBody').html('<div class="empty-state">' + APP.escape(res.message) + '</div>'); return; }
+        var e = res.data;
+        var gtMap = {M:'Nam', F:'Nữ'};
+        var khoa = e.ten_khoa_phong || e.khoa_phong_text || '';
+        $('#nvvSub').text((e.ma_nv||'') + (khoa ? ' · ' + khoa : ''));
+
+        function row(lbl, val, full){
+            return '<div class="nvv-item'+(full?' full':'')+'"><span class="nvv-lbl">'+lbl+'</span>'
+                 + '<span class="nvv-val">'+(val ? APP.escape(String(val)) : '—')+'</span></div>';
+        }
+        var h = '';
+        // Hero
+        h += '<div class="nvv-hero"><div class="nvv-ava">'+APP.escape(initials(e.ho_ten))+'</div>'
+           + '<div><div class="nm">'+APP.escape(e.ho_ten||'')+'</div>'
+           + '<div class="sub">'+APP.escape(e.ma_nv||'')+(e.chuc_danh?' · '+APP.escape(e.chuc_danh):'')
+           + ' · '+(e.trang_thai==1?'Đang làm':'Nghỉ việc')+'</div></div></div>';
+
+        // Thông tin cơ bản
+        h += '<div class="nvv-sec">Thông tin cơ bản</div><div class="nvv-grid">'
+           + row('Mã nhân viên', e.ma_nv)
+           + row('Họ và tên', e.ho_ten)
+           + row('Ngày sinh', e.ngay_sinh ? APP.formatDate(e.ngay_sinh) : '')
+           + row('Giới tính', gtMap[e.gioi_tinh] || e.gioi_tinh)
+           + row('Khoa / Phòng', e.ten_khoa_phong || (e.khoa_phong_text ? e.khoa_phong_text + ' (chưa gán danh mục)' : ''))
+           + row('Chức danh', e.chuc_danh)
+           + row('Văn bằng / Trình độ', e.trinh_do)
+           + row('Chuyên khoa', e.chuyen_khoa)
+           + '</div>';
+
+        // Chứng chỉ hành nghề
+        h += '<div class="nvv-sec">Chứng chỉ hành nghề (CCHN)</div><div class="nvv-grid">'
+           + row('Số CCHN', e.so_cchn)
+           + row('Ngày cấp CCHN', e.ngay_cap_cchn ? APP.formatDate(e.ngay_cap_cchn) : '')
+           + row('Phạm vi hành nghề', e.pham_vi_hanh_nghe, true)
+           + row('Quyết định bổ sung phạm vi', e.qd_bo_sung_pham_vi, true)
+           + row('Điều chỉnh phạm vi HĐCM', e.dieu_chinh_pham_vi)
+           + row('Ngày điều chỉnh', e.ngay_dieu_chinh ? APP.formatDate(e.ngay_dieu_chinh) : '')
+           + row('Chuyên khoa cần cập nhật KTYK', e.chuyen_khoa_cap_nhat, true)
+           + '</div>';
+
+        // Liên hệ
+        h += '<div class="nvv-sec">Liên hệ</div><div class="nvv-grid">'
+           + row('Điện thoại', e.dien_thoai)
+           + row('Email', e.email)
+           + row('Địa chỉ', e.dia_chi, true)
+           + '</div>';
+
+        if (CAN_EDIT) h += '<div style="margin-top:16px"><button class="btn btn-sm btn-primary" onclick="$(\'#drawerView\').removeClass(\'open\').find(\'.drawer\').removeClass(\'open\'); openEdit('+e.id+')">Sửa thông tin</button></div>';
+        $('#nvvBody').html(h);
+    });
+}
+
 function openEdit(id) {
     APP.ajax(URL, {action: 'getById', id: id}).done(function (res) {
         if (!res.success) { APP.toast(res.message, 'error'); return; }

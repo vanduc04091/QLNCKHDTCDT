@@ -11,7 +11,7 @@ $lh = (int)Helper::get('loai_hinh_dao_tao_id', 0);
 $ht = (int)Helper::get('hinh_thuc_hoc_id', 0);
 $dt = (int)Helper::get('doi_tuong_hoc_vien_id', 0);
 
-$res = DT_KhoaHoc_BUS::getPaged(1, 100000, $search, $daXoa, $lh, $ht, $dt);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_KhoaHoc_BUS::getPaged($__p, $__s, $search, $daXoa, $lh, $ht, $dt))];
 $tt = [1 => 'Hoạt động', 0 => 'Ngừng'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 

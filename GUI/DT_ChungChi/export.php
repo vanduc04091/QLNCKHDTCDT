@@ -11,7 +11,7 @@ $opts = [
     'loai'       => Helper::get('loai', ''),
     'trang_thai' => ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1,
 ];
-$res = DT_ChungChi_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_ChungChi_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $ttLbl = [1 => 'Đã cấp', 0 => 'Nháp', 2 => 'Thu hồi'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 

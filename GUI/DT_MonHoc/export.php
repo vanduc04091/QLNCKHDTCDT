@@ -10,7 +10,7 @@ $daXoa  = (int)Helper::get('da_xoa', 0);
 $tt     = ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1;
 $ct     = (int)Helper::get('chuong_trinh_id', 0);
 
-$res = DT_MonHoc_BUS::getPaged(1, 100000, $search, $daXoa, $tt, $ct);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_MonHoc_BUS::getPaged($__p, $__s, $search, $daXoa, $tt, $ct))];
 $ttLbl = [1 => 'Hoạt động', 0 => 'Khóa'];
 
 $headers = ['STT', 'Mã bài', 'Tên bài học', 'Chương trình đào tạo', 'LT', 'TH', 'Tổng tiết', 'Tín chỉ', 'Trạng thái'];

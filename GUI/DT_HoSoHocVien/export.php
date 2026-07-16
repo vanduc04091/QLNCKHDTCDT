@@ -11,7 +11,7 @@ $opts = [
     'loai'        => Helper::get('loai_ho_so', ''),
     'trang_thai'  => ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1,
 ];
-$res = DT_HoSoHocVien_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_HoSoHocVien_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $ttLbl = [1 => 'Hợp lệ', 0 => 'Chờ duyệt', 2 => 'Không hợp lệ'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 

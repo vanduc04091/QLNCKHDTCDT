@@ -51,6 +51,7 @@ $menu = [
     ]],
     ['group' => 'Đào tạo y khoa liên tục', 'key' => 'cme', 'icon' => 'trending-up', 'items' => [
         ['key' => 'DT_CME', 'icon' => 'bar-chart', 'label' => 'Theo dõi tín chỉ', 'url' => $base . 'GUI/DT_CME/index.php', 'module' => 'DT_CME'],
+        ['key' => 'DT_CME_CanhBao', 'icon' => 'alert-triangle', 'label' => 'Cảnh báo chưa đạt', 'url' => $base . 'GUI/DT_CME/canh_bao.php', 'module' => 'DT_CME'],
         ['key' => 'DT_CME_DanhMuc', 'icon' => 'book', 'label' => 'Danh mục quy đổi', 'url' => $base . 'GUI/DT_CME_DanhMuc/index.php', 'module' => 'DT_CME_DanhMuc'],
     ]],
     ['group' => 'Danh mục đào tạo', 'key' => 'dm-dao-tao', 'icon' => 'presentation', 'items' => [

@@ -19,6 +19,7 @@ require_once __DIR__ . '/PUBLIC/Common/PaginationHelper.php';
 require_once __DIR__ . '/PUBLIC/Common/Helper.php';
 require_once __DIR__ . '/PUBLIC/Common/PhanQuyenHelper.php';
 require_once __DIR__ . '/PUBLIC/Common/ExcelHelper.php';
+require_once __DIR__ . '/PUBLIC/Common/ExportHelper.php';
 require_once __DIR__ . '/DAL/database.php';
 
 SessionHelper::start();

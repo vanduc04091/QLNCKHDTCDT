@@ -52,9 +52,55 @@ try {
             $e->ngay_bat_dau = Helper::postStr('ngay_bat_dau') ?: null;
             $e->ngay_ket_thuc = Helper::postStr('ngay_ket_thuc') ?: null;
             $e->ghi_chu = Helper::postStr('ghi_chu') ?: null;
-            if ($isU) { $e->nguoi_cap_nhat = $u; $res = DT_Cme_BUS::ghiNhanUpdate($e); }
-            else      { $e->nguoi_tao = $u;      $res = DT_Cme_BUS::ghiNhanInsert($e); }
+
+            // ----- Minh chứng (PDF/ảnh chứng chỉ) -----
+            $newFile = null;
+            if (!empty($_FILES['minh_chung_file']['name'])) {
+                $up = DT_Cme_BUS::uploadMinhChung($_FILES['minh_chung_file']);
+                if (!$up['success']) ResponseHelper::error($up['message']);
+                $newFile = $up['data'];
+            }
+            $goMinhChung = Helper::postInt('remove_minh_chung', 0) === 1;
+
+            if ($isU) {
+                $e->nguoi_cap_nhat = $u;
+                $old = DT_Cme_BUS::ghiNhanGetById($e->id);
+                if ($newFile) {
+                    if ($old && $old->minh_chung) DT_Cme_BUS::xoaMinhChungFile($old->minh_chung);
+                    $e->minh_chung = $newFile['file_name'];
+                    $e->minh_chung_goc = $newFile['file_goc'];
+                    $e->minh_chung_size = $newFile['file_size'];
+                } elseif ($goMinhChung) {
+                    if ($old && $old->minh_chung) DT_Cme_BUS::xoaMinhChungFile($old->minh_chung);
+                    $e->minh_chung = '';   // '' = gỡ file
+                } else {
+                    $e->minh_chung = null; // null = giữ nguyên
+                }
+                $res = DT_Cme_BUS::ghiNhanUpdate($e);
+            } else {
+                $e->nguoi_tao = $u;
+                if ($newFile) {
+                    $e->minh_chung = $newFile['file_name'];
+                    $e->minh_chung_goc = $newFile['file_goc'];
+                    $e->minh_chung_size = $newFile['file_size'];
+                }
+                $res = DT_Cme_BUS::ghiNhanInsert($e);
+            }
+            // Nếu lưu DB thất bại mà vừa upload file mới -> dọn file để không rác
+            if (!$res['success'] && $newFile) DT_Cme_BUS::xoaMinhChungFile($newFile['file_name']);
             $res['success'] ? ResponseHelper::success($res['message'], $res['data'] ?? null) : ResponseHelper::error($res['message']);
+            break;
+
+        // Đính kèm / gỡ minh chứng nhanh từ danh sách
+        case 'capNhatMinhChung':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_SUA);
+            $res = DT_Cme_BUS::capNhatMinhChung(
+                Helper::postInt('id'),
+                !empty($_FILES['minh_chung_file']['name']) ? $_FILES['minh_chung_file'] : null,
+                Helper::postInt('go', 0) === 1,
+                $u
+            );
+            $res['success'] ? ResponseHelper::success($res['message']) : ResponseHelper::error($res['message']);
             break;
 
         case 'trash':
@@ -99,6 +145,22 @@ try {
         case 'tongQuan':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
             ResponseHelper::success('OK', DT_Cme_BUS::tongQuan(Helper::postInt('nam', (int)date('Y'))));
+            break;
+
+        // Cảnh báo NV chưa đạt ngưỡng (có phân trang)
+        case 'canhBao':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_XEM);
+            $page = max(1, Helper::postInt('page', 1));
+            $size = Helper::postInt('pageSize', AppConfig::DEFAULT_PAGE_SIZE);
+            ResponseHelper::success('OK', DT_Cme_BUS::canhBaoChuaDat(
+                Helper::postInt('nam', (int)date('Y')),
+                [
+                    'khoa_phong_id' => Helper::postInt('khoa_phong_id', 0),
+                    'search'        => Helper::postStr('search'),
+                    'trang_thai'    => Helper::postStr('trang_thai'),
+                ],
+                $page, $size
+            ));
             break;
 
         // Báo cáo

@@ -73,12 +73,12 @@ loai($db, $n5, 'HOC_CHUNGCHI',     'Đang học khóa đào tạo cấp chứng 
 
 echo "== Cấu hình ngưỡng ==\n";
 if (DM_CauHinh_DAL::get('CME_NGUONG_GIO') === null) {
-    DM_CauHinh_DAL::set('CME_NGUONG_GIO', '48', 'CME: số giờ tín chỉ tối thiểu mỗi chu kỳ');
-    echo "  + CME_NGUONG_GIO = 48\n";
+    DM_CauHinh_DAL::set('CME_NGUONG_GIO', '24', 'CME: số giờ tín chỉ tối thiểu mỗi chu kỳ');
+    echo "  + CME_NGUONG_GIO = 24\n";
 } else echo "  · CME_NGUONG_GIO đã có\n";
 if (DM_CauHinh_DAL::get('CME_CHU_KY_NAM') === null) {
-    DM_CauHinh_DAL::set('CME_CHU_KY_NAM', '2', 'CME: số năm 1 chu kỳ tính ngưỡng');
-    echo "  + CME_CHU_KY_NAM = 2\n";
+    DM_CauHinh_DAL::set('CME_CHU_KY_NAM', '1', 'CME: số năm 1 chu kỳ tính ngưỡng');
+    echo "  + CME_CHU_KY_NAM = 1\n";
 } else echo "  · CME_CHU_KY_NAM đã có\n";
 
 echo "\n== XONG ==\n";

@@ -12,7 +12,7 @@ $opts = [
     'loai'       => Helper::get('loai_tai_lieu', ''),
     'trang_thai' => ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1,
 ];
-$res = DT_TaiLieu_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_TaiLieu_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $ttLbl = [1 => 'Hiển thị', 0 => 'Ẩn'];
 
 $headers = ['STT', 'Mã', 'Tiêu đề', 'Loại', 'Định dạng', 'Khóa học', 'Chương trình', 'Bài học', 'Tác giả', 'Công khai', 'Lượt tải', 'Trạng thái'];

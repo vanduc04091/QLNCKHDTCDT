@@ -13,7 +13,7 @@ $opts = [
     'to'            => Helper::get('to', '') ?: null,
     'search'        => Helper::get('search', ''),
 ];
-$res = DT_LichHoc_BUS::getPaged(1, 100000, $opts, (int)Helper::get('da_xoa', 0));
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DT_LichHoc_BUS::getPaged($__p, $__s, $opts, (int)Helper::get('da_xoa', 0)))];
 $ttLbl = [0 => 'Dự kiến', 1 => 'Đã dạy', 2 => 'Đã hủy'];
 $fd = fn($d) => !empty($d) ? date('d/m/Y', strtotime($d)) : '';
 $fg = fn($t) => $t ? substr($t, 0, 5) : '';

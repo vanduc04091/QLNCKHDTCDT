@@ -12,6 +12,9 @@ class DT_CmeGhiNhan_PUBLIC
     public ?string $ngay_bat_dau = null;
     public ?string $ngay_ket_thuc = null;
     public ?string $ghi_chu = null;
+    public ?string $minh_chung = null;        // tên file lưu trên server
+    public ?string $minh_chung_goc = null;    // tên file gốc
+    public ?int $minh_chung_size = null;      // byte
     public ?string $ngay_tao = null;
     public ?string $ngay_cap_nhat = null;
     public ?int $nguoi_tao = null;

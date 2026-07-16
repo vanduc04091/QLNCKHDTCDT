@@ -10,7 +10,7 @@ $daXoa  = (int)Helper::get('da_xoa', 0);
 $loai   = (int)Helper::get('loai_gv', 0);
 $tt     = ($v = Helper::get('trang_thai', '')) !== '' ? (int)$v : -1;
 
-$res = DM_GiangVien_BUS::getPaged(1, 100000, $search, $daXoa, $loai, $tt);
+$res = ['data' => ExportHelper::fetchAll(fn($__p, $__s) => DM_GiangVien_BUS::getPaged($__p, $__s, $search, $daXoa, $loai, $tt))];
 $ttLbl = [1 => 'Hoạt động', 0 => 'Ngừng'];
 $loaiLbl = [1 => 'Trong cơ quan', 2 => 'Ngoài'];
 
