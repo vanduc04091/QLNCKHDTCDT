@@ -17,8 +17,8 @@ function _canSee($moduleKey) {
 
 $menu = [
     ['group' => 'Tổng quan', 'key' => 'tong-quan', 'icon' => 'dashboard', 'items' => [
-        ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],    
-        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],
+        ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],
+        ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'DT_Dashboard'],
         ['key' => 'DT_BaoCao', 'icon' => 'clipboard-list', 'label' => 'Báo cáo đào tạo', 'url' => $base . 'GUI/BaoCao/index.php', 'module' => 'DT_BaoCao'],
         ['key' => 'DT_CME_TongQuan', 'icon' => 'trending-up', 'label' => 'Đào tạo y khoa liên tục', 'url' => $base . 'GUI/DT_CME/tong_quan.php', 'module' => 'DT_CME'],
         ['key' => 'DT_CME_BaoCao', 'icon' => 'clipboard-list', 'label' => 'Báo cáo đào tạo YKLT', 'url' => $base . 'GUI/DT_CME/bao_cao.php', 'module' => 'DT_CME'],
