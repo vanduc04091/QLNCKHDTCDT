@@ -85,8 +85,9 @@ class DM_NhomTaiKhoan_DAL
         $where = " WHERE nt.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (nt.ma_nhom LIKE :s OR nt.ten_nhom LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (nt.ma_nhom LIKE :s1 OR nt.ten_nhom LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
         $countSql = "SELECT COUNT(*) FROM DM_NHOM_TAI_KHOAN nt" . $where;
         $stmt = Database::getConnection()->prepare($countSql);

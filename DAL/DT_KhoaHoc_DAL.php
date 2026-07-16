@@ -100,8 +100,9 @@ class DT_KhoaHoc_DAL
         $where = " WHERE kh.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (kh.ma_khoa_hoc LIKE :s OR kh.ten_khoa_hoc LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (kh.ma_khoa_hoc LIKE :s1 OR kh.ten_khoa_hoc LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
         if ($loaiHinhId > 0) { $where .= " AND kh.loai_hinh_dao_tao_id=:lh "; $params[':lh'] = $loaiHinhId; }
         if ($hinhThucId > 0) { $where .= " AND kh.hinh_thuc_hoc_id=:ht "; $params[':ht'] = $hinhThucId; }

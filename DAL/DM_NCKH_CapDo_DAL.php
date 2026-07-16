@@ -77,8 +77,9 @@ class DM_NCKH_CapDo_DAL
         $where = " WHERE cd.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (cd.ma_cap_do LIKE :s OR cd.ten_cap_do LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (cd.ma_cap_do LIKE :s1 OR cd.ten_cap_do LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
         $countSql = "SELECT COUNT(*) FROM DM_NCKH_CAP_DO cd" . $where;
         $stmt = Database::getConnection()->prepare($countSql);

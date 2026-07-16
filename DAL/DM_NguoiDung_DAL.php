@@ -116,8 +116,9 @@ class DM_NguoiDung_DAL
         $where = ' WHERE nd.da_xoa = :dx ';
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= ' AND (nd.tai_khoan LIKE :s OR nv.ho_ten LIKE :s OR nv.ma_nv LIKE :s) ';
-            $params[':s'] = "%{$search}%";
+            $where .= ' AND (nd.tai_khoan LIKE :s1 OR nv.ho_ten LIKE :s2 OR nv.ma_nv LIKE :s3) ';
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw;
         }
         if ($nhomId > 0) {
             $where .= ' AND nd.nhom_tai_khoan_id = :nhom ';

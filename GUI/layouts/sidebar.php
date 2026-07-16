@@ -20,6 +20,8 @@ $menu = [
         ['key' => 'NCKH_Dashboard', 'icon' => 'trending-up', 'label' => 'Nghiên cứu khoa học', 'url' => $base . 'GUI/dashboard/nckh.php', 'module' => 'NCKH_Dashboard'],    
         ['key' => 'DT_Dashboard', 'icon' => 'bar-chart', 'label' => 'Đào tạo', 'url' => $base . 'GUI/dashboard/dao_tao.php', 'module' => 'Dashboard'],
         ['key' => 'DT_BaoCao', 'icon' => 'clipboard-list', 'label' => 'Báo cáo đào tạo', 'url' => $base . 'GUI/BaoCao/index.php', 'module' => 'DT_BaoCao'],
+        ['key' => 'DT_CME_TongQuan', 'icon' => 'trending-up', 'label' => 'Đào tạo y khoa liên tục', 'url' => $base . 'GUI/DT_CME/tong_quan.php', 'module' => 'DT_CME'],
+        ['key' => 'DT_CME_BaoCao', 'icon' => 'clipboard-list', 'label' => 'Báo cáo đào tạo YKLT', 'url' => $base . 'GUI/DT_CME/bao_cao.php', 'module' => 'DT_CME'],
     ]],
     ['group' => 'Nghiên cứu khoa học', 'key' => 'nckh', 'icon' => 'star', 'items' => [
         ['key' => 'NCKH_DotDangKy',   'icon' => 'calendar',      'label' => 'Đợt đăng ký',        'url' => $base . 'GUI/NCKH_DotDangKy/index.php',   'module' => 'NCKH_DotDangKy'],
@@ -46,6 +48,10 @@ $menu = [
         ['key' => 'DM_HocVien', 'icon' => 'user-badge', 'label' => 'Học viên', 'url' => $base . 'GUI/DM_HocVien/index.php', 'module' => 'DM_HocVien'],
         ['key' => 'DT_HoSoHocVien', 'icon' => 'clipboard-list', 'label' => 'Hồ sơ học viên', 'url' => $base . 'GUI/DT_HoSoHocVien/index.php', 'module' => 'DT_HoSoHocVien'],
         ['key' => 'DT_ChungChi', 'icon' => 'academic-cap', 'label' => 'Chứng chỉ', 'url' => $base . 'GUI/DT_ChungChi/index.php', 'module' => 'DT_ChungChi'],
+    ]],
+    ['group' => 'Đào tạo y khoa liên tục', 'key' => 'cme', 'icon' => 'trending-up', 'items' => [
+        ['key' => 'DT_CME', 'icon' => 'bar-chart', 'label' => 'Theo dõi tín chỉ', 'url' => $base . 'GUI/DT_CME/index.php', 'module' => 'DT_CME'],
+        ['key' => 'DT_CME_DanhMuc', 'icon' => 'book', 'label' => 'Danh mục quy đổi', 'url' => $base . 'GUI/DT_CME_DanhMuc/index.php', 'module' => 'DT_CME_DanhMuc'],
     ]],
     ['group' => 'Danh mục đào tạo', 'key' => 'dm-dao-tao', 'icon' => 'presentation', 'items' => [
         ['key' => 'DM_LoaiHinhDaoTao', 'icon' => 'academic-cap', 'label' => 'Loại hình đào tạo', 'url' => $base . 'GUI/DM_LoaiHinhDaoTao/index.php', 'module' => 'DM_LoaiHinhDaoTao'],

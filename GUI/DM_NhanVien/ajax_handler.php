@@ -30,6 +30,21 @@ try {
             ResponseHelper::success('OK', $e);
             break;
 
+        case 'import':
+            PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_THEM);
+            if (empty($_FILES['file']['name']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                ResponseHelper::error('Chưa chọn file hoặc upload lỗi');
+            }
+            $ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'xlsx') ResponseHelper::error('Chỉ hỗ trợ file .xlsx');
+            if ($_FILES['file']['size'] > 10 * 1024 * 1024) ResponseHelper::error('File quá lớn (tối đa 10MB)');
+            @set_time_limit(120);
+            $res = DM_NhanVien_BUS::importExcel($_FILES['file']['tmp_name'], $u);
+            $res['success']
+                ? ResponseHelper::success($res['message'], ['summary' => $res['summary'], 'rows' => $res['rows']])
+                : ResponseHelper::error($res['message']);
+            break;
+
         case 'insert':
             PhanQuyenHelper::requireQuyen($MODULE, PhanQuyenHelper::QUYEN_THEM);
             $e = new DM_NhanVien_PUBLIC();
@@ -45,6 +60,13 @@ try {
             $e->dien_thoai = Helper::postStr('dien_thoai') ?: null;
             $e->email = Helper::postStr('email') ?: null;
             $e->dia_chi = Helper::postStr('dia_chi') ?: null;
+            $e->pham_vi_hanh_nghe = Helper::postStr('pham_vi_hanh_nghe') ?: null;
+            $e->so_cchn = Helper::postStr('so_cchn') ?: null;
+            $e->ngay_cap_cchn = Helper::postStr('ngay_cap_cchn') ?: null;
+            $e->qd_bo_sung_pham_vi = Helper::postStr('qd_bo_sung_pham_vi') ?: null;
+            $e->dieu_chinh_pham_vi = Helper::postStr('dieu_chinh_pham_vi') ?: null;
+            $e->ngay_dieu_chinh = Helper::postStr('ngay_dieu_chinh') ?: null;
+            $e->chuyen_khoa_cap_nhat = Helper::postStr('chuyen_khoa_cap_nhat') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_tao = $u;
             $res = DM_NhanVien_BUS::insert($e);
@@ -67,6 +89,13 @@ try {
             $e->dien_thoai = Helper::postStr('dien_thoai') ?: null;
             $e->email = Helper::postStr('email') ?: null;
             $e->dia_chi = Helper::postStr('dia_chi') ?: null;
+            $e->pham_vi_hanh_nghe = Helper::postStr('pham_vi_hanh_nghe') ?: null;
+            $e->so_cchn = Helper::postStr('so_cchn') ?: null;
+            $e->ngay_cap_cchn = Helper::postStr('ngay_cap_cchn') ?: null;
+            $e->qd_bo_sung_pham_vi = Helper::postStr('qd_bo_sung_pham_vi') ?: null;
+            $e->dieu_chinh_pham_vi = Helper::postStr('dieu_chinh_pham_vi') ?: null;
+            $e->ngay_dieu_chinh = Helper::postStr('ngay_dieu_chinh') ?: null;
+            $e->chuyen_khoa_cap_nhat = Helper::postStr('chuyen_khoa_cap_nhat') ?: null;
             $e->trang_thai = Helper::postInt('trang_thai', 1);
             $e->nguoi_cap_nhat = $u;
             $res = DM_NhanVien_BUS::update($e);

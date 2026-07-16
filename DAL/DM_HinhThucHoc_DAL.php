@@ -77,8 +77,9 @@ class DM_HinhThucHoc_DAL
         $where = " WHERE ht.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (ht.ma_hinh_thuc LIKE :s OR ht.ten_hinh_thuc LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (ht.ma_hinh_thuc LIKE :s1 OR ht.ten_hinh_thuc LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
 
         $countSql = "SELECT COUNT(*) FROM DM_HINH_THUC_HOC ht" . $where;

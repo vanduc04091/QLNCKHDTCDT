@@ -77,8 +77,9 @@ class DM_LoaiHinhDaoTao_DAL
         $where = " WHERE lh.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (lh.ma_loai_hinh LIKE :s OR lh.ten_loai_hinh LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (lh.ma_loai_hinh LIKE :s1 OR lh.ten_loai_hinh LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
 
         $countSql = "SELECT COUNT(*) FROM DM_LOAI_HINH_DAO_TAO lh" . $where;

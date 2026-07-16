@@ -77,8 +77,9 @@ class DM_NCKH_TheLoai_DAL
         $where = " WHERE tl.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (tl.ma_the_loai LIKE :s OR tl.ten_the_loai LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (tl.ma_the_loai LIKE :s1 OR tl.ten_the_loai LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
         $countSql = "SELECT COUNT(*) FROM DM_NCKH_THE_LOAI tl" . $where;
         $stmt = Database::getConnection()->prepare($countSql);

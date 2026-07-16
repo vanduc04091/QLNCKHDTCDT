@@ -139,8 +139,9 @@ class DM_HocVien_DAL
         $where = " WHERE hv.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (hv.ma_hv LIKE :s OR hv.ho_ten LIKE :s OR hv.email LIKE :s OR hv.dien_thoai LIKE :s OR hv.don_vi_cong_tac LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (hv.ma_hv LIKE :s1 OR hv.ho_ten LIKE :s2 OR hv.email LIKE :s3 OR hv.dien_thoai LIKE :s4 OR hv.don_vi_cong_tac LIKE :s5) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw; $params[':s4'] = $kw; $params[':s5'] = $kw;
         }
         if ($doiTuongId > 0) {
             $where .= " AND hv.doi_tuong_id=:dti ";

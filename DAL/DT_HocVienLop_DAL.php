@@ -101,7 +101,7 @@ class DT_HocVienLop_DAL
                        COALESCE(hvl.ngay_bat_dau, khct.ngay_bat_dau) AS ngay_bat_dau,
                        COALESCE(hvl.ngay_ket_thuc, khct.ngay_ket_thuc) AS ngay_ket_thuc,
                        ct.so_luong_toi_da,
-                       khct.trang_thai AS lop_trang_thai,
+                       khct.trang_thai AS lop_trang_thai, khct.dia_diem,
                        kh.ma_khoa_hoc, kh.ten_khoa_hoc
                 FROM DT_HOC_VIEN_LOP hvl
                 INNER JOIN DT_KHOA_HOC_CHUONG_TRINH khct ON khct.id = hvl.khoa_hoc_chuong_trinh_id AND khct.da_xoa=0
@@ -149,8 +149,9 @@ class DT_HocVienLop_DAL
         $sql = self::selectSql() . " WHERE hvl.khoa_hoc_chuong_trinh_id=:khct AND hvl.da_xoa=0";
         $params = [':khct' => $khctId];
         if ($search !== '') {
-            $sql .= " AND (hv.ma_hv LIKE :s OR hv.ho_ten LIKE :s OR nv.ma_nv LIKE :s)";
-            $params[':s'] = "%{$search}%";
+            $sql .= " AND (hv.ma_hv LIKE :s1 OR hv.ho_ten LIKE :s2 OR nv.ma_nv LIKE :s3)";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw;
         }
         $sql .= " ORDER BY hvl.id ASC";
         $stmt = Database::getConnection()->prepare($sql);
@@ -198,8 +199,9 @@ class DT_HocVienLop_DAL
                   AND hv.id NOT IN (SELECT hoc_vien_id FROM DT_HOC_VIEN_LOP WHERE khoa_hoc_chuong_trinh_id=:khct AND da_xoa=0)";
         $params = [':khct' => $khctId];
         if ($search !== '') {
-            $sql .= " AND (hv.ma_hv LIKE :s OR hv.ho_ten LIKE :s OR nv.ma_nv LIKE :s OR hv.don_vi_cong_tac LIKE :s)";
-            $params[':s'] = "%{$search}%";
+            $sql .= " AND (hv.ma_hv LIKE :s1 OR hv.ho_ten LIKE :s2 OR nv.ma_nv LIKE :s3 OR hv.don_vi_cong_tac LIKE :s4)";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw; $params[':s4'] = $kw;
         }
         $sql .= " ORDER BY hv.ho_ten LIMIT " . (int)$limit;
         $stmt = Database::getConnection()->prepare($sql);

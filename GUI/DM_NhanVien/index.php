@@ -42,10 +42,57 @@ require __DIR__ . '/../layouts/header.php';
         <div class="right">
             <button type="button" class="btn" onclick="exportExcel()" title="Xuất Excel"><?= IconHelper::svg('download','16') ?> Xuất Excel</button>
             <?php if ($canAdd): ?>
+                <button type="button" class="btn" onclick="openImport()" title="Import người hành nghề từ Excel"><?= IconHelper::svg('upload','16') ?> Import Excel</button>
                 <button type="button" class="btn btn-primary" onclick="openCreate()">+ Thêm nhân viên</button>
             <?php endif; ?>
         </div>
     </div>
+
+    <?php if ($canAdd): ?>
+    <!-- Modal Import Excel -->
+    <div class="modal-backdrop" id="modalImport">
+        <div class="modal" style="max-width:680px">
+            <div class="modal-header"><h3>Import người hành nghề từ Excel</h3>
+                <button type="button" class="close" onclick="$('#modalImport').removeClass('open')">&times;</button></div>
+            <div class="modal-body">
+                <div class="imp-note">
+                    <div>File theo mẫu <strong>Danh sách người hành nghề toàn viện</strong> (.xlsx) — 13 cột: MNV, Họ tên, K/P/TT, Văn bằng, Ngày sinh, Phạm vi hành nghề, Số CCHN, Ngày cấp CCHN, QĐ bổ sung, Điều chỉnh phạm vi, Ngày điều chỉnh, Chuyên khoa cập nhật.</div>
+                    <ul>
+                        <li>Khoa/phòng được <strong>tự khớp theo tên</strong>; khớp không được thì vẫn thêm NV và <span class="imp-hl">giữ nguyên tên khoa gốc</span> để gán tay sau.</li>
+                        <li>Mã NV <strong>trùng</strong> (trong file hoặc đã có trong DB) sẽ bị <strong>bỏ qua</strong>.</li>
+                    </ul>
+                </div>
+                <div class="form-group" style="margin-top:12px">
+                    <label>Chọn file Excel (.xlsx)</label>
+                    <input type="file" id="impFile" class="form-control" accept=".xlsx">
+                </div>
+                <div id="impResult" style="display:none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="$('#modalImport').removeClass('open')">Đóng</button>
+                <button type="button" class="btn btn-primary" id="btnImport"><?= IconHelper::svg('upload','16') ?> Bắt đầu import</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        .imp-note { background:#f8fafc; border:1px solid var(--gray-200); border-radius:8px; padding:12px 14px; font-size:12.5px; color:var(--gray-700); }
+        .imp-note ul { margin:8px 0 0; padding-left:18px; } .imp-note li { margin:3px 0; }
+        .imp-hl { color:#92400e; font-weight:600; }
+        .imp-sum { display:flex; gap:10px; margin:12px 0 8px; flex-wrap:wrap; }
+        .imp-chip { padding:6px 12px; border-radius:8px; font-weight:600; font-size:12.5px; }
+        .imp-chip.ok { background:#dcfce7; color:#166534; } .imp-chip.warn { background:#fef3c7; color:#92400e; }
+        .imp-chip.skip { background:#e2e8f0; color:#475569; } .imp-chip.err { background:#fee2e2; color:#991b1b; }
+        .imp-tbl { max-height:280px; overflow:auto; border:1px solid var(--gray-200); border-radius:8px; margin-top:6px; }
+        .imp-tbl table { width:100%; border-collapse:collapse; font-size:12px; }
+        .imp-tbl th, .imp-tbl td { padding:5px 8px; border-bottom:1px solid var(--gray-100); text-align:left; }
+        .imp-tbl tr.ok_note td { background:#fffbeb; } .imp-tbl tr.bo_qua td { background:#f8fafc; color:#64748b; }
+        .imp-tbl tr.loi td { background:#fef2f2; color:#991b1b; }
+    </style>
+    <?php endif; ?>
+    <style>
+        .nv-section-title { font-size:13px; font-weight:700; color:var(--primary,#16a34a); margin:18px 0 10px;
+            padding-top:12px; border-top:1px solid var(--gray-200); }
+    </style>
     <div class="table-wrap" id="tableWrap" style="position:relative;min-height:200px">
         <table class="table">
             <thead>
@@ -151,6 +198,40 @@ require __DIR__ . '/../layouts/header.php';
                     <label>Địa chỉ</label>
                     <input type="text" name="dia_chi" id="f_dia_chi" class="form-control" maxlength="250">
                 </div>
+
+                <div class="nv-section-title">Chứng chỉ hành nghề (CCHN)</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số CCHN</label>
+                        <input type="text" name="so_cchn" id="f_so_cchn" class="form-control" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày cấp CCHN</label>
+                        <input type="date" name="ngay_cap_cchn" id="f_ngay_cap_cchn" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phạm vi hành nghề</label>
+                    <input type="text" name="pham_vi_hanh_nghe" id="f_pham_vi_hanh_nghe" class="form-control" maxlength="300">
+                </div>
+                <div class="form-group">
+                    <label>Quyết định bổ sung phạm vi</label>
+                    <input type="text" name="qd_bo_sung_pham_vi" id="f_qd_bo_sung_pham_vi" class="form-control" maxlength="300">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Điều chỉnh phạm vi HĐCM trong CCHN</label>
+                        <input type="text" name="dieu_chinh_pham_vi" id="f_dieu_chinh_pham_vi" class="form-control" maxlength="300">
+                    </div>
+                    <div class="form-group">
+                        <label>Ngày điều chỉnh phạm vi</label>
+                        <input type="date" name="ngay_dieu_chinh" id="f_ngay_dieu_chinh" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Chuyên khoa cần cập nhật KTYK liên tục</label>
+                    <input type="text" name="chuyen_khoa_cap_nhat" id="f_chuyen_khoa_cap_nhat" class="form-control" maxlength="300">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn" onclick="closeModal()">Hủy</button>
@@ -170,6 +251,50 @@ function exportExcel(){ var p=new URLSearchParams({search:state.search||'',da_xo
 var ICON_EDIT = '<?= addslashes(IconHelper::svg('edit', '18')) ?>';
 var ICON_TRASH = '<?= addslashes(IconHelper::svg('trash', '18')) ?>';
 var ICON_EMPTY = '<?= addslashes(IconHelper::svg('dashboard', '40')) ?>';
+var ICON_UPLOAD = '<?= addslashes(IconHelper::svg('upload', '16')) ?>';
+
+// ===== Import Excel =====
+function openImport(){
+    $('#impFile').val(''); $('#impResult').hide().empty();
+    $('#btnImport').prop('disabled',false).html(ICON_UPLOAD+' Bắt đầu import');
+    $('#modalImport').addClass('open');
+}
+$(document).on('click','#btnImport',function(){
+    var f=$('#impFile')[0].files[0];
+    if(!f){ APP.toast('Chưa chọn file','error'); return; }
+    if(!/\.xlsx$/i.test(f.name)){ APP.toast('Chỉ hỗ trợ file .xlsx','error'); return; }
+    var fd=new FormData(); fd.append('action','import'); fd.append('file',f);
+    $('#btnImport').prop('disabled',true).text('Đang import...');
+    $('#impResult').hide().empty();
+    $.ajax({ url:URL, type:'POST', data:fd, processData:false, contentType:false, dataType:'json',
+        headers: window.CSRF_TOKEN ? {'X-CSRF-Token':window.CSRF_TOKEN} : {} })
+    .done(function(res){
+        $('#btnImport').prop('disabled',false).html(ICON_UPLOAD+' Bắt đầu import');
+        if(!res.success){ APP.toast(res.message||'Import lỗi','error'); return; }
+        var s=res.data.summary, rows=res.data.rows||[];
+        var h='<div class="imp-sum">'+
+            '<span class="imp-chip ok">Đã thêm: '+s.them+'</span>'+
+            (s.khong_map_khoa?'<span class="imp-chip warn">Chưa map khoa: '+s.khong_map_khoa+'</span>':'')+
+            (s.bo_qua?'<span class="imp-chip skip">Bỏ qua: '+s.bo_qua+'</span>':'')+
+            (s.loi?'<span class="imp-chip err">Lỗi: '+s.loi+'</span>':'')+'</div>';
+        // chỉ hiện các dòng cần chú ý (không phải ok thuần) để gọn
+        var noti=rows.filter(function(r){ return r.trang_thai!=='ok'; });
+        if(noti.length){
+            h+='<div class="imp-tbl"><table><thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Ghi chú</th></tr></thead><tbody>';
+            noti.slice(0,300).forEach(function(r){
+                h+='<tr class="'+r.trang_thai+'"><td>'+APP.escape(String(r.stt||''))+'</td><td>'+APP.escape(r.ma||'')+'</td><td>'+APP.escape(r.ten||'')+'</td><td>'+APP.escape(r.ghi_chu||'')+'</td></tr>';
+            });
+            h+='</tbody></table></div>';
+            if(noti.length>300) h+='<div class="text-muted" style="font-size:11.5px;margin-top:6px">… và '+(noti.length-300)+' dòng khác</div>';
+        } else {
+            h+='<div class="text-muted" style="font-size:12.5px">Tất cả bản ghi đã thêm thành công.</div>';
+        }
+        $('#impResult').html(h).show();
+        APP.toast(res.message,'success');
+        load(); if(typeof loadStats==='function') loadStats();
+    })
+    .fail(function(){ $('#btnImport').prop('disabled',false).html(ICON_UPLOAD+' Bắt đầu import'); APP.toast('Lỗi máy chủ khi import','error'); });
+});
 
 function load() {
     APP.showLoading('#tableWrap');
@@ -265,6 +390,13 @@ function openEdit(id) {
         $('#f_dien_thoai').val(e.dien_thoai || '');
         $('#f_email').val(e.email || '');
         $('#f_dia_chi').val(e.dia_chi || '');
+        $('#f_so_cchn').val(e.so_cchn || '');
+        $('#f_ngay_cap_cchn').val(e.ngay_cap_cchn || '');
+        $('#f_pham_vi_hanh_nghe').val(e.pham_vi_hanh_nghe || '');
+        $('#f_qd_bo_sung_pham_vi').val(e.qd_bo_sung_pham_vi || '');
+        $('#f_dieu_chinh_pham_vi').val(e.dieu_chinh_pham_vi || '');
+        $('#f_ngay_dieu_chinh').val(e.ngay_dieu_chinh || '');
+        $('#f_chuyen_khoa_cap_nhat').val(e.chuyen_khoa_cap_nhat || '');
         $('#f_trang_thai').val(e.trang_thai);
         $('#modalForm').addClass('open');
     });

@@ -89,8 +89,9 @@ class DM_BenhVien_DAL
         $where = " WHERE bv.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (bv.ma_benh_vien LIKE :s OR bv.ten_benh_vien LIKE :s OR bv.dia_chi LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (bv.ma_benh_vien LIKE :s1 OR bv.ten_benh_vien LIKE :s2 OR bv.dia_chi LIKE :s3) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw;
         }
         if ($cap !== '') {
             $where .= " AND bv.cap_benh_vien=:cap ";

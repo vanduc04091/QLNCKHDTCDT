@@ -44,7 +44,7 @@ $publicTraCuuUrl = AppConfig::baseUrl('GUI/public/tra_cuu.php');
 </div>
 
 <div class="card" style="background:#eff6ff;border:1px solid #bfdbfe;margin-bottom:14px">
-    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:14px 20px">
         <div style="flex:1;min-width:240px">
             <strong style="color:#1d4ed8">Liên kết công khai cho học viên:</strong>
         </div>

@@ -131,7 +131,8 @@ class DT_PhieuIn_BUS
         if ($d['avatar_url'] !== '') {
             $d['avatar_html'] = '<img src="' . $d['avatar_url'] . '" alt="Ảnh học viên">';
         } else {
-            $d['avatar_html'] = '<div class="thv-noimg">' . self::initials($hv->ho_ten) . '</div>';
+            $ini = htmlspecialchars(self::initials($hv->ho_ten), ENT_QUOTES, 'UTF-8');
+            $d['avatar_html'] = '<div class="thv-noimg">' . $ini . '</div>';
         }
 
         return $d;

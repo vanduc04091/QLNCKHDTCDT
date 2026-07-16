@@ -46,8 +46,9 @@ class DM_NhatKyHeThong_DAL
         $where = " WHERE 1=1 ";
         $params = [];
         if ($search !== '') {
-            $where .= " AND (nk.hanh_dong LIKE :s OR nk.bang_lien_quan LIKE :s OR nk.dia_chi_ip LIKE :s OR u.tai_khoan LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (nk.hanh_dong LIKE :s1 OR nk.bang_lien_quan LIKE :s2 OR nk.dia_chi_ip LIKE :s3 OR u.tai_khoan LIKE :s4) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw; $params[':s3'] = $kw; $params[':s4'] = $kw;
         }
         if ($module !== '') {
             $where .= " AND nk.module=:m ";

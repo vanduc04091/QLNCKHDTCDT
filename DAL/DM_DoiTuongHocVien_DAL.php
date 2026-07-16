@@ -77,8 +77,9 @@ class DM_DoiTuongHocVien_DAL
         $where = " WHERE dt.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (dt.ma_doi_tuong LIKE :s OR dt.ten_doi_tuong LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (dt.ma_doi_tuong LIKE :s1 OR dt.ten_doi_tuong LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
 
         $countSql = "SELECT COUNT(*) FROM DM_DOI_TUONG_HOC_VIEN dt" . $where;

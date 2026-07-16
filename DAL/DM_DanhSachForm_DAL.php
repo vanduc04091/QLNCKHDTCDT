@@ -75,8 +75,9 @@ class DM_DanhSachForm_DAL
         $where = " WHERE f.da_xoa=:dx ";
         $params = [':dx' => $daXoa];
         if ($search !== '') {
-            $where .= " AND (f.ten_form LIKE :s OR f.modules_tuong_ung LIKE :s) ";
-            $params[':s'] = "%{$search}%";
+            $where .= " AND (f.ten_form LIKE :s1 OR f.modules_tuong_ung LIKE :s2) ";
+            $kw = "%{$search}%";
+            $params[':s1'] = $kw; $params[':s2'] = $kw;
         }
 
         $countSql = "SELECT COUNT(*) FROM DM_DANH_SACH_FORM f" . $where;
